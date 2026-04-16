@@ -6,9 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write    # 只需要这个来推送数据库
   actions: read
-  artifacts: write
 
 jobs:
   predict:
