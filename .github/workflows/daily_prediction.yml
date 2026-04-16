@@ -1,36 +1,41 @@
+'EOF'
 name: Daily Football Prediction
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 每天 UTC 2点（北京时间10点）
-  workflow_dispatch:      # 允许手动触发
+    - cron: '0 2 * * *'  # 北京时间每天10点
+  workflow_dispatch:      # 手动触发
 
 jobs:
   predict:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Create directories
+      run: mkdir -p data reports
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests beautifulsoup4 pandas numpy scipy lxml openpyxl
     
-    - name: Init database
-      run: |
-        mkdir -p data reports
-        python3 main.py init
+    - name: Initialize database
+      run: python3 main.py init
     
-    - name: Run scraper
+    - name: Scrape matches
       run: python3 main.py scrape
+      continue-on-error: true  # 即使抓取失败也继续
     
-    - name: Run predictor
+    - name: Generate predictions
       run: python3 main.py predict
     
     - name: Generate report
@@ -39,6 +44,15 @@ jobs:
     - name: Upload reports
       uses: actions/upload-artifact@v4
       with:
-        name: prediction-reports
+        name: prediction-reports-$(date +%Y%m%d)
         path: reports/
         retention-days: 30
+    
+    - name: Commit database updates
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/football.db
+        git diff --staged --quiet || (git commit -m "Update database: $(date +%Y-%m-%d)" && git push)
+      continue-on-error: true
+EOF
