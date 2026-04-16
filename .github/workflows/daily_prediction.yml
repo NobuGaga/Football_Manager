@@ -2,11 +2,11 @@ name: Daily Football Prediction
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 北京时间每天10点
-  workflow_dispatch:      # 手动触发
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 permissions:
-  contents: write         # 授予写入权限，用于提交数据库
+  contents: write
   actions: read
   artifacts: write
 
@@ -18,7 +18,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0     # 获取完整历史，用于提交
+        fetch-depth: 0
     
     - name: Setup Python
       uses: actions/setup-python@v5
