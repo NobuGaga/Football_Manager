@@ -2,27 +2,44 @@ name: Daily Football Prediction
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # UTC 2点 = 北京时间10点
-  workflow_dispatch:
+    - cron: '0 2 * * *'  # 每天 UTC 2点（北京时间10点）
+  workflow_dispatch:      # 允许手动触发
 
 jobs:
   predict:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+    
     - name: Install dependencies
       run: |
-        pip install requests beautifulsoup4 pandas numpy scipy lxml openpyxl matplotlib
-    - name: Run pipeline
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4 pandas numpy scipy lxml openpyxl
+    
+    - name: Init database
       run: |
+        mkdir -p data reports
         python3 main.py init
-        python3 main.py all
+    
+    - name: Run scraper
+      run: python3 main.py scrape
+    
+    - name: Run predictor
+      run: python3 main.py predict
+    
+    - name: Generate report
+      run: python3 main.py report
+    
     - name: Upload reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: prediction-reports
         path: reports/
         retention-days: 30
+EOF
