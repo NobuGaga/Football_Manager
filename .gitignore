@@ -1,0 +1,14 @@
+data/*.db
+data/*.sqlite
+reports/*.xlsx
+reports/*.pdf
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.env
+.vscode/
+.idea/
+*.swp
