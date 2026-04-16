@@ -42,4 +42,3 @@ jobs:
         name: prediction-reports
         path: reports/
         retention-days: 30
-EOF
