@@ -15,15 +15,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      uses: actions/checkout@v5  # ← 升级到 v5 (Node 24)
     
     - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      uses: actions/setup-python@v5  # ← 保持 v5（已支持 Node 24）
     
     - name: Create directories
       run: mkdir -p data reports
@@ -51,7 +46,7 @@ jobs:
       run: echo "DATE=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
     
     - name: Upload reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5  # ← 升级到 v5 (Node 24)
       with:
         name: prediction-reports-${{ steps.date.outputs.DATE }}
         path: reports/
@@ -63,7 +58,6 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        # 使用 -f 强制添加被忽略的数据库文件
         git add -f data/football.db
         git diff --staged --quiet || (git commit -m "Update database: $(date +%Y-%m-%d)" && git push https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:${GITHUB_REF#refs/heads/})
       continue-on-error: true
