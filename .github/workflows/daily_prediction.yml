@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write    # 只需要这个来推送数据库
+  contents: write
   actions: read
 
 jobs:
@@ -63,6 +63,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add data/football.db
+        # 使用 -f 强制添加被忽略的数据库文件
+        git add -f data/football.db
         git diff --staged --quiet || (git commit -m "Update database: $(date +%Y-%m-%d)" && git push https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:${GITHUB_REF#refs/heads/})
       continue-on-error: true
