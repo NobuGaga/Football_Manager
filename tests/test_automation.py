@@ -66,7 +66,7 @@ class AutomationTest(unittest.TestCase):
     def test_successful_run_commits_and_pushes_only_data_products(self):
         work = self.root / "work"
         remote = self.root / "remote.git"
-        shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns("data", "reports", "__pycache__", "*.pyc"))
+        shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".git", "data", "reports", "__pycache__", "*.pyc"))
         (work / "data").mkdir()
         self._git(work, "init", "-b", "main")
         self._git(work, "config", "user.name", "Test")

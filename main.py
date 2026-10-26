@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     fixtures.add_argument("--timezone", default="Asia/Shanghai")
     fixtures.add_argument("--source", default="sporttery_manual")
 
-    scrape = sub.add_parser("scrape", help="尝试读取官方公开网页；失败时改用手动导入")
+    scrape = sub.add_parser("scrape", help="读取体彩官方公开接口；失败时改用手动导入")
     scrape.add_argument("--date")
 
     aliases = sub.add_parser("import-aliases", help="导入球队名称和外部 ID 映射")
@@ -89,14 +89,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     all_cmd = sub.add_parser("all", help="对阵导入/抓取、预测和每日报告")
     all_cmd.add_argument("--date", required=True)
-    all_cmd.add_argument("--fixtures", help="官方对阵文件；不提供时尝试网页抓取")
+    all_cmd.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     all_cmd.add_argument("--timezone", default="Asia/Shanghai")
     all_cmd.add_argument("--output-dir", default="reports")
 
     daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、预测、回测和 Git 推送全流程")
     daily.add_argument("--date", help="对阵日期，默认 Asia/Shanghai 今天")
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
-    daily.add_argument("--fixtures", help="官方对阵文件；不提供时抓取公开网页")
+    daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     daily.add_argument("--results", help="昨日赛果文件；优先于 API 同步")
     daily.add_argument("--output-dir", default="reports")
     daily.add_argument("--enrich", action="store_true", help="使用 API-Football 补充今日赛前特征")

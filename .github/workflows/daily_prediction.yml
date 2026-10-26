@@ -26,14 +26,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests beautifulsoup4 pandas numpy scipy lxml openpyxl
+        pip install requests pandas numpy scipy lxml openpyxl
     
     - name: Initialize database
       run: python3 main.py init
     
     - name: Scrape matches
       run: python3 main.py scrape
-      continue-on-error: true
     
     - name: Generate predictions
       run: python3 main.py predict

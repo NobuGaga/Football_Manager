@@ -30,7 +30,7 @@ bash scripts/daily_automation.sh
 
 - Python 3.10+
 - SQLite（Python 自带）
-- 自动网页抓取另需本机 Chrome；手动对阵流程不需要浏览器
+- 自动对阵抓取使用体彩官方公开接口，不需要本机 Chrome 或 Selenium
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -86,13 +86,13 @@ python3 main.py predict --date YYYY-MM-DD --refresh
 
 该适配器通过球队映射、对阵双方和开赛时间进行唯一匹配；无法确认时进入人工队列。响应缓存在 `data/cache/`，可减少重复请求。高级字段是否可用取决于账户套餐，未获取到 xG 时不会伪造。
 
-### 体彩公开网页
+### 体彩官方公开接口
 
 ```bash
 python3 main.py scrape --date YYYY-MM-DD
 ```
 
-网页结构变化会导致抓取失败，失败时命令显式退出并保留页面快照，不会用空数据继续预测。请遵守网站条款和访问限制，不绕过验证码、登录或反爬机制；不稳定时改用手动导入。
+抓取直接读取体彩页面使用的官方公开接口，按体彩营业日期筛选，不依赖 Chrome 或页面 CSS 结构。请求设置 30 秒超时；原始 JSON 保存到 `data/snapshots/`。业务状态异常、指定日期无对阵、必要字段缺失或记录重复时命令显式退出，不会用空数据继续预测。请遵守网站条款和访问限制，不绕过验证码、登录或反爬机制；不稳定时改用手动导入。
 
 ## 其他命令
 

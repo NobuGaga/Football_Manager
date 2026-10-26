@@ -1,97 +1,128 @@
-"""体彩公开网页的可降级抓取入口。手动导入是稳定主路径。"""
+"""体彩官方公开接口抓取入口。手动导入仍是稳定降级路径。"""
 from __future__ import annotations
 
-import re
+import json
 from pathlib import Path
 
 import pandas as pd
+import requests
 
 from importers import FixtureImporter
 from utils import clean_text, utc_now
 
 
 class SportteryScraper:
-    def __init__(self, db_path: str | Path = "data/football.db"):
+    api_url = "https://webapi.sporttery.cn/gateway/uniform/football/getMatchCalculatorV1.qry"
+    page_url = "https://m.sporttery.cn/mjc/jsq/zqhhgg/"
+    headers = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Referer": page_url,
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    }
+
+    def __init__(self, db_path: str | Path = "data/football.db", timeout: float = 30, session=None):
         self.db_path = str(db_path)
-        self.base_url = "https://m.sporttery.cn/mjc/jsq/zqhhgg/"
-        self.result_url = "https://m.sporttery.cn/mjc/zqsj/?tab=result"
+        self.timeout = timeout
+        self.session = session or requests.Session()
 
     def fetch_daily_matches(self, date: str | None = None) -> pd.DataFrame:
+        """按体彩营业日期获取对阵；指定日期没有有效对阵时显式失败。"""
         try:
-            from bs4 import BeautifulSoup
-            from selenium import webdriver
-            from selenium.webdriver.common.by import By
-            from selenium.webdriver.support.ui import WebDriverWait
-        except ImportError as exc:
-            raise RuntimeError("自动抓取需要 beautifulsoup4 和 selenium；也可直接使用 import-fixtures 手动导入") from exc
-        options = webdriver.ChromeOptions()
-        for argument in ("--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080"):
-            options.add_argument(argument)
-        driver = None
-        try:
-            # 不捆绑特定平台 chromedriver，由 Selenium Manager 匹配本机浏览器。
-            driver = webdriver.Chrome(options=options)
-            driver.get(self.base_url)
-            WebDriverWait(driver, 15).until(lambda browser: browser.find_elements(
-                By.CSS_SELECTOR, "div[class*='match'],div[class*='game'],div[class*='bet-item'],div[class*='jc-item']"))
-            html = driver.page_source
-        finally:
-            if driver is not None:
-                driver.quit()
-        snapshot_dir = Path(self.db_path).parent / "snapshots"
-        snapshot_dir.mkdir(parents=True, exist_ok=True)
-        snapshot = snapshot_dir / f"sporttery_{utc_now().replace(':', '').replace('+', '_')}.html"
-        snapshot.write_text(html, encoding="utf-8")
-        soup = BeautifulSoup(html, "html.parser")
-        items = soup.find_all("div", class_=re.compile("match-item|game-item|match-box|bet-item|jc-item"))
-        matches = []
-        errors = []
-        for item in items:
-            try:
-                parsed = self._parse_match_item(item)
-                if parsed:
+            response = self.session.get(
+                self.api_url, params={"channel": "c"}, headers=self.headers, timeout=self.timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (requests.RequestException, ValueError) as exc:
+            raise RuntimeError(f"体彩官方接口请求失败：{exc}；请稍后重试或改用手动对阵导入") from exc
+
+        snapshot = self._save_snapshot(payload)
+        if not isinstance(payload, dict) or not payload.get("success") or str(payload.get("errorCode")) != "0":
+            message = payload.get("errorMessage", "响应格式不正确") if isinstance(payload, dict) else "响应不是 JSON 对象"
+            raise RuntimeError(f"体彩官方接口返回失败：{message}；原始快照：{snapshot}")
+        value = payload.get("value")
+        groups = value.get("matchInfoList") if isinstance(value, dict) else None
+        if not isinstance(groups, list):
+            raise RuntimeError(f"体彩官方接口缺少 matchInfoList；原始快照：{snapshot}")
+
+        matches, errors, seen = [], [], set()
+        for group in groups:
+            if not isinstance(group, dict):
+                errors.append("对阵分组格式不正确")
+                continue
+            business_date = clean_text(group.get("businessDate"))
+            if date and business_date != date:
+                continue
+            items = group.get("subMatchList")
+            if not isinstance(items, list):
+                errors.append(f"营业日期 {business_date or '未知'} 缺少 subMatchList")
+                continue
+            for item in items:
+                try:
+                    parsed = self._parse_api_match(item, business_date)
+                    identity = (parsed["match_code"], parsed["match_time"], parsed["home_team"], parsed["away_team"])
+                    if identity in seen:
+                        raise ValueError(f"官方对阵重复：{parsed['match_code']} {parsed['home_team']} VS {parsed['away_team']}")
+                    seen.add(identity)
                     matches.append(parsed)
-            except ValueError as exc:
-                errors.append(str(exc))
+                except (TypeError, ValueError) as exc:
+                    errors.append(str(exc))
+        if errors:
+            raise RuntimeError(f"官方对阵校验失败，未导入任何记录：{errors[:3]}；原始快照：{snapshot}")
         if not matches:
-            raise RuntimeError(f"网页未解析出有效对阵，原始快照：{snapshot}。请改用手动对阵导入。{errors[:3]}")
+            scope = f"营业日期 {date} " if date else ""
+            raise RuntimeError(f"体彩官方接口{scope}没有有效对阵；原始快照：{snapshot}。请核对日期或改用手动对阵导入")
+
         result = FixtureImporter(self.db_path).import_rows(matches, default_date=date, source="sporttery_web")
         if result["errors"]:
-            raise RuntimeError(f"部分网页对阵导入失败：{result['errors'][:3]}")
+            raise RuntimeError(f"部分官方对阵导入失败：{result['errors'][:3]}；原始快照：{snapshot}")
         return pd.DataFrame(matches)
 
-    def _parse_match_item(self, item) -> dict | None:
-        text = item.get_text(" ", strip=True)
-        if not text:
-            return None
-        code_element = item.find("span", class_=re.compile("match-code|match-num|code|serial|no"))
-        league_element = item.find("span", class_=re.compile("league-name|league|competition|match-type"))
-        teams = item.find("div", class_=re.compile("teams|match-teams|vs-box|duizhen|home-away"))
-        if not teams:
-            return None
-        pairing = teams.get_text(" ", strip=True)
-        for separator in (" VS ", " vs ", "VS", "vs", " - ", "–", "—"):
-            if separator in pairing:
-                home, away = (part.strip() for part in pairing.split(separator, 1))
-                break
-        else:
-            raise ValueError(f"对阵格式无法识别：{pairing[:80]}")
-        time_element = item.find("span", class_=re.compile("match-time|time|date|kssj"))
-        if not time_element or not clean_text(time_element.text):
-            raise ValueError("缺少开赛时间，不使用当前时间代替")
-        odds = []
-        for element in item.find_all("span", class_=re.compile("odds|spf-odds|rate|pei|pl"))[:3]:
-            try:
-                odds.append(float(element.text.strip()))
-            except ValueError:
-                odds.append(None)
-        odds += [None] * (3 - len(odds))
+    def _save_snapshot(self, payload: object) -> Path:
+        snapshot_dir = Path(self.db_path).parent / "snapshots"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        snapshot = snapshot_dir / f"sporttery_{utc_now().replace(':', '').replace('+', '_')}.json"
+        snapshot.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return snapshot
+
+    @staticmethod
+    def _parse_api_match(item: dict, business_date: str) -> dict:
+        if not isinstance(item, dict):
+            raise ValueError("对阵记录格式不正确")
+        code = clean_text(item.get("matchNumStr"))
+        league = clean_text(item.get("leagueAllName")) or clean_text(item.get("leagueAbbName"))
+        home = clean_text(item.get("homeTeamAllName")) or clean_text(item.get("homeTeamAbbName"))
+        away = clean_text(item.get("awayTeamAllName")) or clean_text(item.get("awayTeamAbbName"))
+        match_date = clean_text(item.get("matchDate"))
+        match_time = clean_text(item.get("matchTime"))
+        missing = [name for name, value in (
+            ("竞彩编号", code), ("联赛", league), ("主队", home), ("客队", away),
+            ("开赛日期", match_date), ("开赛时间", match_time),
+        ) if not value]
+        if missing:
+            raise ValueError(f"官方对阵缺少必要字段 {missing}：{code or '未编号'}")
+        had = item.get("had") or {}
+        hhad = item.get("hhad") or {}
+        if not isinstance(had, dict) or not isinstance(hhad, dict):
+            raise ValueError(f"赔率格式不正确：{code}")
         return {
-            "match_code": clean_text(code_element.text if code_element else "", "未编号"),
-            "league": clean_text(league_element.text if league_element else "", "未知联赛"),
-            "home_team": home, "away_team": away,
-            "match_time": clean_text(time_element.text), "handicap": "0",
-            "odds_home": odds[0], "odds_draw": odds[1], "odds_away": odds[2],
+            "match_code": code,
+            "match_date": business_date,
+            "league": league,
+            "home_team": home,
+            "away_team": away,
+            "match_time": f"{match_date} {match_time[:5]}",
+            "timezone": "Asia/Shanghai",
+            "handicap": clean_text(hhad.get("goalLine"), "0"),
+            "match_status": "pending",
+            "odds_home": had.get("h"),
+            "odds_draw": had.get("d"),
+            "odds_away": had.get("a"),
+            "odds_handicap_home": hhad.get("h"),
+            "odds_handicap_draw": hhad.get("d"),
+            "odds_handicap_away": hhad.get("a"),
+            "source_url": f"{SportteryScraper.api_url}?channel=c",
         }
 
     def fetch_results(self):
