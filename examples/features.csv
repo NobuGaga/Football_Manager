@@ -1,0 +1,2 @@
+竞彩编号,比赛日期,主队,客队,数据时间,expected_home_goals,expected_away_goals,recent_form,injuries,lineups,rest_days_home,rest_days_away
+周日001,2099-10-25,示例城,示例联,2026-10-24T08:00:00+00:00,1.80,0.90,主队近4场WWDL；客队近4场LDLW,双方无已确认重大伤停,首发待临场确认,5,6

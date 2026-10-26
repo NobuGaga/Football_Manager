@@ -1,182 +1,126 @@
-import sqlite3
-import pandas as pd
-import os
+"""Kimi 可读取的每日报告与回测 Excel 报表。"""
+from __future__ import annotations
+
+import json
 from datetime import datetime
-from math import comb
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import pandas as pd
+
+from backtest import Backtester
+from database import Database
+from utils import utc_now
+
 
 class ReportGenerator:
-    def __init__(self, db_path='data/football.db', output_dir='reports'):
-        self.db_path = db_path
-        self.output_dir = output_dir
-        os.makedirs(output_dir, exist_ok=True)
-    
-    def generate_all_reports(self):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        excel_path = os.path.join(self.output_dir, f"足球预测报表_{timestamp}.xlsx")
-        
-        reports = {
-            '01_实际爆冷概率': self._upset_stats(),
-            '02_AI预测命中率': self._hit_rate_stats(),
-            '03_爆冷比分TOP5': self._upset_scores_top5(),
-            '04_不爆冷比分TOP5': self._normal_scores_top5(),
-            '05_平均赔率数据': self._avg_odds(),
-            '06_混合过关EV': self._mix_parlay_ev()
+    def __init__(self, db_path: str | Path = "data/football.db", output_dir: str | Path = "reports"):
+        self.db = Database(db_path)
+        self.db.initialize()
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def daily_items(self, date: str) -> list[dict]:
+        with self.db.connect() as conn:
+            rows = conn.execute("""SELECT f.*,p.id AS prediction_id,p.model_version,p.predicted_at,p.input_as_of,
+                p.probability_home,p.probability_draw,p.probability_away,p.expected_home_goals,p.expected_away_goals,
+                p.top_scores_json,p.score_probabilities_json,p.data_completeness,p.risk_flags_json,p.analysis_json,
+                r.actual_score,r.outcome,r.review_note
+                FROM fixtures f JOIN predictions p ON p.fixture_key=f.fixture_key
+                LEFT JOIN results r ON r.fixture_key=f.fixture_key
+                WHERE f.match_date=? ORDER BY f.start_time_utc,f.match_code,p.predicted_at""", (date,)).fetchall()
+        latest: dict[str, dict] = {}
+        for row in rows:
+            item = dict(row)
+            start = datetime.fromisoformat(item["start_time_utc"]).astimezone(ZoneInfo(item["timezone"]))
+            top_scores = json.loads(item.pop("top_scores_json"))
+            score_probabilities = json.loads(item.pop("score_probabilities_json"))
+            analysis = json.loads(item.pop("analysis_json"))
+            item.update({
+                "score_probabilities": score_probabilities,
+                "basic_info": {key: item[key] for key in ("match_code", "league", "home_team", "away_team", "match_date")},
+                "start_time_local": start.isoformat(timespec="minutes"),
+                "data_status": {"updated_at": item["updated_at"], "input_as_of": item["input_as_of"],
+                                "completeness": item["data_completeness"], "feature_source": analysis.get("feature_source")},
+                "probabilities": {"home_win": item["probability_home"], "draw": item["probability_draw"],
+                                  "away_win": item["probability_away"]},
+                "expected_goals": {"home": item["expected_home_goals"], "away": item["expected_away_goals"]},
+                "top_scores": top_scores,
+                "analysis": analysis,
+                "risk_flags": json.loads(item.pop("risk_flags_json")),
+                "model_info": {"version": item["model_version"], "predicted_at": item["predicted_at"]},
+                "post_match": {"actual_score": item["actual_score"], "outcome": item["outcome"],
+                               "review_note": item["review_note"]},
+            })
+            latest[item["fixture_key"]] = item
+        return list(latest.values())
+
+    def generate_daily_report(self, date: str) -> dict[str, str]:
+        items = self.daily_items(date)
+        stem = f"竞彩足球分析_{date}"
+        json_path = self.output_dir / f"{stem}.json"
+        csv_path = self.output_dir / f"{stem}.csv"
+        md_path = self.output_dir / f"{stem}.md"
+        xlsx_path = self.output_dir / f"{stem}.xlsx"
+        document = {"report_date": date, "generated_at": utc_now(), "match_count": len(items),
+                    "disclaimer": "概率估计仅供分析，不构成收益保证或确定性投注建议。", "matches": items}
+        json_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+        rows = [self._flat_item(item) for item in items]
+        frame = pd.DataFrame(rows)
+        frame.to_csv(csv_path, index=False, encoding="utf-8-sig")
+        frame.to_excel(xlsx_path, index=False, sheet_name="每日预测")
+        md_path.write_text(self._daily_markdown(document), encoding="utf-8")
+        return {"json": str(json_path), "csv": str(csv_path), "markdown": str(md_path), "excel": str(xlsx_path)}
+
+    def generate_all_reports(self) -> str:
+        result = Backtester(self.db.path).evaluate()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        excel_path = self.output_dir / f"预测回测报表_{timestamp}.xlsx"
+        metrics = pd.DataFrame([{"联赛": league, **values} for league, values in result["metrics"].items()])
+        calibration = pd.DataFrame(result["calibration"])
+        with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            metrics.to_excel(writer, sheet_name="概率质量与命中指标", index=False)
+            calibration.to_excel(writer, sheet_name="概率校准", index=False)
+        json_path = excel_path.with_suffix(".json")
+        json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        return str(excel_path)
+
+    @staticmethod
+    def _flat_item(item: dict) -> dict:
+        basic = item["basic_info"]
+        probs = item["probabilities"]
+        expected = item["expected_goals"]
+        return {
+            "竞彩编号": basic["match_code"], "比赛日期": basic["match_date"], "联赛": basic["league"],
+            "主队": basic["home_team"], "客队": basic["away_team"], "开赛时间": item["start_time_local"],
+            "数据完整度": item["data_completeness"], "数据时间": item["input_as_of"],
+            "主胜概率": probs["home_win"], "平局概率": probs["draw"], "客胜概率": probs["away_win"],
+            "主队预期进球": expected["home"], "客队预期进球": expected["away"],
+            "高概率比分": "/".join(f"{v['score']}({v['probability']:.2%})" for v in item["top_scores"]),
+            "风险提示": "；".join(item["risk_flags"]), "模型版本": item["model_version"],
+            "预测生成时间": item["predicted_at"], "实际比分": item["actual_score"] or "",
+            "复盘备注": item["review_note"] or "",
         }
-        
-        with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-            for sheet_name, df in reports.items():
-                if not df.empty:
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
-        
-        print(f"📊 Excel报表已生成: {excel_path}")
-        return excel_path
-    
-    def _upset_stats(self):
-        conn = sqlite3.connect(self.db_path)
-        stats = pd.read_sql_query("""
-            SELECT 
-                SUM(CASE WHEN is_upset = 2 THEN 1 ELSE 0 END) as big_upset,
-                SUM(CASE WHEN is_upset = 1 THEN 1 ELSE 0 END) as small_upset,
-                SUM(CASE WHEN is_upset = 0 THEN 1 ELSE 0 END) as no_upset,
-                COUNT(*) as total
-            FROM matches WHERE actual_result IS NOT NULL
-        """, conn)
-        conn.close()
-        
-        if stats.empty or stats.iloc[0]['total'] == 0:
-            return pd.DataFrame({'提示': ['暂无已完成比赛数据']})
-        
-        row = stats.iloc[0]
-        total = row['total']
-        
-        data = [
-            {'统计项': '大爆冷（🔴）', '出现场次': int(row['big_upset']), '占比': f"{row['big_upset']/total*100:.1f}%", '历史概率': '13.3%', '差值': f"{(row['big_upset']/total - 0.133)*100:+.1f}%"},
-            {'统计项': '小爆冷（🟡）', '出现场次': int(row['small_upset']), '占比': f"{row['small_upset']/total*100:.1f}%", '历史概率': '40.0%', '差值': f"{(row['small_upset']/total - 0.40)*100:+.1f}%"},
-            {'统计项': '不爆冷（🟢）', '出现场次': int(row['no_upset']), '占比': f"{row['no_upset']/total*100:.1f}%", '历史概率': '46.7%', '差值': f"{(row['no_upset']/total - 0.467)*100:+.1f}%"}
-        ]
-        return pd.DataFrame(data)
-    
-    def _hit_rate_stats(self):
-        conn = sqlite3.connect(self.db_path)
-        stats = pd.read_sql_query("""
-            SELECT 
-                SUM(CASE WHEN hit_prediction = 1 THEN 1 ELSE 0 END) as hit_1,
-                SUM(CASE WHEN hit_prediction = 2 THEN 1 ELSE 0 END) as hit_2,
-                SUM(CASE WHEN hit_prediction = 3 THEN 1 ELSE 0 END) as hit_3,
-                SUM(CASE WHEN hit_prediction > 0 THEN 1 ELSE 0 END) as total_hit,
-                COUNT(*) as total
-            FROM matches WHERE actual_result IS NOT NULL AND prediction_1 IS NOT NULL
-        """, conn)
-        conn.close()
-        
-        if stats.empty or stats.iloc[0]['total'] == 0:
-            return pd.DataFrame({'提示': ['暂无核对数据']})
-        
-        row = stats.iloc[0]
-        total = row['total']
-        
-        data = [
-            {'预测命中': '1号预测命中（首选）', '命中场数': int(row['hit_1']), '命中率': f"{row['hit_1']/total*100:.1f}%"},
-            {'预测命中': '2号预测命中（次选）', '命中场数': int(row['hit_2']), '命中率': f"{row['hit_2']/total*100:.1f}%"},
-            {'预测命中': '3号预测命中（备选）', '命中场数': int(row['hit_3']), '命中率': f"{row['hit_3']/total*100:.1f}%"},
-            {'预测命中': '总命中场数', '命中场数': int(row['total_hit']), '命中率': f"{row['total_hit']/total*100:.1f}%"}
-        ]
-        return pd.DataFrame(data)
-    
-    def _upset_scores_top5(self):
-        conn = sqlite3.connect(self.db_path)
-        df = pd.read_sql_query("""
-            SELECT actual_result, COUNT(*) as count
-            FROM matches WHERE is_upset IN (1, 2) AND actual_result IS NOT NULL
-            GROUP BY actual_result ORDER BY count DESC LIMIT 5
-        """, conn)
-        
-        totals = pd.read_sql_query("SELECT COUNT(*) as cnt FROM matches WHERE is_upset IN (1,2) AND actual_result IS NOT NULL", conn)
-        total_matches = pd.read_sql_query("SELECT COUNT(*) as cnt FROM matches WHERE actual_result IS NOT NULL", conn)
-        conn.close()
-        
-        if df.empty:
-            return pd.DataFrame({'提示': ['暂无爆冷比分数据']})
-        
-        upset_total = totals.iloc[0]['cnt'] if not totals.empty else 1
-        all_matches = total_matches.iloc[0]['cnt'] if not total_matches.empty else 1
-        
-        data = []
-        for idx, row in df.iterrows():
-            data.append({
-                '排名': idx + 1, '比分': row['actual_result'], '出现场数': int(row['count']),
-                '占爆冷比例': f"{row['count']/upset_total*100:.1f}%", '占总场数比例': f"{row['count']/all_matches*100:.1f}%"
-            })
-        return pd.DataFrame(data)
-    
-    def _normal_scores_top5(self):
-        conn = sqlite3.connect(self.db_path)
-        df = pd.read_sql_query("""
-            SELECT actual_result, COUNT(*) as count
-            FROM matches WHERE is_upset = 0 AND actual_result IS NOT NULL
-            GROUP BY actual_result ORDER BY count DESC LIMIT 5
-        """, conn)
-        
-        totals = pd.read_sql_query("SELECT COUNT(*) as cnt FROM matches WHERE is_upset = 0 AND actual_result IS NOT NULL", conn)
-        total_matches = pd.read_sql_query("SELECT COUNT(*) as cnt FROM matches WHERE actual_result IS NOT NULL", conn)
-        conn.close()
-        
-        if df.empty:
-            return pd.DataFrame({'提示': ['暂无正常比分数据']})
-        
-        normal_total = totals.iloc[0]['cnt'] if not totals.empty else 1
-        all_matches = total_matches.iloc[0]['cnt'] if not total_matches.empty else 1
-        
-        data = []
-        for idx, row in df.iterrows():
-            data.append({
-                '排名': idx + 1, '比分': row['actual_result'], '出现场数': int(row['count']),
-                '占不爆冷比例': f"{row['count']/normal_total*100:.1f}%", '占总场数比例': f"{row['count']/all_matches*100:.1f}%"
-            })
-        return pd.DataFrame(data)
-    
-    def _avg_odds(self):
-        conn = sqlite3.connect(self.db_path)
-        avg = pd.read_sql_query("""
-            SELECT 
-                AVG(CASE WHEN is_upset = 2 THEN MAX(odds_home, odds_draw, odds_away) END) as avg_big,
-                AVG(CASE WHEN is_upset = 1 THEN (odds_home + odds_draw + odds_away - MIN(odds_home, odds_draw, odds_away) - MAX(odds_home, odds_draw, odds_away)) END) as avg_small,
-                AVG(CASE WHEN is_upset = 0 THEN MIN(odds_home, odds_draw, odds_away) END) as avg_no
-            FROM matches WHERE actual_result IS NOT NULL
-        """, conn)
-        conn.close()
-        
-        data = [
-            {'类型': '大爆冷（🔴）', '平均赔率': f"{avg.iloc[0]['avg_big']:.4f}" if pd.notna(avg.iloc[0]['avg_big']) else '5.4383', '说明': '对应最大赔率', '基准赔率': '5.4383'},
-            {'类型': '小爆冷（🟡）', '平均赔率': f"{avg.iloc[0]['avg_small']:.4f}" if pd.notna(avg.iloc[0]['avg_small']) else '3.7508', '说明': '对应第二大赔率', '基准赔率': '3.7508'},
-            {'类型': '不爆冷（🟢）', '平均赔率': f"{avg.iloc[0]['avg_no']:.4f}" if pd.notna(avg.iloc[0]['avg_no']) else '1.6033', '说明': '对应最小赔率', '基准赔率': '1.6033'}
-        ]
-        return pd.DataFrame(data)
-    
-    def _mix_parlay_ev(self):
-        conn = sqlite3.connect(self.db_path)
-        probs = pd.read_sql_query("""
-            SELECT 
-                CAST(SUM(CASE WHEN is_upset = 2 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) as p_big,
-                CAST(SUM(CASE WHEN is_upset = 1 THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) as p_small
-            FROM matches WHERE actual_result IS NOT NULL
-        """, conn)
-        conn.close()
-        
-        p_big = probs.iloc[0]['p_big'] if not probs.empty and pd.notna(probs.iloc[0]['p_big']) else 0.133
-        p_small = probs.iloc[0]['p_small'] if not probs.empty and pd.notna(probs.iloc[0]['p_small']) else 0.40
-        odds_big, odds_small = 5.4383, 3.7508
-        
-        modes = [('2,3关', 2), ('3,4关', 3), ('4,5关', 4), ('2,3,4关', 2)]
-        data = []
-        
-        for mode_name, min_hit in modes:
-            exp_big = (p_big ** min_hit) * (odds_big ** min_hit) * 2
-            exp_small = (p_small ** min_hit) * (odds_small ** min_hit) * 2
-            
-            data.append({
-                '模式': mode_name, '最低命中': min_hit, '大爆冷概率': f"{p_big*100:.1f}%",
-                '大爆冷期望': f"{exp_big:.2f}", '大爆冷EV比': f"{exp_big/2:.2f}",
-                '小爆冷概率': f"{p_small*100:.1f}%", '小爆冷期望': f"{exp_small:.2f}", '小爆冷EV比': f"{exp_small/2:.2f}"
-            })
-        return pd.DataFrame(data)
+
+    @staticmethod
+    def _daily_markdown(document: dict) -> str:
+        lines = [f"# 竞彩足球批量分析（{document['report_date']}）", "",
+                 f"生成时间：{document['generated_at']}  ", f"比赛数量：{document['match_count']}", "",
+                 "> 比分与胜平负均为概率估计；数据不足时降低结论强度，不构成收益保证。", ""]
+        if not document["matches"]:
+            lines.append("当日暂无已保存的预测记录。")
+        for item in document["matches"]:
+            basic = item["basic_info"]
+            probs = item["probabilities"]
+            expected = item["expected_goals"]
+            lines += [f"## {basic['match_code']}｜{basic['league']}｜{basic['home_team']} VS {basic['away_team']}", "",
+                      f"- **开赛时间**：{item['start_time_local']}（{item['timezone']}）",
+                      f"- **数据状态**：完整度 {item['data_completeness']:.0%}；输入截至 {item['input_as_of']}；来源 {item['data_status']['feature_source']}",
+                      f"- **胜平负概率**：主胜 {probs['home_win']:.1%}／平局 {probs['draw']:.1%}／客胜 {probs['away_win']:.1%}",
+                      f"- **预期进球**：主队 {expected['home']:.2f}／客队 {expected['away']:.2f}",
+                      "- **高概率比分**：" + "；".join(f"{v['score']}（{v['probability']:.1%}）" for v in item["top_scores"]),
+                      f"- **分析依据**：{item['analysis']['method']}；赛前特征 {len(item['analysis']['evidence'])} 项",
+                      "- **风险提示**：" + ("；".join(item["risk_flags"]) if item["risk_flags"] else "仍需关注临场阵容、轮换与赛程变化"),
+                      f"- **模型信息**：{item['model_version']}；生成于 {item['predicted_at']}",
+                      f"- **赛后字段**：实际比分 {item['actual_score'] or '待补录'}；复盘 {item['review_note'] or '待补录'}", ""]
+        return "\n".join(lines)
