@@ -6,7 +6,7 @@
 
 ## 工程说明
 
-完整架构、数据表、模型口径、迁移策略与方案覆盖情况见 [项目工程文档](docs/项目工程.md)。输入样例位于 `examples/`。Kimi Claw 接入和每日标准流程见 [CONTEXT.md](CONTEXT.md)。
+项目默认上下文入口与文档读取路由见 [AGENTS.md](AGENTS.md)，Codex 会默认读取仓库根目录的该文件。完整架构、数据表、模型口径、迁移策略与方案覆盖情况见 [项目工程文档](docs/项目工程.md)。输入样例位于 `examples/`。Kimi Claw 接入和每日标准流程也见 `AGENTS.md`。
 
 ## Kimi Claw 每日自动化
 
@@ -24,7 +24,7 @@ bash scripts/daily_automation.sh
 bash scripts/daily_automation.sh
 ```
 
-正式入口要求 Git 工作区干净，成功后只提交 `data/football.db` 和 `reports/`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。cron 指令、频道配置和故障处理见 `CONTEXT.md`，先手动验收再设置定时。
+正式入口要求 Git 工作区干净，成功后只提交 `data/football.db` 和 `reports/`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。cron 指令、频道配置和故障处理见 `AGENTS.md`，先手动验收再设置定时。
 
 ## 环境与安装
 
