@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "date": "2026-11-08",
+  "results_date": "2026-11-07",
+  "generated_at": "2026-11-08T11:14:56+00:00",
+  "fixtures": 25,
+  "results_imported": 0,
+  "predictions_checked": 0,
+  "new_predictions": 25,
+  "warnings": [
+    "未配置赛果文件或 API-Football，昨日赛果回填未执行"
+  ],
+  "reports": {
+    "json": "reports/足球经理的推断_2026-11-08.json",
+    "csv": "reports/足球经理的推断_2026-11-08.csv",
+    "markdown": "reports/足球经理的推断_2026-11-08.md",
+    "excel": "reports/足球经理的推断_2026-11-08.xlsx"
+  },
+  "backtest": "reports/回测结果_2026-11-08.json",
+  "enrichment": null,
+  "status_file": "reports/每日运行状态_2026-11-08.json",
+  "summary_file": "reports/每日中文摘要_2026-11-08.md"
+}
