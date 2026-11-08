@@ -24,6 +24,7 @@ __pycache__/
 venv/
 env/
 .env
+/wechat_key/
 .vscode/
 .idea/
 *.swp
