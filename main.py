@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""竞彩足球多联赛批量预测分析系统。
+"""足球经理的推断 · 多联赛概率分析。
 
 常用流程：
   python3 main.py init
@@ -62,15 +62,15 @@ def build_parser() -> argparse.ArgumentParser:
     sync_results = sub.add_parser("sync-results", help="使用 API-Football 回填指定日期的已完结赛果")
     sync_results.add_argument("--date", required=True)
 
-    predict = sub.add_parser("predict", help="生成版本化概率和比分预测")
+    predict = sub.add_parser("predict", help="生成版本化概率和比分推断")
     predict.add_argument("--date")
-    predict.add_argument("--refresh", action="store_true", help="临场更新：追加新预测，保留初版")
-    predict.add_argument("--as-of", help="历史模拟的预测时间 ISO 8601；不得晚于开赛时间")
+    predict.add_argument("--refresh", action="store_true", help="临场更新：追加新推断，保留初版")
+    predict.add_argument("--as-of", help="历史模拟的推断时间 ISO 8601；不得晚于开赛时间")
 
     results = sub.add_parser("import-results", help="导入实际比分并关联对阵")
     results.add_argument("file")
     results.add_argument("--source", default="manual_results")
-    sub.add_parser("check", help="核对所有已出赛果的预测")
+    sub.add_parser("check", help="核对所有已出赛果的推断")
 
     report = sub.add_parser("report", help="指定日期生成每日报告；不指定则生成回测 Excel")
     report.add_argument("--date")
@@ -87,21 +87,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("review-queue", help="列出需要人工确认的名称或外部比赛匹配")
 
-    all_cmd = sub.add_parser("all", help="对阵导入/抓取、预测和每日报告")
+    all_cmd = sub.add_parser("all", help="对阵导入/抓取、推断和每日报告")
     all_cmd.add_argument("--date", required=True)
     all_cmd.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     all_cmd.add_argument("--timezone", default="Asia/Shanghai")
     all_cmd.add_argument("--output-dir", default="reports")
 
-    daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、预测、回测和 Git 推送全流程")
-    daily.add_argument("--date", help="对阵日期，默认 Asia/Shanghai 今天")
+    daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、推断、回测和 Git 推送全流程")
+    daily.add_argument("--date", help="体彩营业日，默认 Asia/Shanghai 今天")
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
     daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     daily.add_argument("--results", help="昨日赛果文件；优先于 API 同步")
     daily.add_argument("--output-dir", default="reports")
     daily.add_argument("--enrich", action="store_true", help="使用 API-Football 补充今日赛前特征")
     daily.add_argument("--sync-results", action="store_true", help="使用 API-Football 回填昨日赛果")
-    daily.add_argument("--refresh", action="store_true", help="追加临场预测版本")
+    daily.add_argument("--refresh", action="store_true", help="追加临场推断版本")
     daily.add_argument("--require-results", action="store_true", help="昨日有比赛但未可靠回填时中止")
     daily.add_argument("--pull", action="store_true", help="开始前 git pull --rebase")
     daily.add_argument("--push", action="store_true", help="成功后仅提交数据产物并 git push")
@@ -134,11 +134,11 @@ def main(argv: list[str] | None = None) -> int:
         print_result(APIFootballEnricher(db).sync_results(args.date))
     elif args.command == "predict":
         predictions = FootballPredictor(db).predict_all(args.date, args.refresh, args.as_of)
-        print(f"新增 {len(predictions)} 条预测；既有预测未被覆盖")
+        print(f"新增 {len(predictions)} 条推断；既有推断未被覆盖")
     elif args.command == "import-results":
         print_result(ResultImporter(db).import_file(args.file, args.source))
     elif args.command == "check":
-        print(f"已核对 {len(ResultChecker(db).check_all())} 条版本化预测")
+        print(f"已核对 {len(ResultChecker(db).check_all())} 条版本化推断")
     elif args.command in {"report", "export-kimi"}:
         reporter = ReportGenerator(db, args.output_dir)
         if args.command == "export-kimi" or args.date:
@@ -164,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             SportteryScraper(db).fetch_daily_matches(args.date)
         predictions = FootballPredictor(db).predict_all(args.date)
-        print(f"新增 {len(predictions)} 条预测")
+        print(f"新增 {len(predictions)} 条推断")
         print_result(ReportGenerator(db, args.output_dir).generate_daily_report(args.date))
     elif args.command == "daily":
         from automation import DailyAutomation

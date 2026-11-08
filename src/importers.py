@@ -45,15 +45,15 @@ class BaseImporter:
                 return supplied
             raise ValueError(f"fixture_key 不存在：{supplied}")
         home, away = self._teams(row)
-        code = clean_text(first(row, "竞彩编号", "场次", "match_code"))
-        date = clean_text(first(row, "比赛日期", "match_date"))
+        code = clean_text(first(row, "比赛编号", "竞彩编号", "场次", "match_code"))
+        date = clean_text(first(row, "比赛日期", "business_date", "match_date"))
         clauses = ["home_team=?", "away_team=?"]
         params: list = [home, away]
         if code:
             clauses.append("match_code=?")
             params.append(code)
         if date:
-            clauses.append("match_date=?")
+            clauses.append("business_date=?")
             params.append(date)
         matches = conn.execute(f"SELECT fixture_key FROM fixtures WHERE {' AND '.join(clauses)}", params).fetchall()
         if len(matches) != 1:
@@ -99,13 +99,14 @@ class FixtureImporter(BaseImporter):
     def _import_row(self, conn, row: dict, default_date: str | None, source: str,
                     timezone_name: str, raw_path: str | None, captured: str) -> tuple[str, bool]:
         home, away = self._teams(row)
-        code = clean_text(first(row, "竞彩编号", "场次", "match_code"), "未编号")
+        code = clean_text(first(row, "比赛编号", "竞彩编号", "场次", "match_code"), "未编号")
         league = clean_text(first(row, "联赛名称", "联赛", "league"), "未知联赛")
         tz = clean_text(first(row, "执行时区", "时区", "timezone"), timezone_name)
-        date = clean_text(first(row, "比赛日期", "match_date"), default_date or "")
+        date = clean_text(first(row, "比赛日期", "business_date", "match_date"), default_date or "")
         start_value = first(row, "开赛时间", "比赛时间", "start_time", "match_time")
         start_utc, tz = parse_datetime(start_value, date or None, tz)
         match_date = local_date(start_utc, tz)
+        business_date = date or match_date
         handicap = clean_text(first(row, "让球信息", "让球", "handicap"), "0")
         odds = {
             "odds_home": optional_float(first(row, "主胜", "odds_home")),
@@ -118,8 +119,8 @@ class FixtureImporter(BaseImporter):
         external_provider = clean_text(first(row, "外部数据源", "external_provider")) or None
         external_id = clean_text(first(row, "外部比赛ID", "external_fixture_id")) or None
         existing = conn.execute("""SELECT fixture_key FROM fixtures
-            WHERE match_code=? AND match_date=? AND home_team=? AND away_team=?""",
-            (code, match_date, home, away)).fetchone()
+            WHERE match_code=? AND business_date=? AND home_team=? AND away_team=?""",
+            (code, business_date, home, away)).fetchone()
         if not existing:
             # 跨日延期仍关联原比赛，但不把相隔一周以上的同编号对阵强行合并。
             candidates = conn.execute("""SELECT fixture_key,start_time_utc FROM fixtures
@@ -130,21 +131,22 @@ class FixtureImporter(BaseImporter):
                 existing = nearby[0]
         key = existing["fixture_key"] if existing else fixture_key(code, start_utc, home, away)
         normalized = dict(row)
-        normalized.update({"start_time_utc": start_utc, "timezone": tz, "odds": odds})
+        normalized.update({"start_time_utc": start_utc, "timezone": tz, "business_date": business_date, "odds": odds})
         content_hash = payload_hash(normalized)
         changed = conn.execute("SELECT 1 FROM fixture_snapshots WHERE fixture_key=? AND content_hash=?", (key, content_hash)).fetchone() is None
         now = utc_now()
         conn.execute("""INSERT INTO fixtures(
-            fixture_key,match_code,match_date,league,home_team,away_team,start_time_utc,timezone,
+            fixture_key,match_code,match_date,business_date,league,home_team,away_team,start_time_utc,timezone,
             handicap,sale_status,match_status,odds_json,source,source_url,external_provider,external_fixture_id,created_at,updated_at
-        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(fixture_key) DO UPDATE SET
-            league=excluded.league,match_date=excluded.match_date,start_time_utc=excluded.start_time_utc,timezone=excluded.timezone,
+            league=excluded.league,match_date=excluded.match_date,business_date=excluded.business_date,
+            start_time_utc=excluded.start_time_utc,timezone=excluded.timezone,
             handicap=excluded.handicap,sale_status=excluded.sale_status,match_status=excluded.match_status,
             odds_json=excluded.odds_json,source=excluded.source,source_url=COALESCE(excluded.source_url,fixtures.source_url),
             external_provider=COALESCE(excluded.external_provider,fixtures.external_provider),
             external_fixture_id=COALESCE(excluded.external_fixture_id,fixtures.external_fixture_id),updated_at=excluded.updated_at""", (
-            key, code, match_date, league, home, away, start_utc, tz, handicap,
+            key, code, match_date, business_date, league, home, away, start_utc, tz, handicap,
             clean_text(first(row, "销售状态", "sale_status")) or None,
             clean_text(first(row, "比赛状态", "match_status"), "pending"),
             json.dumps(odds, ensure_ascii=False), source,

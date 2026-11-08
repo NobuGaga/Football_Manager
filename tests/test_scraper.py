@@ -81,6 +81,8 @@ class SportteryScraperTest(unittest.TestCase):
         with Database(self.db).connect() as conn:
             row = conn.execute("SELECT * FROM fixtures").fetchone()
             self.assertEqual(row["start_time_utc"], "2099-10-25T18:45:00+00:00")
+            self.assertEqual(row["match_date"], "2099-10-26")
+            self.assertEqual(row["business_date"], "2099-10-25")
             self.assertEqual(row["timezone"], "Asia/Shanghai")
             self.assertEqual(row["source"], "sporttery_web")
             self.assertEqual(json.loads(row["odds_json"])["odds_handicap_home"], 1.9)
@@ -95,6 +97,15 @@ class SportteryScraperTest(unittest.TestCase):
         with Database(self.db).connect() as conn:
             self.assertEqual(conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0], 0)
         self.assertEqual(len(list((self.root / "snapshots").glob("sporttery_*.json"))), 1)
+
+    def test_config_only_response_is_reported_as_no_fixtures(self):
+        data = payload()
+        data["value"] = {"vtoolsConfig": {}}
+        scraper = SportteryScraper(self.db, session=FakeSession(data))
+        with self.assertRaisesRegex(RuntimeError, "营业日期 2099-10-25 没有有效对阵"):
+            scraper.fetch_daily_matches("2099-10-25")
+        with Database(self.db).connect() as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0], 0)
 
     def test_invalid_match_fails_before_any_import(self):
         invalid = match()

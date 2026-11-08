@@ -1,0 +1,72 @@
+<view class="page">
+  <view class="brand-row">
+    <view class="brand-mark">FM</view>
+    <view class="brand-copy">
+      <text class="brand-name">足球经理的推断</text>
+      <text class="brand-subtitle mono">PROJECT HUB / 01</text>
+    </view>
+    <view class="baseline-badge">文档基线 f142366</view>
+  </view>
+
+  <view class="hero-eyebrow mono">— 足球经理的推断 · 多联赛概率分析</view>
+  <view class="hero-title">让每一次推断，<text>都有迹可循。</text></view>
+  <view class="hero-description">从官方对阵到赛后回测，一条带时间边界、版本记录与安全约束的完整数据流水线。</view>
+
+  <view class="hero-actions">
+    <button class="primary-button" bindtap="goPipeline">探索数据流水线<text class="button-arrow">→</text></button>
+    <button class="secondary-button" bindtap="copyDailyCommand">复制每日命令</button>
+  </view>
+
+  <view class="model-card card">
+    <view class="card-topline">
+      <view>
+        <view class="model-caption mono">MODEL BASELINE</view>
+        <view class="model-name mono">poisson-dc-v1</view>
+      </view>
+      <view class="outline-badge">● 可复现基线</view>
+    </view>
+    <view class="matrix-heading">
+      <text>比分概率矩阵</text>
+      <text class="matrix-note">0—10 球网格 · 示意</text>
+    </view>
+    <view class="score-matrix">
+      <view wx:for="{{matrix}}" wx:key="index" class="matrix-cell {{item.hot ? 'matrix-hot' : ''}}" style="opacity: {{item.opacity}};"></view>
+    </view>
+    <view class="model-features">
+      <view><text class="feature-mark">P</text><text>完整概率分布</text></view>
+      <view><text class="feature-mark">V</text><text>追加而非覆盖</text></view>
+    </view>
+  </view>
+
+  <view class="stats-grid">
+    <view wx:for="{{stats}}" wx:key="label" class="stat-card">
+      <view class="stat-value mono">{{item.value}}<text>{{item.unit}}</text></view>
+      <view class="stat-label">{{item.label}}</view>
+      <view class="stat-detail">{{item.detail}}</view>
+    </view>
+  </view>
+
+  <view class="section-heading">
+    <text class="section-kicker mono">01 / CORE PRINCIPLES</text>
+    <text class="section-title">四条核心设计原则</text>
+    <text class="section-description">保存推断结果，也保存得出结果所需的上下文。</text>
+  </view>
+
+  <view class="principle-list">
+    <view wx:for="{{principles}}" wx:key="number" class="principle-card card">
+      <view class="principle-top">
+        <text class="principle-number mono">{{item.number}}</text>
+        <text class="principle-mark">{{item.mark}}</text>
+      </view>
+      <view class="principle-title">{{item.title}}</view>
+      <view class="principle-description">{{item.description}}</view>
+    </view>
+  </view>
+
+  <view class="notice">
+    <view class="notice-mark">!</view>
+    <view class="notice-text">足球经理的推断基于赛前数据与概率模型，不构成收益保证或确定性投注建议。信息不足时，明确标记数据缺失与不确定性。</view>
+  </view>
+
+  <view class="footer-note">Python CLI · SQLite · Poisson / Dixon–Coles<br/>工程文档更新于 2026.10.25</view>
+</view>

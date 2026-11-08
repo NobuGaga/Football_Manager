@@ -114,6 +114,7 @@ class PipelineTest(unittest.TestCase):
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0], 1)
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM results").fetchone()[0], 1)
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM predictions").fetchone()[0], 0)
+            self.assertEqual(migrated.execute("SELECT business_date FROM fixtures").fetchone()[0], "2026-01-01")
 
     def _key(self):
         with Database(self.db).connect() as conn:

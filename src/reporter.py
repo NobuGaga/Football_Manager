@@ -28,7 +28,7 @@ class ReportGenerator:
                 r.actual_score,r.outcome,r.review_note
                 FROM fixtures f JOIN predictions p ON p.fixture_key=f.fixture_key
                 LEFT JOIN results r ON r.fixture_key=f.fixture_key
-                WHERE f.match_date=? ORDER BY f.start_time_utc,f.match_code,p.predicted_at""", (date,)).fetchall()
+                WHERE f.business_date=? ORDER BY f.start_time_utc,f.match_code,p.predicted_at""", (date,)).fetchall()
         latest: dict[str, dict] = {}
         for row in rows:
             item = dict(row)
@@ -38,7 +38,7 @@ class ReportGenerator:
             analysis = json.loads(item.pop("analysis_json"))
             item.update({
                 "score_probabilities": score_probabilities,
-                "basic_info": {key: item[key] for key in ("match_code", "league", "home_team", "away_team", "match_date")},
+                "basic_info": {key: item[key] for key in ("match_code", "league", "home_team", "away_team", "match_date", "business_date")},
                 "start_time_local": start.isoformat(timespec="minutes"),
                 "data_status": {"updated_at": item["updated_at"], "input_as_of": item["input_as_of"],
                                 "completeness": item["data_completeness"], "feature_source": analysis.get("feature_source")},
@@ -57,7 +57,7 @@ class ReportGenerator:
 
     def generate_daily_report(self, date: str) -> dict[str, str]:
         items = self.daily_items(date)
-        stem = f"竞彩足球分析_{date}"
+        stem = f"足球经理的推断_{date}"
         json_path = self.output_dir / f"{stem}.json"
         csv_path = self.output_dir / f"{stem}.csv"
         md_path = self.output_dir / f"{stem}.md"
@@ -68,14 +68,14 @@ class ReportGenerator:
         rows = [self._flat_item(item) for item in items]
         frame = pd.DataFrame(rows)
         frame.to_csv(csv_path, index=False, encoding="utf-8-sig")
-        frame.to_excel(xlsx_path, index=False, sheet_name="每日预测")
+        frame.to_excel(xlsx_path, index=False, sheet_name="每日推断")
         md_path.write_text(self._daily_markdown(document), encoding="utf-8")
         return {"json": str(json_path), "csv": str(csv_path), "markdown": str(md_path), "excel": str(xlsx_path)}
 
     def generate_all_reports(self) -> str:
         result = Backtester(self.db.path).evaluate()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        excel_path = self.output_dir / f"预测回测报表_{timestamp}.xlsx"
+        excel_path = self.output_dir / f"推断回测报表_{timestamp}.xlsx"
         metrics = pd.DataFrame([{"联赛": league, **values} for league, values in result["metrics"].items()])
         calibration = pd.DataFrame(result["calibration"])
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
@@ -91,24 +91,24 @@ class ReportGenerator:
         probs = item["probabilities"]
         expected = item["expected_goals"]
         return {
-            "竞彩编号": basic["match_code"], "比赛日期": basic["match_date"], "联赛": basic["league"],
+            "比赛编号": basic["match_code"], "比赛日期": basic["business_date"], "联赛": basic["league"],
             "主队": basic["home_team"], "客队": basic["away_team"], "开赛时间": item["start_time_local"],
             "数据完整度": item["data_completeness"], "数据时间": item["input_as_of"],
             "主胜概率": probs["home_win"], "平局概率": probs["draw"], "客胜概率": probs["away_win"],
             "主队预期进球": expected["home"], "客队预期进球": expected["away"],
             "高概率比分": "/".join(f"{v['score']}({v['probability']:.2%})" for v in item["top_scores"]),
             "风险提示": "；".join(item["risk_flags"]), "模型版本": item["model_version"],
-            "预测生成时间": item["predicted_at"], "实际比分": item["actual_score"] or "",
+            "推断生成时间": item["predicted_at"], "实际比分": item["actual_score"] or "",
             "复盘备注": item["review_note"] or "",
         }
 
     @staticmethod
     def _daily_markdown(document: dict) -> str:
-        lines = [f"# 竞彩足球批量分析（{document['report_date']}）", "",
+        lines = [f"# 足球经理的推断（{document['report_date']}）", "",
                  f"生成时间：{document['generated_at']}  ", f"比赛数量：{document['match_count']}", "",
                  "> 比分与胜平负均为概率估计；数据不足时降低结论强度，不构成收益保证。", ""]
         if not document["matches"]:
-            lines.append("当日暂无已保存的预测记录。")
+            lines.append("当日暂无已保存的推断记录。")
         for item in document["matches"]:
             basic = item["basic_info"]
             probs = item["probabilities"]

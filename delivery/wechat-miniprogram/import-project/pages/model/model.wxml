@@ -1,0 +1,62 @@
+<view class="page">
+  <view class="section-heading first-heading">
+    <text class="section-kicker mono">03 / MODEL & EVALUATION</text>
+    <text class="section-title">输出概率，也输出不确定性</text>
+    <text class="section-description">模型给出可复现基线，回测负责检验长期概率质量。</text>
+  </view>
+
+  <view class="formula-card">
+    <view class="formula-topline mono"><text>PROBABILITY ENGINE</text><text>poisson-dc-v1</text></view>
+    <view class="formula-title">从预期进球开始</view>
+    <view class="formula-description">基础比分概率由双方独立 Poisson 分布相乘，再对低比分进行 Dixon–Coles 修正。</view>
+    <view class="formula-box">
+      <text class="formula-caption">基础比分概率</text>
+      <text class="formula-main mono">P(H=h, A=a)</text>
+      <text class="formula-equation mono">= Poisson(h; λhome) × Poisson(a; λaway)</text>
+    </view>
+    <view class="correction-title">低比分修正与归一化</view>
+    <view class="correction-copy">0:0、0:1、1:0、1:1 使用 rho 修正，在 0..10 球网格归一化。</view>
+    <view class="formula-tags"><text>三向概率</text><text>双方预期进球</text><text>前 5 个比分</text></view>
+  </view>
+
+  <view class="section-heading compact-heading">
+    <text class="section-kicker mono">EXPECTED GOALS</text>
+    <text class="section-title small-title">预期进球的估计顺序</text>
+  </view>
+
+  <view class="priority-card card">
+    <view wx:for="{{priorities}}" wx:key="id" class="priority-item">
+      <view class="priority-number mono">{{item.id}}</view>
+      <view class="priority-copy"><text class="priority-title">{{item.title}}</text><text class="priority-detail">{{item.detail}}</text></view>
+    </view>
+  </view>
+
+  <view class="boundary-card card">
+    <view class="boundary-kicker mono">TIME INTEGRITY</view>
+    <view class="boundary-title">只有合法的时间链，才进入回测</view>
+    <view class="boundary-copy">防止未来数据泄漏，也避免赛后信息重写赛前判断。</view>
+    <button class="equation-button" bindtap="copyTimeBoundary">
+      <text class="mono">input_as_of</text><text>≤</text><text class="mono">predicted_at</text><text>≤</text><text class="mono">start_time_utc</text>
+    </button>
+    <view class="equation-hint">点击复制时间边界表达式</view>
+  </view>
+
+  <view class="section-heading">
+    <text class="section-kicker mono">ROLLING BACKTEST</text>
+    <text class="section-title">评价概率，而非迷信单次命中</text>
+    <text class="section-description">总体与分联赛分别统计，只使用已保存推断和真实赛果。</text>
+  </view>
+
+  <view class="metrics-grid">
+    <view wx:for="{{metrics}}" wx:key="name" class="metric-card card">
+      <text class="metric-number mono">0{{index + 1}}</text>
+      <text class="metric-name">{{item.name}}</text>
+      <text class="metric-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <view class="notice">
+    <view class="notice-mark">!</view>
+    <view class="notice-text">这是一套可运行基线，不宣称已完成分联赛参数训练。升班马、小样本、杯赛与阵容不确定信息应通过特征和风险标记体现。</view>
+  </view>
+</view>

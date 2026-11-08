@@ -39,7 +39,7 @@ class AutomationTest(unittest.TestCase):
         db = self.root / "football.db"
         fixture_file = self.root / "fixture.json"
         fixture_file.write_text(json.dumps([{
-            "竞彩编号": "周六001", "联赛": "测试联赛", "主队": "主队A", "客队": "客队B",
+            "比赛编号": "周六001", "联赛": "测试联赛", "主队": "主队A", "客队": "客队B",
             "开赛时间": "2099-10-24 18:00", "external_provider": "api-football", "external_fixture_id": "9001",
         }], ensure_ascii=False), encoding="utf-8")
         FixtureImporter(db).import_file(fixture_file)
@@ -60,8 +60,34 @@ class AutomationTest(unittest.TestCase):
         self.assertEqual(status["new_predictions"], 1)
         summary = (self.root / "reports" / "每日中文摘要_2099-10-25.md").read_text(encoding="utf-8")
         self.assertIn("昨日赛果回填：1 场", summary)
-        self.assertIn("今日新增预测：1 条", summary)
+        self.assertIn("今日新增推断：1 条", summary)
         self.assertTrue((self.root / "reports" / "回测结果_2099-10-25.json").exists())
+
+    def test_cross_day_business_date_drives_whole_daily_pipeline(self):
+        db = self.root / "football.db"
+        fixture_file = self.root / "cross_day_fixture.json"
+        fixture_file.write_text(json.dumps([{
+            "比赛编号": "周日001", "比赛日期": "2099-10-25", "联赛": "测试联赛",
+            "主队": "主队A", "客队": "客队B", "开赛时间": "2099-10-26 02:45",
+            "主胜": 2.0, "平局": 3.4, "客胜": 3.8,
+        }], ensure_ascii=False), encoding="utf-8")
+        FixtureImporter(db).import_file(fixture_file)
+        result_file = self.root / "cross_day_result.json"
+        result_file.write_text(json.dumps([{
+            "比赛编号": "周日001", "比赛日期": "2099-10-25", "主队": "主队A", "客队": "客队B",
+            "实际比分": "2:1",
+        }], ensure_ascii=False), encoding="utf-8")
+        status = DailyAutomation(ROOT, db, self.root / "reports").run(
+            date="2099-10-25", results_date="2099-10-24",
+            fixtures=str(fixture_file), results=str(result_file),
+        )
+        self.assertEqual(status["results_imported"], 1)
+        self.assertEqual(status["new_predictions"], 1)
+        report = json.loads((self.root / "reports" / "足球经理的推断_2099-10-25.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["match_count"], 1)
+        basic = report["matches"][0]["basic_info"]
+        self.assertEqual(basic["business_date"], "2099-10-25")
+        self.assertEqual(basic["match_date"], "2099-10-26")
 
     def test_successful_run_commits_and_pushes_only_data_products(self):
         work = self.root / "work"

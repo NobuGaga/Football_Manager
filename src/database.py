@@ -1,4 +1,4 @@
-"""SQLite 数据层：每日快照、版本化预测和旧库迁移。"""
+"""SQLite 数据层：每日快照、版本化推断和旧库迁移。"""
 from __future__ import annotations
 
 import json
@@ -7,7 +7,7 @@ from pathlib import Path
 
 from utils import fixture_key, local_date, normalize_score, outcome, utc_now
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     fixture_key TEXT PRIMARY KEY,
     match_code TEXT NOT NULL,
     match_date TEXT NOT NULL,
+    business_date TEXT,
     league TEXT NOT NULL,
     home_team TEXT NOT NULL,
     away_team TEXT NOT NULL,
@@ -145,8 +146,13 @@ class Database:
     def initialize(self) -> None:
         with self.connect() as conn:
             conn.executescript(SCHEMA)
-            conn.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(fixtures)")}
+            if "business_date" not in columns:
+                conn.execute("ALTER TABLE fixtures ADD COLUMN business_date TEXT")
             self._migrate_legacy_matches(conn)
+            conn.execute("UPDATE fixtures SET business_date=match_date WHERE business_date IS NULL OR business_date=''")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_fixtures_business_date ON fixtures(business_date, start_time_utc)")
+            conn.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
 
     def _migrate_legacy_matches(self, conn: sqlite3.Connection) -> None:
         if conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='matches'").fetchone() is None:
@@ -193,7 +199,7 @@ class Database:
                 conn.execute("INSERT OR IGNORE INTO model_versions VALUES(?,?,?,?,?,?,NULL)", (
                     "legacy-v0", "旧版比分迁移", "{}", None, None, now,
                 ))
-                # 旧记录没有概率和预期进球，保留原表供审计，不伪造概率写入新预测表。
+                # 旧记录没有概率和预期进球，保留原表供审计，不伪造概率写入新推断表。
 
     def upsert_model(self, version: str, name: str, parameters: dict) -> None:
         with self.connect() as conn:

@@ -43,6 +43,8 @@ class SportteryScraper:
             raise RuntimeError(f"体彩官方接口返回失败：{message}；原始快照：{snapshot}")
         value = payload.get("value")
         groups = value.get("matchInfoList") if isinstance(value, dict) else None
+        if groups is None and isinstance(value, dict) and set(value) == {"vtoolsConfig"}:
+            groups = []
         if not isinstance(groups, list):
             raise RuntimeError(f"体彩官方接口缺少 matchInfoList；原始快照：{snapshot}")
 
@@ -97,7 +99,7 @@ class SportteryScraper:
         match_date = clean_text(item.get("matchDate"))
         match_time = clean_text(item.get("matchTime"))
         missing = [name for name, value in (
-            ("竞彩编号", code), ("联赛", league), ("主队", home), ("客队", away),
+            ("比赛编号", code), ("联赛", league), ("主队", home), ("客队", away),
             ("开赛日期", match_date), ("开赛时间", match_time),
         ) if not value]
         if missing:

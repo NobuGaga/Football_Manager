@@ -1,4 +1,4 @@
-"""赛果关联与逐条预测核对，不再依赖旧表 hit_prediction 的 NULL 条件。"""
+"""赛果关联与逐条推断核对，不再依赖旧表 hit_prediction 的 NULL 条件。"""
 from __future__ import annotations
 
 import json

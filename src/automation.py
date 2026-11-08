@@ -1,4 +1,4 @@
-"""Kimi Claw／cron 每日编排：Git、赛果、预测、回测、摘要与安全推送。"""
+"""Kimi Claw／cron 每日编排：Git、赛果、推断、回测、摘要与安全推送。"""
 from __future__ import annotations
 
 import fcntl
@@ -113,7 +113,7 @@ class DailyAutomation:
                 frame = SportteryScraper(self.db_path).fetch_daily_matches(match_date)
                 fixture_count = len(frame)
             if fixture_count == 0:
-                raise RuntimeError("没有导入有效官方对阵，已停止预测和推送")
+                raise RuntimeError("没有导入有效官方对阵，已停止推断和推送")
 
             enrichment_info = None
             if enrich:
@@ -173,11 +173,11 @@ class DailyAutomation:
     @staticmethod
     def _markdown_summary(status: dict, backtest: dict) -> str:
         overall = backtest.get("metrics", {}).get("全部联赛", {})
-        lines = [f"# 足球预测每日摘要（{status['date']}）", "",
+        lines = [f"# 足球经理的推断每日摘要（{status['date']}）", "",
                  f"- 官方对阵：{status['fixtures']} 场",
                  f"- 昨日赛果回填：{status['results_imported']} 场",
-                 f"- 已核对预测版本：{status['predictions_checked']} 条",
-                 f"- 今日新增预测：{status['new_predictions']} 条",
+                 f"- 已核对推断版本：{status['predictions_checked']} 条",
+                 f"- 今日新增推断：{status['new_predictions']} 条",
                  f"- 每日报告：{status['reports']['markdown']}",
                  f"- 回测结果：{status['backtest']}"]
         if overall.get("predictions"):
@@ -185,7 +185,7 @@ class DailyAutomation:
                       f"- 首选／前三比分命中率：{overall['top1_score_accuracy']:.1%}／{overall['top3_score_accuracy']:.1%}",
                       f"- Log Loss／Brier：{overall['log_loss']:.4f}／{overall['brier_score']:.4f}"]
         else:
-            lines.append("- 回测：暂无可评价的历史预测")
+            lines.append("- 回测：暂无可评价的历史推断")
         lines += ["", "## 风险与待处理事项", ""]
         lines += [f"- {warning}" for warning in status["warnings"]] or ["- 无附加告警；仍需关注临场阵容和数据更新"]
         lines += ["", "> 本结果为概率分析，不构成收益保证或确定性投注建议。", ""]

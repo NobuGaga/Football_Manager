@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/overview/overview",
+    "pages/pipeline/pipeline",
+    "pages/model/model",
+    "pages/automation/automation",
+    "pages/structure/structure"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#0b100d",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "足球经理的推断",
+    "backgroundColor": "#0b100d",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#829080",
+    "selectedColor": "#c8f55a",
+    "backgroundColor": "#101712",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/overview/overview", "text": "概览" },
+      { "pagePath": "pages/pipeline/pipeline", "text": "流水线" },
+      { "pagePath": "pages/model/model", "text": "模型" },
+      { "pagePath": "pages/automation/automation", "text": "自动化" },
+      { "pagePath": "pages/structure/structure", "text": "结构" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

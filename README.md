@@ -1,14 +1,18 @@
-# Football Manager：竞彩足球多联赛批量预测分析系统
+# Football Manager：足球经理的推断 · 多联赛概率分析
 
-以中国体育彩票竞彩足球官方对阵确定分析范围，使用 SQLite 保存每日快照、赛前特征、版本化预测和赛果，并输出供 Kimi 批量读取的 JSON、CSV、Excel 与 Markdown 报告。
+以中国体育彩票官方足球对阵确定分析范围，使用 SQLite 保存每日快照、赛前特征、版本化推断和赛果，并输出供 Kimi 批量读取的 JSON、CSV、Excel 与 Markdown 报告。
 
-> 预测是概率估计，不构成收益保证或确定性投注建议。信息不足时报告会标记数据缺失和风险。
+> 推断是概率估计，不构成收益保证或确定性投注建议。信息不足时报告会标记数据缺失和风险。
 
 ## 工程说明
 
 项目默认上下文入口与文档读取路由见 [AGENTS.md](AGENTS.md)，Codex 会默认读取仓库根目录的该文件。完整架构、数据表、模型口径、迁移策略与方案覆盖情况见 [项目工程文档](docs/项目工程.md)。输入样例位于 `examples/`。Kimi Claw 接入和每日标准流程也见 `AGENTS.md`。
 
-## Kimi Claw 每日自动化
+GitHub 仅用于保存当前项目的源码、文档和数据产物版本，不承担定时计算、预测策略生成、消息推送或小程序上传。上述运行任务统一由 Kimi Claw 执行，仓库不保留 GitHub Actions 工作流。
+
+对外名称为“足球经理的推断”，正文简称“推断”；命令继续使用 `predict`。新每日报告命名为 `reports/足球经理的推断_YYYY-MM-DD.*`，中文比赛标识使用“比赛编号”，导入兼容旧列名。历史报告与原始快照保留原貌。
+
+## Kimi Claw 每日自动化与策略推送
 
 ```bash
 # 示例赛果需先有关联对阵；真实每日任务使用库中已有昨日对阵
@@ -20,11 +24,13 @@ DAILY_FIXTURES_FILE="$PWD/examples/fixtures.csv" \
 DAILY_RESULTS_FILE="$PWD/examples/results.csv" \
 bash scripts/daily_automation.sh
 
-# 正式任务：拉取、回填、预测、回测、提交并推送
+# 正式任务：拉取、回填、推断、回测、提交并推送
 bash scripts/daily_automation.sh
 ```
 
-正式入口要求 Git 工作区干净，成功后只提交 `data/football.db` 和 `reports/`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。cron 指令、频道配置和故障处理见 `AGENTS.md`，先手动验收再设置定时。
+正式入口要求 Git 工作区干净，成功后只提交 `data/football.db` 和 `reports/`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。
+
+命令成功并完成 Git 推送后，Kimi Claw 读取当日 JSON 报告、运行状态和回测结果，按现行概率策略生成中文预测策略并推送到已配置频道。策略必须保留每场三向概率、数据完整度和风险，不得改写成确定性或收益承诺。cron 指令、策略表达、频道配置和故障处理见 `AGENTS.md` 与 `rules/football_manager_policy.md`，先手动验收再设置定时。
 
 ## 环境与安装
 
@@ -37,12 +43,12 @@ python3 -m pip install -r requirements.txt
 python3 main.py init
 ```
 
-初始化会创建新数据表，并将旧版 `matches` 数据迁移到 `fixtures`／`results`。原表保留用于审计；旧预测没有原始概率，因此不会伪造概率写入 `predictions`。
+初始化会创建新数据表，并将旧版 `matches` 数据迁移到 `fixtures`／`results`。原表保留用于审计；旧推断没有原始概率，因此不会伪造概率写入 `predictions`。
 
 ## 每日手动对阵流程（推荐）
 
 ```bash
-# 1. 导入官方对阵；时间列缺少日期时用 --date 补充
+# 1. 导入官方对阵；--date 和比赛日期均指体彩营业日，凌晨开赛不改变营业日
 python3 main.py import-fixtures examples/fixtures.csv --date 2099-10-25
 
 # 2. 可选：维护球队标准名、英文名和外部 ID
@@ -57,7 +63,7 @@ python3 main.py predict --date 2099-10-25
 # 5. 输出每日报告，默认写入 reports/
 python3 main.py report --date 2099-10-25
 
-# 也可一步执行导入、预测与报告
+# 也可一步执行导入、推断与报告
 python3 main.py all --date 2099-10-25 --fixtures examples/fixtures.csv
 ```
 
@@ -92,7 +98,7 @@ python3 main.py predict --date YYYY-MM-DD --refresh
 python3 main.py scrape --date YYYY-MM-DD
 ```
 
-抓取直接读取体彩页面使用的官方公开接口，按体彩营业日期筛选，不依赖 Chrome 或页面 CSS 结构。请求设置 30 秒超时；原始 JSON 保存到 `data/snapshots/`。业务状态异常、指定日期无对阵、必要字段缺失或记录重复时命令显式退出，不会用空数据继续预测。请遵守网站条款和访问限制，不绕过验证码、登录或反爬机制；不稳定时改用手动导入。
+抓取直接读取体彩页面使用的官方公开接口，按体彩营业日期筛选，不依赖 Chrome 或页面 CSS 结构。请求设置 30 秒超时；原始 JSON 保存到 `data/snapshots/`。业务状态异常、指定日期无对阵、必要字段缺失或记录重复时命令显式退出，不会用空数据继续推断。请遵守网站条款和访问限制，不绕过验证码、登录或反爬机制；不稳定时改用手动导入。
 
 ## 其他命令
 

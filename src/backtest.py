@@ -1,4 +1,4 @@
-"""基于赛前已保存预测的时间安全回测与概率质量评价。"""
+"""基于赛前已保存推断的时间安全回测与概率质量评价。"""
 from __future__ import annotations
 
 import json
@@ -42,7 +42,7 @@ class Backtester:
             "eligible_predictions": sum(len(group) for key, group in groups.items() if key == "全部联赛"),
             "metrics": {name: self._metrics(group) for name, group in groups.items()},
             "calibration": self._calibration(groups.get("全部联赛", [])),
-            "method": "仅评价已落库且 predicted_at 不晚于开赛、input_as_of 不晚于预测时间的记录；按比赛时间排序。",
+            "method": "仅评价已落库且 predicted_at 不晚于开赛、input_as_of 不晚于推断时间的记录；按比赛时间排序。",
         }
         if model_version:
             with self.db.connect() as conn:

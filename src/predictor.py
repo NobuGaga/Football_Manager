@@ -1,4 +1,4 @@
-"""可复现的泊松 / Dixon–Coles 基线预测。预测记录只追加，不覆盖。"""
+"""可复现的泊松 / Dixon–Coles 基线推断。推断记录只追加，不覆盖。"""
 from __future__ import annotations
 
 import json
@@ -39,7 +39,7 @@ class FootballPredictor:
         query = "SELECT * FROM fixtures WHERE match_status NOT IN ('cancelled','postponed','finished')"
         params: list = []
         if date:
-            query += " AND match_date=?"
+            query += " AND business_date=?"
             params.append(date)
         query += " ORDER BY start_time_utc,match_code"
         with self.db.connect() as conn:

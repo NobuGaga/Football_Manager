@@ -55,7 +55,7 @@ class APIFootballEnricher:
             external.extend(self.client.get("fixtures", date=(match_day + timedelta(days=offset)).isoformat(), timezone="UTC"))
         enriched, queued, errors = 0, 0, []
         with self.db.connect() as conn:
-            fixtures = conn.execute("SELECT * FROM fixtures WHERE match_date=?", (date,)).fetchall()
+            fixtures = conn.execute("SELECT * FROM fixtures WHERE business_date=?", (date,)).fetchall()
             for fixture in fixtures:
                 try:
                     matched = self._match_fixture(conn, fixture, external)
@@ -94,7 +94,7 @@ class APIFootballEnricher:
             external.extend(self.client.get("fixtures", date=(match_day + timedelta(days=offset)).isoformat(), timezone="UTC"))
         rows, unmatched, pending, errors = [], [], 0, []
         with self.db.connect() as conn:
-            fixtures = conn.execute("SELECT * FROM fixtures WHERE match_date=?", (date,)).fetchall()
+            fixtures = conn.execute("SELECT * FROM fixtures WHERE business_date=?", (date,)).fetchall()
             for fixture in fixtures:
                 try:
                     matched = self._match_fixture(conn, fixture, external)

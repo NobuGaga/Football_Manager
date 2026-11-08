@@ -1,0 +1,59 @@
+<view class="page">
+  <view class="section-heading first-heading">
+    <text class="section-kicker mono">02 / DATA PIPELINE</text>
+    <text class="section-title">从对阵，到可验证的结论</text>
+    <text class="section-description">点击节点，查看每一步的输入、输出与异常边界。</text>
+  </view>
+
+  <scroll-view scroll-x enhanced show-scrollbar="{{false}}" class="flow-scroll">
+    <view class="flow-tabs">
+      <button wx:for="{{flowSteps}}" wx:key="short" class="flow-tab {{flowIndex === index ? 'flow-active' : ''}}" data-index="{{index}}" bindtap="selectFlow">
+        <text class="flow-number mono">{{index + 1 < 10 ? '0' + (index + 1) : index + 1}}</text>
+        <text class="flow-mark">{{item.mark}}</text>
+        <text class="flow-name">{{item.short}}</text>
+      </button>
+    </view>
+  </scroll-view>
+
+  <view class="flow-detail card">
+    <view class="detail-kicker mono">{{currentFlow.eyebrow}} / {{flowIndex + 1}}</view>
+    <view class="detail-title">{{currentFlow.title}}</view>
+    <view class="detail-lead">{{currentFlow.description}}</view>
+    <view class="detail-copy">{{currentFlow.detail}}</view>
+    <view class="flow-progress">
+      <view class="progress-track"><view class="progress-value" style="width: {{(flowIndex + 1) * 100 / flowSteps.length}}%;"></view></view>
+      <text class="mono">{{flowIndex + 1}} / {{flowSteps.length}}</text>
+    </view>
+  </view>
+
+  <view class="io-card card">
+    <view class="io-block">
+      <text class="io-label mono">INPUT</text>
+      <text class="io-value">{{currentFlow.input}}</text>
+    </view>
+    <view class="io-arrow">↓</view>
+    <view class="io-block io-output">
+      <text class="io-label mono">OUTPUT</text>
+      <text class="io-value">{{currentFlow.output}}</text>
+    </view>
+    <view class="io-safe">✓ 来源、时间与状态始终保留</view>
+  </view>
+
+  <button wx:if="{{flowIndex < flowSteps.length - 1}}" class="primary-button next-button" bindtap="nextFlow">查看下一节点<text class="button-arrow">→</text></button>
+  <view wx:else class="complete-card">✓ 已查看完整数据流水线</view>
+
+  <view class="section-heading">
+    <text class="section-kicker mono">SQLITE SCHEMA</text>
+    <text class="section-title">08 张核心数据表</text>
+    <text class="section-description">职责清晰，关联可审计；历史快照和推断版本不被覆盖。</text>
+  </view>
+
+  <view class="tables-card card">
+    <text wx:for="{{tables}}" wx:key="*this" class="table-tag mono">{{item}}</text>
+  </view>
+
+  <view class="notice">
+    <view class="notice-mark">i</view>
+    <view class="notice-text">business_date 是体彩营业日；数据库存储 UTC 开赛时间，同时保留原始执行时区，避免跨日比赛错配。</view>
+  </view>
+</view>

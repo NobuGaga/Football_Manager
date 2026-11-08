@@ -1,0 +1,14 @@
+{
+  "name": "football-manager-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "足球经理的推断 · 工程信息微信小程序及 CI 上传工具",
+  "scripts": {
+    "test": "node scripts/test-pages.cjs && node scripts/test-ci.cjs",
+    "upload": "node scripts/upload-ci.cjs",
+    "preview": "node scripts/preview-ci.cjs"
+  },
+  "devDependencies": {
+    "miniprogram-ci": "2.1.31"
+  }
+}

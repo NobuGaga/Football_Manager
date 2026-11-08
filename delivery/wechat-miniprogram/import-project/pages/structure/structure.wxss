@@ -1,0 +1,172 @@
+.first-heading {
+  margin-top: 12rpx;
+}
+
+.file-card {
+  padding: 14rpx;
+}
+
+.file-card-head {
+  display: flex;
+  height: 72rpx;
+  padding: 0 12rpx;
+  align-items: center;
+  color: #d6dfd1;
+  font-size: 21rpx;
+}
+
+.folder-mark {
+  margin-right: 12rpx;
+  color: #c8f55a;
+  font-size: 26rpx;
+}
+
+.file-count {
+  margin-left: auto;
+  color: #6f7c6d;
+  font-size: 19rpx;
+}
+
+.file-row {
+  display: flex;
+  width: 100%;
+  min-height: 66rpx;
+  padding: 10rpx 12rpx;
+  align-items: center;
+  border: 1rpx solid transparent;
+  border-radius: 12rpx;
+}
+
+.file-active {
+  border-color: #3b4b2e;
+  background: #1d2816;
+}
+
+.file-bullet {
+  width: 30rpx;
+  flex: 0 0 auto;
+  color: #c8f55a;
+  font-size: 25rpx;
+}
+
+.file-path {
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+  color: #a5b0a0;
+  font-size: 19rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-active .file-path {
+  color: #e2eadc;
+}
+
+.file-type {
+  width: 54rpx;
+  margin-left: 10rpx;
+  color: #748171;
+  font-size: 18rpx;
+  text-align: right;
+}
+
+.file-detail {
+  margin-top: 20rpx;
+  padding: 30rpx;
+  background: #0e1510;
+}
+
+.file-detail-mark {
+  display: flex;
+  width: 86rpx;
+  height: 86rpx;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid #33402f;
+  border-radius: 22rpx;
+  color: #c8f55a;
+  background: #151e16;
+  font-family: Consolas, monospace;
+  font-size: 28rpx;
+}
+
+.file-tag {
+  margin-top: 30rpx;
+  color: #c8f55a;
+  font-size: 18rpx;
+  letter-spacing: 2rpx;
+}
+
+.file-detail-title {
+  margin-top: 12rpx;
+  overflow-wrap: anywhere;
+  font-size: 30rpx;
+  line-height: 1.5;
+}
+
+.file-detail-description {
+  margin-top: 18rpx;
+  color: #95a191;
+  font-size: 24rpx;
+  line-height: 1.85;
+}
+
+.file-meta {
+  display: flex;
+  margin-top: 22rpx;
+  padding-top: 20rpx;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1rpx solid #2b352b;
+  color: #748170;
+  font-size: 21rpx;
+  gap: 20rpx;
+}
+
+.file-meta text:last-child {
+  color: #a6b1a1;
+  text-align: right;
+}
+
+.copy-path {
+  margin-top: 28rpx;
+}
+
+.compact-heading {
+  margin-bottom: 24rpx;
+}
+
+.small-title {
+  font-size: 34rpx;
+}
+
+.environment-card {
+  display: flex;
+  padding: 26rpx;
+  flex-wrap: wrap;
+}
+
+.environment-card > view {
+  display: flex;
+  width: 50%;
+  padding: 18rpx 0;
+  flex-direction: column;
+}
+
+.environment-card text {
+  color: #6d7a69;
+  font-family: Consolas, monospace;
+  font-size: 17rpx;
+  letter-spacing: 1rpx;
+}
+
+.environment-card strong {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.test-button {
+  margin-top: 20rpx;
+}

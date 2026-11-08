@@ -1,0 +1,45 @@
+<view class="page">
+  <view class="section-heading first-heading">
+    <text class="section-kicker mono">05 / PROJECT STRUCTURE</text>
+    <text class="section-title">每个模块，都有清晰职责</text>
+    <text class="section-description">选择文件或目录，查看它在工程中的作用。</text>
+  </view>
+
+  <view class="file-card card">
+    <view class="file-card-head"><text class="folder-mark">▾</text><text class="mono">Football_Manager/</text><text class="file-count">{{projectFiles.length}} 项</text></view>
+    <button wx:for="{{projectFiles}}" wx:key="path" class="file-row {{selectedIndex === index ? 'file-active' : ''}}" data-index="{{index}}" bindtap="selectFile">
+      <text class="file-bullet">{{item.type === '产物' ? '▱' : '·'}}</text>
+      <text class="file-path mono">{{item.path}}</text>
+      <text class="file-type">{{item.type}}</text>
+    </button>
+  </view>
+
+  <view class="file-detail card">
+    <view class="file-detail-mark">{ }</view>
+    <view class="file-tag mono">{{currentFile.tag}}</view>
+    <view class="file-detail-title mono">{{currentFile.path}}</view>
+    <view class="file-detail-description">{{currentFile.description}}</view>
+    <view class="file-meta"><text>模块类型</text><text>{{currentFile.type}}</text></view>
+    <view class="file-meta"><text>工程约束</text><text>{{currentFile.type === '产物' ? '按安全范围写回' : '职责单一，可独立验证'}}</text></view>
+    <button class="secondary-button copy-path" bindtap="copyFilePath">复制文件路径</button>
+  </view>
+
+  <view class="section-heading compact-heading">
+    <text class="section-kicker mono">ENVIRONMENT</text>
+    <text class="section-title small-title">运行环境</text>
+  </view>
+
+  <view class="environment-card card">
+    <view><text>RUNTIME</text><strong>Python 3.10+</strong></view>
+    <view><text>DATABASE</text><strong>SQLite</strong></view>
+    <view><text>ENTRYPOINT</text><strong>main.py</strong></view>
+    <view><text>TEST</text><strong>unittest</strong></view>
+  </view>
+
+  <button class="primary-button test-button" bindtap="copyTestCommand">复制测试命令</button>
+
+  <view class="notice">
+    <view class="notice-mark">i</view>
+    <view class="notice-text">小程序用于浏览工程信息，不直接读取本地数据库，也不会执行仓库命令或修改 Git 历史。</view>
+  </view>
+</view>
