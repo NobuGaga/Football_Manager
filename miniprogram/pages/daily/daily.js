@@ -9,6 +9,7 @@ Page({
     reportDate: dailyReport.reportDate,
     generatedAt: dailyReport.generatedAt,
     matchCount: dailyReport.matchCount,
+    predictionCount: dailyReport.predictionCount,
     disclaimer: dailyReport.disclaimer,
     matches: [],
   },
@@ -23,6 +24,7 @@ Page({
       const highest = directions.reduce((current, item) => item.value > current.value ? item : current);
       return {
         ...match,
+        strategyKey: `${match.fixtureKey}-${match.aiModel}`,
         startTimeText: match.startTimeLocal ? match.startTimeLocal.replace('T', ' ').slice(0, 16) : '待确认',
         homePercent: percent(match.probabilities.home_win),
         drawPercent: percent(match.probabilities.draw),

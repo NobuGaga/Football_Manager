@@ -1,7 +1,11 @@
 {
   "report_date": "2026-11-08",
-  "generated_at": "2026-11-08T11:15:44+00:00",
+  "generated_at": "2026-11-08T12:31:50+00:00",
   "match_count": 25,
+  "prediction_count": 25,
+  "ai_models": [
+    "kimi"
+  ],
   "disclaimer": "概率估计仅供分析，不构成收益保证或确定性投注建议。",
   "matches": [
     {
@@ -27,6 +31,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 11,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.4264578926362187,
@@ -221,6 +228,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -254,6 +266,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 12,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.1869244292859582,
@@ -448,6 +463,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -481,6 +501,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 13,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.20337957410892477,
@@ -675,6 +698,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -708,6 +736,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 14,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.45941204707799843,
@@ -902,6 +933,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -935,6 +971,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 15,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.09454771129547183,
@@ -1129,6 +1168,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -1162,6 +1206,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 16,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.18079167426877915,
@@ -1356,6 +1403,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -1389,6 +1441,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 17,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.18755085308663183,
@@ -1583,6 +1638,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -1616,6 +1676,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 18,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.12019655344252486,
@@ -1810,6 +1873,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -1843,6 +1911,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 19,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.2293329474239363,
@@ -2037,6 +2108,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -2070,6 +2146,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 20,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.18567939054090096,
@@ -2264,6 +2343,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -2297,6 +2381,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 21,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.16488887415117112,
@@ -2491,6 +2578,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -2524,6 +2616,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 22,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.5902337293624899,
@@ -2718,6 +2813,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -2751,6 +2851,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 23,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.1263521911658364,
@@ -2945,6 +3048,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -2978,6 +3086,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 24,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.6708560358957778,
@@ -3172,6 +3283,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -3205,6 +3321,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 25,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.14612532578215293,
@@ -3399,6 +3518,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -3432,6 +3556,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 26,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.447748596381444,
@@ -3626,6 +3753,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -3659,6 +3791,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 27,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.6968792847408861,
@@ -3853,6 +3988,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -3886,6 +4026,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 28,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.4900120146910489,
@@ -4080,6 +4223,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -4113,6 +4261,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 29,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.6893271392079355,
@@ -4307,6 +4458,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -4340,6 +4496,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 30,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.5544939209813403,
@@ -4534,6 +4693,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -4567,6 +4731,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 31,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.10879356959125867,
@@ -4761,6 +4928,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -4794,6 +4966,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 32,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.6341150990533907,
@@ -4988,6 +5163,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -5021,6 +5201,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 33,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.24681914225715232,
@@ -5215,6 +5398,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -5248,6 +5436,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 34,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.3831137655489017,
@@ -5442,6 +5633,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"
@@ -5475,6 +5671,9 @@
       "business_date": "2026-11-08",
       "prediction_id": 35,
       "model_version": "poisson-dc-v1",
+      "ai_model": "kimi",
+      "strategy_id": "kimi-probability-v1",
+      "strategy_category": "稳健概率",
       "predicted_at": "2026-11-08T11:14:56+00:00",
       "input_as_of": "2026-11-08T11:14:56+00:00",
       "probability_home": 0.2143813851593641,
@@ -5669,6 +5868,11 @@
         "缺失数据：lineups",
         "预期进球估计方式：odds_only_fallback"
       ],
+      "ai_strategy": {
+        "ai_model": "kimi",
+        "strategy_id": "kimi-probability-v1",
+        "category": "稳健概率"
+      },
       "model_info": {
         "version": "poisson-dc-v1",
         "predicted_at": "2026-11-08T11:14:56+00:00"

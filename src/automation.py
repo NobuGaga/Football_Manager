@@ -70,9 +70,8 @@ class DailyAutomation:
 
     def run(self, date: str | None = None, results_date: str | None = None,
             fixtures: str | None = None, results: str | None = None,
-            enrich: bool = False, sync_results: bool = False,
             refresh: bool = False, require_results: bool = False,
-            pull: bool = False, push: bool = False) -> dict:
+            pull: bool = False, push: bool = False, ai_model: str = "kimi") -> dict:
         match_date = date or datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
         day = datetime.strptime(match_date, "%Y-%m-%d").date()
         previous_date = results_date or (day - timedelta(days=1)).isoformat()
@@ -87,24 +86,15 @@ class DailyAutomation:
 
             if results:
                 result_info = ResultImporter(self.db_path).import_file(results)
-            elif sync_results:
-                from providers import APIFootballEnricher
-                result_info = APIFootballEnricher(self.db_path).sync_results(previous_date)
             else:
                 result_info = {"imported": 0, "errors": [], "skipped": True}
-                warnings.append("未配置赛果文件或 API-Football，昨日赛果回填未执行")
+                warnings.append("未提供昨日赛果文件，赛果回填未执行")
             if result_info.get("errors"):
                 raise RuntimeError(f"赛果导入存在关联错误，已停止后续推送：{result_info['errors'][:3]}")
             if result_info.get("unmatched"):
-                warnings.append(f"{len(result_info['unmatched'])} 场赛果外部匹配待人工确认")
-            if result_info.get("pending"):
-                warnings.append(f"{result_info['pending']} 场外部比赛尚未完结")
-            if require_results:
-                missing_manual_results = bool(results) and result_info.get("imported", 0) == 0
-                missing_api_results = (result_info.get("fixtures", 0) > 0 and result_info.get("imported", 0) == 0
-                                       and not result_info.get("pending"))
-                if result_info.get("skipped") or missing_manual_results or missing_api_results:
-                    raise RuntimeError("require-results 已启用，但昨日赛果没有可靠回填")
+                warnings.append(f"{len(result_info['unmatched'])} 场赛果关联待人工确认")
+            if require_results and (result_info.get("skipped") or result_info.get("imported", 0) == 0):
+                raise RuntimeError("require-results 已启用，但昨日赛果没有可靠回填")
             checked = len(ResultChecker(self.db_path).check_all())
 
             if fixtures:
@@ -118,16 +108,7 @@ class DailyAutomation:
             if fixture_count == 0:
                 raise RuntimeError("没有导入有效官方对阵，已停止推断和推送")
 
-            enrichment_info = None
-            if enrich:
-                from providers import APIFootballEnricher
-                enrichment_info = APIFootballEnricher(self.db_path).enrich(match_date)
-                if enrichment_info.get("errors"):
-                    warnings.append(f"API-Football 有 {len(enrichment_info['errors'])} 场特征补充失败，使用现有数据继续")
-                if enrichment_info.get("manual_review"):
-                    warnings.append(f"{enrichment_info['manual_review']} 场赛前外部匹配待人工确认")
-
-            predictions = FootballPredictor(self.db_path).predict_all(match_date, refresh=refresh)
+            predictions = FootballPredictor(self.db_path, ai_model=ai_model).predict_all(match_date, refresh=refresh)
             reporter = ReportGenerator(self.db_path, self.output_dir)
             report_paths = reporter.generate_daily_report(match_date)
             miniprogram_data_path = export_miniprogram_report(report_paths["json"], self.miniprogram_data_path)
@@ -137,13 +118,12 @@ class DailyAutomation:
 
             status = {
                 "status": "completed", "date": match_date, "results_date": previous_date,
-                "generated_at": utc_now(), "fixtures": fixture_count,
+                "generated_at": utc_now(), "fixtures": fixture_count, "ai_model": ai_model,
                 "results_imported": result_info.get("imported", 0), "predictions_checked": checked,
                 "new_predictions": len(predictions), "warnings": warnings,
                 "reports": {key: self._relative(path) for key, path in report_paths.items()},
                 "backtest": self._relative(backtest_path),
                 "miniprogram_data": self._relative(miniprogram_data_path),
-                "enrichment": enrichment_info,
             }
             status_path = self.output_dir / f"每日运行状态_{match_date}.json"
             summary_path = self.output_dir / f"每日中文摘要_{match_date}.md"

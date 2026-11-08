@@ -28,7 +28,7 @@
 
 约束：
 
-- 体彩官方对阵决定分析范围，API-Football 只补充数据。
+- 体彩官方对阵决定分析范围；本地赛前文件和项目策略文档提供输入，不调用外部足球数据 API。
 - 不绕过验证码、登录、反爬或访问限制；官方公开接口失败时显式中止，改用官方对阵文件。
 - 推断是概率分析，不使用“包中”“稳赢”等措辞，不承诺收益。
 - 不覆盖历史推断；临场更新必须追加版本。
@@ -43,7 +43,7 @@
 | `main.py` | 全部命令入口，`daily` 是每日总流程 |
 | `src/automation.py` | Git 检查、流程编排、锁、摘要与安全提交 |
 | `src/miniprogram_export.py` | 将当日 JSON 报告转换为紧凑的小程序数据 |
-| `src/providers.py` | API-Football 赛前特征和已完结赛果同步 |
+| `src/ai_strategies.py` / `rules/strategies/` | AI 模型策略文档加载、校验与分类 |
 | `data/football.db` | 对阵、快照、特征、推断、赛果和模型版本 |
 | `reports/` | 每日 JSON／CSV／Excel／Markdown、回测和中文摘要 |
 | `miniprogram/data/daily-report.js` | 每日推断页面的打包报告快照 |
@@ -68,7 +68,7 @@
    ```
 
 5. 正式每日任务默认上传小程序，需安装 Node.js，并在 Claw 安全环境配置 `WECHAT_APPID` 和多行私钥 `WECHAT_PRIVATE_KEY`。凭证不写仓库或日志；如启用上传 IP 白名单，加入 Claw 固定出口 IP。
-6. 如需 API-Football，在运行环境中配置 `API_FOOTBALL_KEY`。不要把密钥写入仓库；维护球队映射，否则外部比赛会进入人工确认队列。
+6. 通过 `AI_MODEL` 选择 `rules/strategies/` 中的 AI 分类，默认 `kimi`；可用 `python3 main.py ai-strategies` 查看。无需任何足球数据 API 密钥。
 7. 如需微信、飞书或企业微信通知，由用户在 Kimi Claw「设置 → 聊天频道」配置，工程不保存渠道凭证。
 
 可写入长期记忆的内容仅包括：仓库用途、非敏感 SOP、已确认的数据格式和故障处理偏好。不得记录 token、API key、渠道 secret 或含凭证的 URL。
@@ -121,7 +121,7 @@ bash scripts/daily_automation.sh
 | `DAILY_MINIPROGRAM_UPLOAD=0` | 显式关闭正式任务的小程序上传 |
 | `NODE_BIN` | 指定 Node.js 可执行文件，默认 `node` |
 | `WECHAT_APPID` / `WECHAT_PRIVATE_KEY` | 每日体验版上传凭证 |
-| `API_FOOTBALL_KEY` | 启用赛前特征和赛果 API 同步 |
+| `AI_MODEL` | 选择项目 AI 策略分类，默认 `kimi` |
 
 ## 6. cron 配置（手动验收之后）
 
@@ -140,7 +140,7 @@ bash scripts/daily_automation.sh
 - **官方公开接口无对阵**：使用 `DAILY_FIXTURES_FILE` 重跑，不生成空推断。
 - **赛果未完结**：记录 pending，下一天继续；不填 0:0。
 - **外部匹配不唯一**：运行 `python3 main.py review-queue`，完善映射后重跑。
-- **API 特征部分失败**：摘要中保留警告，模型只使用已有赛前数据。
+- **本地特征不足**：摘要和报告中保留缺失项，模型只使用已有赛前数据与所选策略文档。
 - **小程序上传失败**：保留上传错误和已推送的 Git 提交信息，不宣称体验版已更新；修复凭证、Node.js 或白名单后运行 `bash scripts/wechat_daily_upload.sh` 重试。
 - **重复执行**：文件锁阻止并发；同日非 refresh 不重复生成相同模型推断。
 

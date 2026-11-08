@@ -6,6 +6,7 @@ import math
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ai_strategies import DEFAULT_AI_MODEL, load_ai_strategy
 from database import Database
 from utils import clean_text, optional_float, utc_now
 
@@ -13,9 +14,11 @@ from utils import clean_text, optional_float, utc_now
 class FootballPredictor:
     MODEL_VERSION = "poisson-dc-v1"
 
-    def __init__(self, db_path: str | Path = "data/football.db", parameters: dict | None = None):
+    def __init__(self, db_path: str | Path = "data/football.db", parameters: dict | None = None,
+                 ai_model: str = DEFAULT_AI_MODEL):
         self.db = Database(db_path)
         self.db.initialize()
+        self.ai_strategy = load_ai_strategy(ai_model)
         self.parameters = {
             "league_avg_home_goals": 1.40,
             "league_avg_away_goals": 1.10,
@@ -46,8 +49,10 @@ class FootballPredictor:
             fixtures = conn.execute(query, params).fetchall()
             predictions = []
             for fixture in fixtures:
-                if not refresh and conn.execute("SELECT 1 FROM predictions WHERE fixture_key=? AND model_version=? LIMIT 1",
-                                                (fixture["fixture_key"], self.MODEL_VERSION)).fetchone():
+                if not refresh and conn.execute("""SELECT 1 FROM predictions
+                    WHERE fixture_key=? AND model_version=? AND ai_model=? AND strategy_id=? LIMIT 1""",
+                                                (fixture["fixture_key"], self.MODEL_VERSION,
+                                                 self.ai_strategy["ai_model"], self.ai_strategy["strategy_id"])).fetchone():
                     continue
                 if fixture["start_time_utc"] <= cutoff:
                     continue
@@ -87,8 +92,13 @@ class FootballPredictor:
         if any(word in league for word in ("杯", "Cup", "资格赛")):
             risks.append("杯赛或资格赛可能存在轮换与战意不确定性")
         analysis = self._analysis(features, method, feature_row["source"] if feature_row else "league_baseline")
+        analysis["strategy_document"] = self.ai_strategy["document_path"]
+        analysis["strategy_sha256"] = self.ai_strategy["document_sha256"]
         return {
             "model_version": self.MODEL_VERSION,
+            "ai_model": self.ai_strategy["ai_model"],
+            "strategy_id": self.ai_strategy["strategy_id"],
+            "strategy_category": self.ai_strategy["strategy_category"],
             "predicted_at": predicted_at or utc_now(),
             "input_as_of": feature_row["as_of"] if feature_row else (predicted_at or utc_now()),
             "probability_home": home,
@@ -163,11 +173,14 @@ class FootballPredictor:
 
     def _insert_prediction(self, conn, key: str, pred: dict) -> None:
         conn.execute("""INSERT INTO predictions(
-            fixture_key,model_version,predicted_at,input_as_of,probability_home,probability_draw,probability_away,
-            expected_home_goals,expected_away_goals,score_probabilities_json,top_scores_json,
-            data_completeness,risk_flags_json,analysis_json
-        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-            key, pred["model_version"], pred["predicted_at"], pred["input_as_of"],
+            fixture_key,model_version,ai_model,strategy_id,strategy_category,predicted_at,input_as_of,
+            probability_home,probability_draw,probability_away,expected_home_goals,expected_away_goals,
+            score_probabilities_json,top_scores_json,data_completeness,risk_flags_json,analysis_json
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+            key, pred["model_version"], pred.get("ai_model", self.ai_strategy["ai_model"]),
+            pred.get("strategy_id", self.ai_strategy["strategy_id"]),
+            pred.get("strategy_category", self.ai_strategy["strategy_category"]),
+            pred["predicted_at"], pred["input_as_of"],
             pred["probability_home"], pred["probability_draw"], pred["probability_away"],
             pred["expected_home_goals"], pred["expected_away_goals"],
             json.dumps(pred["score_probabilities"]), json.dumps(pred["top_scores"], ensure_ascii=False),

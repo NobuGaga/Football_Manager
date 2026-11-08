@@ -2,7 +2,7 @@
   <view class="section-heading daily-heading">
     <text class="section-kicker mono">DAILY PROBABILITY REPORT</text>
     <text class="section-title">每日推断</text>
-    <text class="section-description">{{reportDate}} · 共 {{matchCount}} 场 · 由 Kimi Claw 随每日任务打包更新</text>
+    <text class="section-description">{{reportDate}} · {{matchCount}} 场 / {{predictionCount}} 条策略 · 由 Kimi Claw 每日打包</text>
   </view>
 
   <view class="notice">
@@ -11,12 +11,12 @@
   </view>
 
   <view wx:if="{{matches.length}}" class="match-list">
-    <view wx:for="{{matches}}" wx:key="fixtureKey" class="match-card card">
+    <view wx:for="{{matches}}" wx:key="strategyKey" class="match-card card">
       <view class="match-topline">
         <text class="match-code mono">{{item.matchCode}}</text>
         <text class="match-time mono">{{item.startTimeText}}</text>
       </view>
-      <view class="match-league">{{item.league}}</view>
+      <view class="match-league">{{item.league}} · {{item.aiModel}} / {{item.strategyCategory}}</view>
       <view class="match-teams">{{item.homeTeam}}<text>VS</text>{{item.awayTeam}}</view>
 
       <view class="tendency-row">

@@ -27,10 +27,8 @@ fi
 if [[ "${DAILY_REQUIRE_RESULTS:-0}" == "1" ]]; then
   args+=(--require-results)
 fi
-if [[ -n "${API_FOOTBALL_KEY:-}" ]]; then
-  args+=(--sync-results --enrich)
-else
-  echo "提示：未配置 API_FOOTBALL_KEY；将跳过 API 赛果同步和赛前特征补充。" >&2
+if [[ -n "${AI_MODEL:-}" ]]; then
+  args+=(--ai-model "$AI_MODEL")
 fi
 
 python3 main.py "${args[@]}"

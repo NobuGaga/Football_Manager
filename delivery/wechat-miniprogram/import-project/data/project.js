@@ -2,7 +2,7 @@ const stats = [
   { value: '04', unit: '种', label: '每日报告格式', detail: 'JSON / CSV / Excel / Markdown' },
   { value: '08', unit: '张', label: '核心数据表', detail: '从对阵快照到模型版本' },
   { value: '05', unit: '个', label: '前列比分输出', detail: '来自完整比分概率矩阵' },
-  { value: '15', unit: 'min', label: 'API 本地缓存', detail: '减少重复请求与配额消耗' },
+  { value: '04', unit: '类', label: 'AI 策略分类', detail: 'Kimi / ChatGPT / Claude / Gemini' },
 ];
 
 const principles = [
@@ -28,7 +28,7 @@ const flowSteps = [
   {
     short: '赛前特征', eyebrow: 'FEATURES', title: '只使用当时已经知道的信息',
     description: '预期进球、xG、攻防乘数、伤停与阵容等特征都带有 as_of 时间截面。',
-    detail: 'API-Football 通过球队映射、双方与开赛时间唯一匹配；非唯一候选进入人工确认队列。',
+    detail: '本地赛前文件保留 as_of 时间截面；项目 AI 策略文档决定分类与表达方式，不调用外部足球数据 API。',
     input: 'match_features / team_aliases', output: '带来源与完整度的赛前输入', mark: '征',
   },
   {
@@ -123,7 +123,7 @@ const projectFiles = [
   { path: 'src/database.py', type: '数据', description: '定义 SQLite schema、数据库连接，以及旧 matches 数据的无损迁移。', tag: 'SQLITE' },
   { path: 'src/importers.py', type: '数据', description: '处理对阵、球队映射、赛前特征与赛果导入，执行字段和时间校验。', tag: 'IMPORT' },
   { path: 'src/predictor.py', type: '模型', description: '实现 Poisson + Dixon–Coles 基线，生成完整比分概率与三向概率。', tag: 'MODEL' },
-  { path: 'src/providers.py', type: '适配', description: 'API-Football 缓存、唯一匹配、赛前特征适配与已完结赛果同步。', tag: 'PROVIDER' },
+  { path: 'src/ai_strategies.py', type: '策略', description: '加载项目 AI 策略文档，校验分类并保存文档哈希。', tag: 'STRATEGY' },
   { path: 'src/scraper.py', type: '适配', description: '体彩官方公开接口入口，保存原始快照，失败时显式降级到手动导入。', tag: 'SOURCE' },
   { path: 'src/reporter.py', type: '输出', description: '生成每日 JSON／CSV／Excel／Markdown 报告和回测 Excel。', tag: 'REPORT' },
   { path: 'src/result_checker.py', type: '复盘', description: '逐条关联已保存推断与实际赛果，写入复盘字段。', tag: 'RESULT' },

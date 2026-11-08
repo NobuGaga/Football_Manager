@@ -1,7 +1,11 @@
 const dailyReport = {
   "reportDate": "2026-11-08",
-  "generatedAt": "2026-11-08T11:15:44+00:00",
+  "generatedAt": "2026-11-08T12:31:50+00:00",
   "matchCount": 25,
+  "predictionCount": 25,
+  "aiModels": [
+    "kimi"
+  ],
   "disclaimer": "概率估计仅供分析，不构成收益保证或确定性投注建议。",
   "matches": [
     {
@@ -43,6 +47,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -85,6 +92,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -127,6 +137,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -169,6 +182,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -211,6 +227,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -253,6 +272,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -295,6 +317,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -337,6 +362,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -379,6 +407,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -421,6 +452,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -463,6 +497,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -505,6 +542,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -547,6 +587,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -589,6 +632,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -631,6 +677,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -673,6 +722,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -715,6 +767,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -757,6 +812,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -799,6 +857,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -841,6 +902,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -883,6 +947,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -925,6 +992,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -967,6 +1037,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -1009,6 +1082,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     },
@@ -1051,6 +1127,9 @@ const dailyReport = {
         "预期进球估计方式：odds_only_fallback"
       ],
       "modelVersion": "poisson-dc-v1",
+      "aiModel": "kimi",
+      "strategyId": "kimi-probability-v1",
+      "strategyCategory": "稳健概率",
       "predictedAt": "2026-11-08T11:14:56+00:00",
       "actualScore": null
     }

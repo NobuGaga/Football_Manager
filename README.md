@@ -28,7 +28,7 @@ bash scripts/daily_automation.sh
 bash scripts/daily_automation.sh
 ```
 
-正式入口要求 Git 工作区干净，成功后提交 `data/football.db`、`reports/` 和打包后的 `miniprogram/data/daily-report.js`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。
+正式入口要求 Git 工作区干净，成功后提交 `data/football.db`、`reports/` 和打包后的 `miniprogram/data/daily-report.js`。赛前特征只从本地文件读取，赛果只从本地赛果文件回填；`AI_MODEL` 选择项目策略分类，默认 `kimi`。
 
 每日报告会同步打包到小程序的“每日推断”页面。正式任务随后运行小程序测试并通过 CI 机器人 1 上传，持续更新体验版；`DAILY_NO_GIT=1` 手动验收不上传，`DAILY_MINIPROGRAM_UPLOAD=0` 可显式关闭上传。上传需要 Node.js、已安装的 `miniprogram-ci` 依赖，以及 Claw 环境中的 `WECHAT_APPID`、`WECHAT_PRIVATE_KEY`。
 
@@ -82,17 +82,17 @@ python3 main.py report  # 生成回测 Excel
 
 回测包含 Log Loss、Brier 分数、胜平负准确率、首选／前三比分命中率、预期进球 MAE 和概率校准。只有满足 `input_as_of ≤ predicted_at ≤ 开赛时间` 的记录才进入指标。
 
-## 可选数据源与网页入口
+## 本地策略与网页入口
 
-### API-Football
+### AI 预测策略分类
 
 ```bash
-export API_FOOTBALL_KEY="你的密钥"
-python3 main.py enrich --date YYYY-MM-DD
-python3 main.py predict --date YYYY-MM-DD --refresh
+python3 main.py ai-strategies
+AI_MODEL=kimi python3 main.py predict --date YYYY-MM-DD
+AI_MODEL=chatgpt python3 main.py predict --date YYYY-MM-DD
 ```
 
-该适配器通过球队映射、对阵双方和开赛时间进行唯一匹配；无法确认时进入人工队列。响应缓存在 `data/cache/`，可减少重复请求。高级字段是否可用取决于账户套餐，未获取到 xG 时不会伪造。
+项目内置 Kimi（稳健概率）、ChatGPT（市场对照）、Claude（风险复核）和 Gemini（情景分析）四类策略，配置和规则位于 `rules/strategies/`。每次预测保存 AI 模型、策略 ID、分类和文档哈希；现有历史预测已归类为 Kimi。不同分类共享已保存的统计概率基础，不调用外部足球数据 API，也不伪装成已验证的各厂商在线模型调用。
 
 ### 体彩官方公开接口
 

@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from ai_strategies import available_ai_strategies
 from backtest import Backtester
 from database import Database
 from importers import FeatureImporter, FixtureImporter, ResultImporter
@@ -58,13 +59,31 @@ class PipelineTest(unittest.TestCase):
         predictions = predictor.predict_all(as_of="2099-10-24T08:00:00+00:00")
         self.assertEqual(len(predictions), 1)
         prediction = predictions[0]
+        self.assertEqual(prediction["ai_model"], "kimi")
+        self.assertEqual(prediction["strategy_category"], "稳健概率")
+        self.assertEqual(prediction["analysis"]["strategy_document"], "rules/strategies/kimi.md")
         self.assertAlmostEqual(prediction["probability_home"] + prediction["probability_draw"] +
                                prediction["probability_away"], 1.0, places=7)
         self.assertEqual(len(prediction["top_scores"]), 5)
         self.assertEqual(predictor.predict_all(as_of="2099-10-24T08:00:00+00:00"), [])
         predictor.predict_all(refresh=True, as_of="2099-10-24T09:00:00+00:00")
+        other = FootballPredictor(self.db, ai_model="chatgpt").predict_all(as_of="2099-10-24T09:00:00+00:00")
+        self.assertEqual(other[0]["strategy_category"], "市场对照")
         with Database(self.db).connect() as conn:
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0], 2)
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0], 3)
+            self.assertEqual(conn.execute("SELECT COUNT(DISTINCT ai_model) FROM predictions").fetchone()[0], 2)
+        paths = ReportGenerator(self.db, self.root / "reports").generate_daily_report("2099-10-25")
+        report = json.loads(Path(paths["json"]).read_text(encoding="utf-8"))
+        self.assertEqual(report["match_count"], 1)
+        self.assertEqual(report["prediction_count"], 2)
+        self.assertEqual(report["ai_models"], ["chatgpt", "kimi"])
+
+    def test_available_ai_strategies_have_distinct_categories(self):
+        strategies = available_ai_strategies()
+        self.assertEqual({item["ai_model"] for item in strategies}, {"kimi", "chatgpt", "claude", "gemini"})
+        self.assertEqual(len({item["strategy_id"] for item in strategies}), 4)
+        self.assertEqual(len({item["strategy_category"] for item in strategies}), 4)
+        self.assertTrue(all(len(item["document_sha256"]) == 64 for item in strategies))
 
     def test_future_features_are_excluded(self):
         feature_file = self.root / "features.json"
@@ -115,6 +134,19 @@ class PipelineTest(unittest.TestCase):
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM results").fetchone()[0], 1)
             self.assertEqual(migrated.execute("SELECT COUNT(*) FROM predictions").fetchone()[0], 0)
             self.assertEqual(migrated.execute("SELECT business_date FROM fixtures").fetchone()[0], "2026-01-01")
+
+    def test_existing_prediction_table_is_classified_as_kimi(self):
+        legacy = self.root / "old-predictions.db"
+        conn = sqlite3.connect(legacy)
+        conn.execute("CREATE TABLE predictions(id INTEGER PRIMARY KEY,fixture_key TEXT,model_version TEXT,predicted_at TEXT)")
+        conn.execute("INSERT INTO predictions VALUES(1,'old-fixture','poisson-dc-v1','2026-11-08T00:00:00+00:00')")
+        conn.commit()
+        conn.close()
+        Database(legacy).initialize()
+        with Database(legacy).connect() as migrated:
+            row = migrated.execute("SELECT ai_model,strategy_id,strategy_category FROM predictions").fetchone()
+            self.assertEqual(tuple(row), ("kimi", "kimi-probability-v1", "稳健概率"))
+            self.assertEqual(migrated.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0], "4")
 
     def _key(self):
         with Database(self.db).connect() as conn:

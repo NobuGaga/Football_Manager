@@ -9,8 +9,8 @@ def export_miniprogram_report(report_path: str | Path, output_path: str | Path) 
     output_path = Path(output_path)
     report = json.loads(report_path.read_text(encoding="utf-8"))
     matches = report.get("matches", [])
-    if report.get("match_count") != len(matches):
-        raise ValueError("每日报告比赛数量与明细不一致，停止生成小程序数据")
+    if report.get("prediction_count", len(matches)) != len(matches):
+        raise ValueError("每日报告策略数量与明细不一致，停止生成小程序数据")
 
     compact_matches = []
     for match in matches:
@@ -31,6 +31,9 @@ def export_miniprogram_report(report_path: str | Path, output_path: str | Path) 
             "method": match.get("analysis", {}).get("method"),
             "riskFlags": match.get("risk_flags", []),
             "modelVersion": match.get("model_version"),
+            "aiModel": match.get("ai_strategy", {}).get("ai_model", "kimi"),
+            "strategyId": match.get("ai_strategy", {}).get("strategy_id", "kimi-probability-v1"),
+            "strategyCategory": match.get("ai_strategy", {}).get("category", "稳健概率"),
             "predictedAt": match.get("predicted_at"),
             "actualScore": match.get("actual_score"),
         })
@@ -38,7 +41,9 @@ def export_miniprogram_report(report_path: str | Path, output_path: str | Path) 
     payload = {
         "reportDate": report["report_date"],
         "generatedAt": report["generated_at"],
-        "matchCount": len(compact_matches),
+        "matchCount": report["match_count"],
+        "predictionCount": len(compact_matches),
+        "aiModels": report.get("ai_models", ["kimi"]),
         "disclaimer": report["disclaimer"],
         "matches": compact_matches,
     }

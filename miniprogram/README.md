@@ -28,6 +28,8 @@ bash scripts/daily_automation.sh
 
 执行顺序为：生成每日报告 → 导出紧凑的小程序数据 → 将数据库、报告和 `miniprogram/data/daily-report.js` 提交并推送 → 运行小程序测试 → 上传体验版。上传备注包含报告日期，默认使用固定 `CI 机器人 1`。
 
+`AI_MODEL` 选择 `rules/strategies/` 中的策略分类，默认 `kimi`。每日页面显示每条记录的 AI 模型和分类；同一场比赛的多个 AI 策略记录会分别保留。项目不调用外部足球数据 API。
+
 - `DAILY_NO_GIT=1`：手动验收，只生成报告和小程序数据，不提交、不推送、不上传。
 - `DAILY_MINIPROGRAM_UPLOAD=0`：正式任务保留报告与 Git 推送，但显式关闭小程序上传。
 - `NODE_BIN`：可选，指定 Node.js 可执行文件，默认是 `node`。

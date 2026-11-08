@@ -57,18 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
     features.add_argument("file")
     features.add_argument("--source", default="manual_features")
 
-    enrich = sub.add_parser("enrich", help="使用 API-Football 补充赛前特征")
-    enrich.add_argument("--date", required=True)
-
-    sync_results = sub.add_parser("sync-results", help="使用 API-Football 回填指定日期的已完结赛果")
-    sync_results.add_argument("--date", required=True)
-
-    predict = sub.add_parser("predict", help="生成版本化概率和比分推断")
+    predict = sub.add_parser("predict", help="按项目 AI 策略文档生成版本化概率和比分推断")
     predict.add_argument("--date")
     predict.add_argument("--refresh", action="store_true", help="临场更新：追加新推断，保留初版")
     predict.add_argument("--as-of", help="历史模拟的推断时间 ISO 8601；不得晚于开赛时间")
+    predict.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"), help="AI 策略分类，默认 kimi")
+    sub.add_parser("ai-strategies", help="列出项目内可用的 AI 预测策略分类")
 
-    results = sub.add_parser("import-results", help="导入实际比分并关联对阵")
+    results = sub.add_parser("import-results", help="从本地赛果文件导入实际比分并关联对阵")
     results.add_argument("file")
     results.add_argument("--source", default="manual_results")
     sub.add_parser("check", help="核对所有已出赛果的推断")
@@ -91,22 +87,22 @@ def build_parser() -> argparse.ArgumentParser:
     backtest.add_argument("--league")
     backtest.add_argument("--output")
 
-    sub.add_parser("review-queue", help="列出需要人工确认的名称或外部比赛匹配")
+    sub.add_parser("review-queue", help="列出历史遗留的待确认名称或比赛匹配")
 
-    all_cmd = sub.add_parser("all", help="对阵导入/抓取、推断和每日报告")
+    all_cmd = sub.add_parser("all", help="对阵导入/抓取、策略推断和每日报告")
     all_cmd.add_argument("--date", required=True)
     all_cmd.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     all_cmd.add_argument("--timezone", default="Asia/Shanghai")
     all_cmd.add_argument("--output-dir", default="reports")
+    all_cmd.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
 
-    daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、推断、回测和 Git 推送全流程")
+    daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、策略推断、回测和 Git 推送全流程")
     daily.add_argument("--date", help="体彩营业日，默认 Asia/Shanghai 今天")
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
     daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
-    daily.add_argument("--results", help="昨日赛果文件；优先于 API 同步")
+    daily.add_argument("--results", help="昨日赛果文件")
     daily.add_argument("--output-dir", default="reports")
-    daily.add_argument("--enrich", action="store_true", help="使用 API-Football 补充今日赛前特征")
-    daily.add_argument("--sync-results", action="store_true", help="使用 API-Football 回填昨日赛果")
+    daily.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
     daily.add_argument("--refresh", action="store_true", help="追加临场推断版本")
     daily.add_argument("--require-results", action="store_true", help="昨日有比赛但未可靠回填时中止")
     daily.add_argument("--pull", action="store_true", help="开始前 git pull --rebase")
@@ -132,14 +128,11 @@ def main(argv: list[str] | None = None) -> int:
         print_result(AliasImporter(db).import_file(args.file))
     elif args.command == "import-features":
         print_result(FeatureImporter(db).import_file(args.file, args.source))
-    elif args.command == "enrich":
-        from providers import APIFootballEnricher
-        print_result(APIFootballEnricher(db).enrich(args.date))
-    elif args.command == "sync-results":
-        from providers import APIFootballEnricher
-        print_result(APIFootballEnricher(db).sync_results(args.date))
+    elif args.command == "ai-strategies":
+        from ai_strategies import available_ai_strategies
+        print_result(available_ai_strategies())
     elif args.command == "predict":
-        predictions = FootballPredictor(db).predict_all(args.date, args.refresh, args.as_of)
+        predictions = FootballPredictor(db, ai_model=args.ai_model).predict_all(args.date, args.refresh, args.as_of)
         print(f"新增 {len(predictions)} 条推断；既有推断未被覆盖")
     elif args.command == "import-results":
         print_result(ResultImporter(db).import_file(args.file, args.source))
@@ -176,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
             print_result(FixtureImporter(db).import_file(args.fixtures, args.date, timezone_name=args.timezone))
         else:
             SportteryScraper(db).fetch_daily_matches(args.date)
-        predictions = FootballPredictor(db).predict_all(args.date)
+        predictions = FootballPredictor(db, ai_model=args.ai_model).predict_all(args.date)
         print(f"新增 {len(predictions)} 条推断")
         print_result(ReportGenerator(db, args.output_dir).generate_daily_report(args.date))
     elif args.command == "daily":
@@ -190,8 +183,8 @@ def main(argv: list[str] | None = None) -> int:
             output_dir = repo_root / output_dir
         status = DailyAutomation(repo_root, db_path, output_dir).run(
             date=args.date, results_date=args.results_date, fixtures=args.fixtures, results=args.results,
-            enrich=args.enrich, sync_results=args.sync_results, refresh=args.refresh,
-            require_results=args.require_results, pull=args.pull, push=args.push,
+            refresh=args.refresh, require_results=args.require_results, pull=args.pull, push=args.push,
+            ai_model=args.ai_model,
         )
         print(Path(status["summary_file"]).read_text(encoding="utf-8") if Path(status["summary_file"]).is_absolute()
               else (repo_root / status["summary_file"]).read_text(encoding="utf-8"))

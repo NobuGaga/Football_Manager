@@ -22,14 +22,14 @@ class ReportGenerator:
 
     def daily_items(self, date: str) -> list[dict]:
         with self.db.connect() as conn:
-            rows = conn.execute("""SELECT f.*,p.id AS prediction_id,p.model_version,p.predicted_at,p.input_as_of,
-                p.probability_home,p.probability_draw,p.probability_away,p.expected_home_goals,p.expected_away_goals,
-                p.top_scores_json,p.score_probabilities_json,p.data_completeness,p.risk_flags_json,p.analysis_json,
-                r.actual_score,r.outcome,r.review_note
+            rows = conn.execute("""SELECT f.*,p.id AS prediction_id,p.model_version,p.ai_model,p.strategy_id,
+                p.strategy_category,p.predicted_at,p.input_as_of,p.probability_home,p.probability_draw,p.probability_away,
+                p.expected_home_goals,p.expected_away_goals,p.top_scores_json,p.score_probabilities_json,
+                p.data_completeness,p.risk_flags_json,p.analysis_json,r.actual_score,r.outcome,r.review_note
                 FROM fixtures f JOIN predictions p ON p.fixture_key=f.fixture_key
                 LEFT JOIN results r ON r.fixture_key=f.fixture_key
-                WHERE f.business_date=? ORDER BY f.start_time_utc,f.match_code,p.predicted_at""", (date,)).fetchall()
-        latest: dict[str, dict] = {}
+                WHERE f.business_date=? ORDER BY f.start_time_utc,f.match_code,p.ai_model,p.predicted_at""", (date,)).fetchall()
+        latest: dict[tuple[str, str], dict] = {}
         for row in rows:
             item = dict(row)
             start = datetime.fromisoformat(item["start_time_utc"]).astimezone(ZoneInfo(item["timezone"]))
@@ -48,12 +48,14 @@ class ReportGenerator:
                 "top_scores": top_scores,
                 "analysis": analysis,
                 "risk_flags": json.loads(item.pop("risk_flags_json")),
+                "ai_strategy": {"ai_model": item["ai_model"], "strategy_id": item["strategy_id"],
+                                "category": item["strategy_category"]},
                 "model_info": {"version": item["model_version"], "predicted_at": item["predicted_at"]},
                 "post_match": {"actual_score": item["actual_score"], "outcome": item["outcome"],
                                "review_note": item["review_note"]},
             })
-            latest[item["fixture_key"]] = item
-        return list(latest.values())
+            latest[(item["fixture_key"], item["ai_model"])] = item
+        return sorted(latest.values(), key=lambda item: (item["start_time_utc"], item["match_code"], item["ai_model"]))
 
     def generate_daily_report(self, date: str) -> dict[str, str]:
         items = self.daily_items(date)
@@ -62,7 +64,9 @@ class ReportGenerator:
         csv_path = self.output_dir / f"{stem}.csv"
         md_path = self.output_dir / f"{stem}.md"
         xlsx_path = self.output_dir / f"{stem}.xlsx"
-        document = {"report_date": date, "generated_at": utc_now(), "match_count": len(items),
+        document = {"report_date": date, "generated_at": utc_now(),
+                    "match_count": len({item["fixture_key"] for item in items}), "prediction_count": len(items),
+                    "ai_models": sorted({item["ai_model"] for item in items}),
                     "disclaimer": "概率估计仅供分析，不构成收益保证或确定性投注建议。", "matches": items}
         json_path.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
         rows = [self._flat_item(item) for item in items]
@@ -98,6 +102,7 @@ class ReportGenerator:
             "主队预期进球": expected["home"], "客队预期进球": expected["away"],
             "高概率比分": "/".join(f"{v['score']}({v['probability']:.2%})" for v in item["top_scores"]),
             "风险提示": "；".join(item["risk_flags"]), "模型版本": item["model_version"],
+            "AI 模型": item["ai_model"], "AI 策略分类": item["strategy_category"], "策略 ID": item["strategy_id"],
             "推断生成时间": item["predicted_at"], "实际比分": item["actual_score"] or "",
             "复盘备注": item["review_note"] or "",
         }
@@ -105,7 +110,9 @@ class ReportGenerator:
     @staticmethod
     def _daily_markdown(document: dict) -> str:
         lines = [f"# 足球经理的推断（{document['report_date']}）", "",
-                 f"生成时间：{document['generated_at']}  ", f"比赛数量：{document['match_count']}", "",
+                 f"生成时间：{document['generated_at']}",
+                 f"比赛数量：{document['match_count']}；策略记录：{document['prediction_count']}",
+                 f"AI 分类：{'、'.join(document['ai_models']) or '无'}", "",
                  "> 比分与胜平负均为概率估计；数据不足时降低结论强度，不构成收益保证。", ""]
         if not document["matches"]:
             lines.append("当日暂无已保存的推断记录。")
@@ -113,7 +120,8 @@ class ReportGenerator:
             basic = item["basic_info"]
             probs = item["probabilities"]
             expected = item["expected_goals"]
-            lines += [f"## {basic['match_code']}｜{basic['league']}｜{basic['home_team']} VS {basic['away_team']}", "",
+            strategy = item["ai_strategy"]
+            lines += [f"## {basic['match_code']}｜{basic['league']}｜{basic['home_team']} VS {basic['away_team']}｜{strategy['ai_model']}·{strategy['category']}", "",
                       f"- **开赛时间**：{item['start_time_local']}（{item['timezone']}）",
                       f"- **数据状态**：完整度 {item['data_completeness']:.0%}；输入截至 {item['input_as_of']}；来源 {item['data_status']['feature_source']}",
                       f"- **胜平负概率**：主胜 {probs['home_win']:.1%}／平局 {probs['draw']:.1%}／客胜 {probs['away_win']:.1%}",
@@ -121,6 +129,7 @@ class ReportGenerator:
                       "- **高概率比分**：" + "；".join(f"{v['score']}（{v['probability']:.1%}）" for v in item["top_scores"]),
                       f"- **分析依据**：{item['analysis']['method']}；赛前特征 {len(item['analysis']['evidence'])} 项",
                       "- **风险提示**：" + ("；".join(item["risk_flags"]) if item["risk_flags"] else "仍需关注临场阵容、轮换与赛程变化"),
+                      f"- **AI 策略**：{strategy['ai_model']}／{strategy['category']}／{strategy['strategy_id']}",
                       f"- **模型信息**：{item['model_version']}；生成于 {item['predicted_at']}",
                       f"- **赛后字段**：实际比分 {item['actual_score'] or '待补录'}；复盘 {item['review_note'] or '待补录'}", ""]
         return "\n".join(lines)

@@ -14,17 +14,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from automation import DailyAutomation
 from database import Database
 from importers import FixtureImporter
-from providers import APIFootballEnricher
-
-
-class FakeResultsClient:
-    def get(self, endpoint: str, **params):
-        assert endpoint == "fixtures"
-        return [{
-            "fixture": {"id": 9001, "date": "2099-10-24T10:00:00+00:00", "status": {"short": "FT"}},
-            "teams": {"home": {"id": 1, "name": "Home"}, "away": {"id": 2, "name": "Away"}},
-            "goals": {"home": 2, "away": 1},
-        }]
 
 
 class AutomationTest(unittest.TestCase):
@@ -34,19 +23,6 @@ class AutomationTest(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
-
-    def test_api_results_are_synced_only_for_finished_match(self):
-        db = self.root / "football.db"
-        fixture_file = self.root / "fixture.json"
-        fixture_file.write_text(json.dumps([{
-            "比赛编号": "周六001", "联赛": "测试联赛", "主队": "主队A", "客队": "客队B",
-            "开赛时间": "2099-10-24 18:00", "external_provider": "api-football", "external_fixture_id": "9001",
-        }], ensure_ascii=False), encoding="utf-8")
-        FixtureImporter(db).import_file(fixture_file)
-        result = APIFootballEnricher(db, client=FakeResultsClient()).sync_results("2099-10-24")
-        self.assertEqual(result["imported"], 1)
-        with Database(db).connect() as conn:
-            self.assertEqual(conn.execute("SELECT actual_score FROM results").fetchone()[0], "2:1")
 
     def test_local_daily_pipeline_generates_chinese_summary(self):
         db = self.root / "football.db"

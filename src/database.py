@@ -7,7 +7,7 @@ from pathlib import Path
 
 from utils import fixture_key, local_date, normalize_score, outcome, utc_now
 
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -88,6 +88,9 @@ CREATE TABLE IF NOT EXISTS predictions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fixture_key TEXT NOT NULL,
     model_version TEXT NOT NULL,
+    ai_model TEXT NOT NULL DEFAULT 'kimi',
+    strategy_id TEXT NOT NULL DEFAULT 'kimi-probability-v1',
+    strategy_category TEXT NOT NULL DEFAULT '稳健概率',
     predicted_at TEXT NOT NULL,
     input_as_of TEXT NOT NULL,
     probability_home REAL NOT NULL,
@@ -151,8 +154,23 @@ class Database:
                 conn.execute("ALTER TABLE fixtures ADD COLUMN business_date TEXT")
             self._migrate_legacy_matches(conn)
             conn.execute("UPDATE fixtures SET business_date=match_date WHERE business_date IS NULL OR business_date=''")
+            self._migrate_prediction_ai(conn)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_fixtures_business_date ON fixtures(business_date, start_time_utc)")
             conn.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
+
+    @staticmethod
+    def _migrate_prediction_ai(conn: sqlite3.Connection) -> None:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(predictions)")}
+        migrations = {
+            "ai_model": "kimi",
+            "strategy_id": "kimi-probability-v1",
+            "strategy_category": "稳健概率",
+        }
+        for name, default in migrations.items():
+            if name not in columns:
+                conn.execute(f"ALTER TABLE predictions ADD COLUMN {name} TEXT NOT NULL DEFAULT '{default}'")
+            conn.execute(f"UPDATE predictions SET {name}=? WHERE {name} IS NULL OR {name}=''", (default,))
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_predictions_ai ON predictions(fixture_key, ai_model, strategy_id, predicted_at)")
 
     def _migrate_legacy_matches(self, conn: sqlite3.Connection) -> None:
         if conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='matches'").fetchone() is None:
