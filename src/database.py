@@ -7,7 +7,7 @@ from pathlib import Path
 
 from utils import fixture_key, local_date, normalize_score, outcome, utc_now
 
-SCHEMA_VERSION = "4"
+SCHEMA_VERSION = "5"
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -112,10 +112,49 @@ CREATE TABLE IF NOT EXISTS results (
     away_goals INTEGER NOT NULL,
     outcome TEXT NOT NULL,
     actual_score TEXT NOT NULL,
+    result_type TEXT,
     recorded_at TEXT NOT NULL,
     source TEXT NOT NULL,
     review_note TEXT,
     FOREIGN KEY(fixture_key) REFERENCES fixtures(fixture_key)
+);
+CREATE TABLE IF NOT EXISTS legacy_score_predictions (
+    fixture_key TEXT PRIMARY KEY,
+    ai_model TEXT NOT NULL DEFAULT 'kimi',
+    predicted_scores_json TEXT NOT NULL,
+    declared_result_type TEXT,
+    declared_ai_hit INTEGER,
+    source TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(fixture_key) REFERENCES fixtures(fixture_key)
+);
+CREATE TABLE IF NOT EXISTS user_bets (
+    fixture_key TEXT PRIMARY KEY,
+    prediction_id INTEGER,
+    strategy_version TEXT,
+    outcome_selection TEXT,
+    score_selections_json TEXT NOT NULL DEFAULT '[]',
+    stake REAL,
+    odds REAL,
+    ticket_id TEXT,
+    placed_at TEXT,
+    source TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(fixture_key) REFERENCES fixtures(fixture_key),
+    FOREIGN KEY(prediction_id) REFERENCES predictions(id)
+);
+CREATE TABLE IF NOT EXISTS strategy_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fixture_key TEXT NOT NULL,
+    prediction_id INTEGER NOT NULL,
+    strategy_version TEXT NOT NULL,
+    policy_sha256 TEXT NOT NULL,
+    history_sha256 TEXT NOT NULL,
+    decision_json TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    FOREIGN KEY(fixture_key) REFERENCES fixtures(fixture_key),
+    FOREIGN KEY(prediction_id) REFERENCES predictions(id),
+    UNIQUE(prediction_id, strategy_version, policy_sha256, history_sha256)
 );
 CREATE TABLE IF NOT EXISTS match_review_queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,6 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_fixtures_status ON fixtures(match_status);
 CREATE INDEX IF NOT EXISTS idx_snapshots_fixture ON fixture_snapshots(fixture_key, captured_at);
 CREATE INDEX IF NOT EXISTS idx_features_cutoff ON match_features(fixture_key, as_of);
 CREATE INDEX IF NOT EXISTS idx_predictions_fixture ON predictions(fixture_key, predicted_at);
+CREATE INDEX IF NOT EXISTS idx_strategy_decisions_fixture ON strategy_decisions(fixture_key, generated_at);
 """
 
 
@@ -152,6 +192,7 @@ class Database:
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(fixtures)")}
             if "business_date" not in columns:
                 conn.execute("ALTER TABLE fixtures ADD COLUMN business_date TEXT")
+            self._migrate_result_types(conn)
             self._migrate_legacy_matches(conn)
             conn.execute("UPDATE fixtures SET business_date=match_date WHERE business_date IS NULL OR business_date=''")
             self._migrate_prediction_ai(conn)
@@ -171,6 +212,22 @@ class Database:
                 conn.execute(f"ALTER TABLE predictions ADD COLUMN {name} TEXT NOT NULL DEFAULT '{default}'")
             conn.execute(f"UPDATE predictions SET {name}=? WHERE {name} IS NULL OR {name}=''", (default,))
         conn.execute("CREATE INDEX IF NOT EXISTS idx_predictions_ai ON predictions(fixture_key, ai_model, strategy_id, predicted_at)")
+
+    @staticmethod
+    def _migrate_result_types(conn: sqlite3.Connection) -> None:
+        from selections import classify_result_type
+
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(results)")}
+        if "result_type" not in columns:
+            conn.execute("ALTER TABLE results ADD COLUMN result_type TEXT")
+        rows = conn.execute("""SELECT r.fixture_key,r.home_goals,r.away_goals,r.result_type,
+            f.odds_json,f.handicap FROM results r JOIN fixtures f ON f.fixture_key=r.fixture_key
+            WHERE r.result_type IS NULL OR r.result_type=''""").fetchall()
+        for row in rows:
+            result_type = classify_result_type(json.loads(row["odds_json"] or "{}"), row["home_goals"],
+                                               row["away_goals"], row["handicap"])
+            if result_type:
+                conn.execute("UPDATE results SET result_type=? WHERE fixture_key=?", (result_type, row["fixture_key"]))
 
     def _migrate_legacy_matches(self, conn: sqlite3.Connection) -> None:
         if conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='matches'").fetchone() is None:
@@ -205,10 +262,15 @@ class Database:
             ))
             if row["actual_result"]:
                 try:
+                    from selections import classify_result_type
+
                     score = normalize_score(row["actual_result"])
                     home, away = map(int, score.split(":"))
-                    conn.execute("INSERT OR IGNORE INTO results VALUES(?,?,?,?,?,?,?,NULL)", (
-                        key, home, away, outcome(home, away), score, now, "legacy_matches",
+                    result_type = classify_result_type(odds, home, away, row["handicap"])
+                    conn.execute("""INSERT OR IGNORE INTO results(
+                        fixture_key,home_goals,away_goals,outcome,actual_score,result_type,recorded_at,source,review_note
+                    ) VALUES(?,?,?,?,?,?,?,?,NULL)""", (
+                        key, home, away, outcome(home, away), score, result_type, now, "legacy_matches",
                     ))
                 except ValueError:
                     pass

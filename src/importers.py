@@ -232,6 +232,8 @@ class ResultImporter(BaseImporter):
         return self.import_rows(rows, source)
 
     def import_rows(self, rows: list[dict], source: str = "manual_results") -> dict:
+        from selections import classify_result_type, normalize_result_type
+
         count, errors = 0, []
         with self.db.connect() as conn:
             for number, row in enumerate(rows, 2):
@@ -239,13 +241,23 @@ class ResultImporter(BaseImporter):
                     key = self._locate_fixture(conn, row)
                     score = normalize_score(first(row, "实际比分", "actual_score", "actual_result"))
                     home, away = map(int, score.split(":"))
+                    fixture = conn.execute("SELECT odds_json,handicap FROM fixtures WHERE fixture_key=?", (key,)).fetchone()
+                    odds = json.loads(fixture["odds_json"] or "{}")
+                    computed_type = classify_result_type(odds, home, away, fixture["handicap"])
+                    declared_text = clean_text(first(row, "结果类型", "result_type"))
+                    declared_type = normalize_result_type(declared_text)
+                    if declared_text and not declared_type:
+                        raise ValueError(f"无效结果类型：{declared_text}")
+                    if declared_type and computed_type and declared_type != computed_type:
+                        raise ValueError(f"结果类型不一致：填写 {declared_type}，按赛果和赔率应为 {computed_type}")
+                    result_type = computed_type or declared_type or None
                     conn.execute("""INSERT INTO results(
-                        fixture_key,home_goals,away_goals,outcome,actual_score,recorded_at,source,review_note
-                    ) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(fixture_key) DO UPDATE SET
+                        fixture_key,home_goals,away_goals,outcome,actual_score,result_type,recorded_at,source,review_note
+                    ) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(fixture_key) DO UPDATE SET
                         home_goals=excluded.home_goals,away_goals=excluded.away_goals,outcome=excluded.outcome,
-                        actual_score=excluded.actual_score,recorded_at=excluded.recorded_at,
+                        actual_score=excluded.actual_score,result_type=excluded.result_type,recorded_at=excluded.recorded_at,
                         source=excluded.source,review_note=excluded.review_note""", (
-                        key, home, away, outcome(home, away), score, utc_now(), source,
+                        key, home, away, outcome(home, away), score, result_type, utc_now(), source,
                         clean_text(first(row, "复盘备注", "review_note")) or None,
                     ))
                     conn.execute("UPDATE fixtures SET match_status='finished',updated_at=? WHERE fixture_key=?", (utc_now(), key))

@@ -67,7 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
     results = sub.add_parser("import-results", help="从本地赛果文件导入实际比分并关联对阵")
     results.add_argument("file")
     results.add_argument("--source", default="manual_results")
-    sub.add_parser("check", help="核对所有已出赛果的推断")
+    check = sub.add_parser("check", help="核对 AI 与用户选择，并重新输出预测核对表")
+    check.add_argument("--date", help="只输出指定营业日的核对表")
+    check.add_argument("--output-dir", default="reports")
 
     report = sub.add_parser("report", help="指定日期生成每日报告；不指定则生成回测 Excel")
     report.add_argument("--date")
@@ -76,6 +78,38 @@ def build_parser() -> argparse.ArgumentParser:
     export = sub.add_parser("export-kimi", help="生成供 Kimi 读取的每日 JSON/CSV/Excel/Markdown")
     export.add_argument("--date", required=True)
     export.add_argument("--output-dir", default="reports")
+
+    checklist = sub.add_parser("export-checklist", help="输出含原始赔率和用户选择的预测核对表")
+    checklist.add_argument("--date", required=True)
+    checklist.add_argument("--output-dir", default="reports")
+    checklist.add_argument("--output")
+    checklist.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
+
+    strategy = sub.add_parser("analyze-strategy", help="生成双选比分、正路与偏态方向策略")
+    strategy.add_argument("--date", required=True)
+    strategy.add_argument("--output-dir", default="reports")
+    strategy.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
+
+    checklist_import = sub.add_parser("import-checklist", help="导入实际下注与赛果，回写核对表和历史数据")
+    checklist_import.add_argument("file")
+    checklist_import.add_argument("--output-dir", default="reports")
+
+    checklist_validation = sub.add_parser("validate-checklist", help="独立重算并校验预测核对表全部结论")
+    checklist_validation.add_argument("file")
+    checklist_validation.add_argument("--output")
+
+    history_import = sub.add_parser("import-history", help="迁移旧版足球预测历史数据，不伪造概率")
+    history_import.add_argument("file")
+    history_import.add_argument("--year", type=int, help="MM-DD 比赛时间使用的年份；有完整年份时可省略")
+    history_import.add_argument("--output-dir", default="reports")
+
+    history_export = sub.add_parser("export-history", help="从数据库去重并导出足球预测历史数据 CSV")
+    history_export.add_argument("--output", default="reports/足球预测历史数据.csv")
+
+    strategy_validation = sub.add_parser("validate-strategy", help="校验策略声明、历史命中与偏态候选")
+    strategy_validation.add_argument("--date")
+    strategy_validation.add_argument("--output-dir", default="reports")
+    strategy_validation.add_argument("--update-policy", action="store_true", help="将历史样本校准元数据写回策略 MD")
 
     mini_export = sub.add_parser("export-miniprogram", help="将每日 JSON 报告打包为小程序数据")
     mini_export.add_argument("--date", required=True)
@@ -96,7 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
     all_cmd.add_argument("--output-dir", default="reports")
     all_cmd.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
 
-    daily = sub.add_parser("daily", help="Kimi Claw 每日赛果、策略推断、回测和 Git 推送全流程")
+    daily = sub.add_parser("daily", help="每日赛果、推断、双选策略、核对表、历史和 Git 推送全流程")
     daily.add_argument("--date", help="体彩营业日，默认 Asia/Shanghai 今天")
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
     daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
@@ -137,13 +171,60 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "import-results":
         print_result(ResultImporter(db).import_file(args.file, args.source))
     elif args.command == "check":
-        print(f"已核对 {len(ResultChecker(db).check_all())} 条版本化推断")
+        from checklist import ChecklistGenerator
+
+        checked = len(ResultChecker(db).check_all())
+        if args.date:
+            dates = [args.date]
+        else:
+            with Database(db).connect() as conn:
+                dates = [row["business_date"] for row in conn.execute("""SELECT DISTINCT f.business_date
+                    FROM predictions p JOIN fixtures f ON f.fixture_key=p.fixture_key
+                    JOIN results r ON r.fixture_key=p.fixture_key ORDER BY f.business_date""")]
+        generator = ChecklistGenerator(db, args.output_dir)
+        paths = [generator.generate(date)["csv"] for date in dates]
+        print_result({"predictions_checked": checked, "checklists": paths})
     elif args.command in {"report", "export-kimi"}:
         reporter = ReportGenerator(db, args.output_dir)
         if args.command == "export-kimi" or args.date:
             print_result(reporter.generate_daily_report(args.date))
         else:
             print(f"回测报表：{reporter.generate_all_reports()}")
+    elif args.command == "export-checklist":
+        from checklist import ChecklistGenerator
+        print_result(ChecklistGenerator(db, args.output_dir, args.ai_model).generate(args.date, args.output))
+    elif args.command == "analyze-strategy":
+        from strategy_engine import StrategyEngine
+        print_result(StrategyEngine(db, args.output_dir, ai_model=args.ai_model).generate(args.date))
+    elif args.command == "import-checklist":
+        from checklist import ChecklistImporter
+        print_result(ChecklistImporter(db).import_file(args.file, args.output_dir))
+    elif args.command == "validate-checklist":
+        from checklist import ChecklistValidator
+        validator = ChecklistValidator()
+        result = validator.write_report(args.file, args.output) if args.output else validator.validate_file(args.file)
+        print_result(result)
+        if not result["valid"]:
+            raise ValueError(f"预测核对表校验失败：{result['error_count']} 个错误")
+    elif args.command == "import-history":
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from history import HistoryManager
+        manager = HistoryManager(db)
+        result = manager.import_file(args.file, args.year)
+        result["export"] = manager.export(Path(args.output_dir) / "足球预测历史数据.csv")
+        report_date = datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
+        validation_path = Path(args.output_dir) / f"历史数据导入校验_{report_date}.json"
+        validation_path.parent.mkdir(parents=True, exist_ok=True)
+        result["validation_report"] = str(validation_path)
+        validation_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print_result(result)
+    elif args.command == "export-history":
+        from history import HistoryManager
+        print_result(HistoryManager(db).export(args.output))
+    elif args.command == "validate-strategy":
+        from strategy_engine import StrategyValidator
+        print_result(StrategyValidator(db, args.output_dir).generate(args.date, args.update_policy))
     elif args.command == "export-miniprogram":
         repo_root = Path(__file__).resolve().parent
         report_path = Path(args.report) if args.report else repo_root / "reports" / f"足球经理的推断_{args.date}.json"

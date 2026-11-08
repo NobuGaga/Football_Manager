@@ -146,7 +146,7 @@ class PipelineTest(unittest.TestCase):
         with Database(legacy).connect() as migrated:
             row = migrated.execute("SELECT ai_model,strategy_id,strategy_category FROM predictions").fetchone()
             self.assertEqual(tuple(row), ("kimi", "kimi-probability-v1", "稳健概率"))
-            self.assertEqual(migrated.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0], "4")
+            self.assertEqual(migrated.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()[0], "5")
 
     def _key(self):
         with Database(self.db).connect() as conn:

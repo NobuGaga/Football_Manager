@@ -96,6 +96,16 @@ class DailyAutomation:
             if require_results and (result_info.get("skipped") or result_info.get("imported", 0) == 0):
                 raise RuntimeError("require-results 已启用，但昨日赛果没有可靠回填")
             checked = len(ResultChecker(self.db_path).check_all())
+            from checklist import ChecklistGenerator
+            from history import HistoryManager
+            from strategy_engine import StrategyEngine, StrategyValidator
+
+            checklist_generator = ChecklistGenerator(self.db_path, self.output_dir, ai_model=ai_model)
+            checked_checklists = []
+            if result_info.get("imported", 0):
+                previous_checklist = checklist_generator.generate(previous_date)
+                if previous_checklist["rows"]:
+                    checked_checklists.append(previous_checklist["csv"])
 
             if fixtures:
                 fixture_info = FixtureImporter(self.db_path).import_file(fixtures, default_date=match_date)
@@ -111,6 +121,10 @@ class DailyAutomation:
             predictions = FootballPredictor(self.db_path, ai_model=ai_model).predict_all(match_date, refresh=refresh)
             reporter = ReportGenerator(self.db_path, self.output_dir)
             report_paths = reporter.generate_daily_report(match_date)
+            strategy_result = StrategyEngine(self.db_path, self.output_dir, ai_model=ai_model).generate(match_date)
+            checklist_result = checklist_generator.generate(match_date)
+            validation_result = StrategyValidator(self.db_path, self.output_dir).generate(match_date)
+            history_result = HistoryManager(self.db_path).export(self.output_dir / "足球预测历史数据.csv")
             miniprogram_data_path = export_miniprogram_report(report_paths["json"], self.miniprogram_data_path)
             backtest = Backtester(self.db_path).evaluate()
             backtest_path = self.output_dir / f"回测结果_{match_date}.json"
@@ -122,6 +136,12 @@ class DailyAutomation:
                 "results_imported": result_info.get("imported", 0), "predictions_checked": checked,
                 "new_predictions": len(predictions), "warnings": warnings,
                 "reports": {key: self._relative(path) for key, path in report_paths.items()},
+                "strategy_reports": {key: self._relative(strategy_result[key]) for key in ("json", "csv", "markdown")},
+                "checklist": self._relative(checklist_result["csv"]),
+                "checked_checklists": [self._relative(path) for path in checked_checklists],
+                "strategy_validation": self._relative(validation_result["json"]),
+                "history": self._relative(history_result["csv"]),
+                "history_rows": history_result["rows"],
                 "backtest": self._relative(backtest_path),
                 "miniprogram_data": self._relative(miniprogram_data_path),
             }
@@ -164,6 +184,10 @@ class DailyAutomation:
                  f"- 已核对推断版本：{status['predictions_checked']} 条",
                  f"- 今日新增推断：{status['new_predictions']} 条",
                  f"- 每日报告：{status['reports']['markdown']}",
+                 f"- 双选与方向策略：{status['strategy_reports']['markdown']}",
+                 f"- 预测核对表：{status['checklist']}",
+                 f"- 历史数据：{status['history']}（{status['history_rows']} 场）",
+                 f"- 策略校验：{status['strategy_validation']}",
                  f"- 小程序数据：{status['miniprogram_data']}",
                  f"- 回测结果：{status['backtest']}"]
         if overall.get("predictions"):
