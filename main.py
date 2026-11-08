@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from backtest import Backtester
 from database import Database
 from importers import AliasImporter, FeatureImporter, FixtureImporter, ResultImporter
+from miniprogram_export import export_miniprogram_report
 from predictor import FootballPredictor
 from reporter import ReportGenerator
 from result_checker import ResultChecker
@@ -79,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
     export = sub.add_parser("export-kimi", help="生成供 Kimi 读取的每日 JSON/CSV/Excel/Markdown")
     export.add_argument("--date", required=True)
     export.add_argument("--output-dir", default="reports")
+
+    mini_export = sub.add_parser("export-miniprogram", help="将每日 JSON 报告打包为小程序数据")
+    mini_export.add_argument("--date", required=True)
+    mini_export.add_argument("--report", help="每日 JSON 路径，默认读取 reports/ 下对应日期报告")
+    mini_export.add_argument("--output", default="miniprogram/data/daily-report.js")
 
     backtest = sub.add_parser("backtest", help="计算 Log Loss、Brier、校准和比分指标")
     backtest.add_argument("--model-version")
@@ -145,6 +151,13 @@ def main(argv: list[str] | None = None) -> int:
             print_result(reporter.generate_daily_report(args.date))
         else:
             print(f"回测报表：{reporter.generate_all_reports()}")
+    elif args.command == "export-miniprogram":
+        repo_root = Path(__file__).resolve().parent
+        report_path = Path(args.report) if args.report else repo_root / "reports" / f"足球经理的推断_{args.date}.json"
+        output_path = Path(args.output)
+        if not output_path.is_absolute():
+            output_path = repo_root / output_path
+        print(export_miniprogram_report(report_path, output_path))
     elif args.command == "backtest":
         result = Backtester(db).evaluate(args.model_version, args.league)
         if args.output:

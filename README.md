@@ -28,9 +28,11 @@ bash scripts/daily_automation.sh
 bash scripts/daily_automation.sh
 ```
 
-正式入口要求 Git 工作区干净，成功后只提交 `data/football.db` 和 `reports/`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。
+正式入口要求 Git 工作区干净，成功后提交 `data/football.db`、`reports/` 和打包后的 `miniprogram/data/daily-report.js`。配置 `API_FOOTBALL_KEY` 后会自动补充赛前特征并同步昨日已完结赛果；未配置时会在中文摘要中明确标记跳过。
 
-命令成功并完成 Git 推送后，Kimi Claw 读取当日 JSON 报告、运行状态和回测结果，按现行概率策略生成中文预测策略并推送到已配置频道。策略必须保留每场三向概率、数据完整度和风险，不得改写成确定性或收益承诺。cron 指令、策略表达、频道配置和故障处理见 `AGENTS.md` 与 `rules/football_manager_policy.md`，先手动验收再设置定时。
+每日报告会同步打包到小程序的“每日推断”页面。正式任务随后运行小程序测试并通过 CI 机器人 1 上传，持续更新体验版；`DAILY_NO_GIT=1` 手动验收不上传，`DAILY_MINIPROGRAM_UPLOAD=0` 可显式关闭上传。上传需要 Node.js、已安装的 `miniprogram-ci` 依赖，以及 Claw 环境中的 `WECHAT_APPID`、`WECHAT_PRIVATE_KEY`。
+
+命令成功、Git 推送和小程序上传完成后，Kimi Claw 读取当日 JSON 报告、运行状态和回测结果，按现行概率策略生成中文预测策略并推送到已配置频道。策略必须保留每场三向概率、数据完整度和风险，不得改写成确定性或收益承诺。cron 指令、策略表达、频道配置和故障处理见 `AGENTS.md` 与 `rules/football_manager_policy.md`，先手动验收再设置定时。
 
 ## 环境与安装
 

@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/overview/overview",
+    "pages/daily/daily",
     "pages/pipeline/pipeline",
     "pages/model/model",
     "pages/automation/automation",

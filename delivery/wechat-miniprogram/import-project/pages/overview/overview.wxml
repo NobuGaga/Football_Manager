@@ -13,7 +13,8 @@
   <view class="hero-description">从官方对阵到赛后回测，一条带时间边界、版本记录与安全约束的完整数据流水线。</view>
 
   <view class="hero-actions">
-    <button class="primary-button" bindtap="goPipeline">探索数据流水线<text class="button-arrow">→</text></button>
+    <button class="primary-button" bindtap="goDaily">查看每日推断<text class="button-arrow">→</text></button>
+    <button class="secondary-button" bindtap="goPipeline">探索数据流水线</button>
     <button class="secondary-button" bindtap="copyDailyCommand">复制每日命令</button>
   </view>
 

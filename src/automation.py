@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from backtest import Backtester
 from database import Database
 from importers import FixtureImporter, ResultImporter
+from miniprogram_export import export_miniprogram_report
 from predictor import FootballPredictor
 from reporter import ReportGenerator
 from result_checker import ResultChecker
@@ -45,7 +46,7 @@ class GitRepository:
 
     def commit_and_push(self, date: str, push: bool) -> str | None:
         # 只提交明确的数据产物，不暂存源码、凭证、缓存或人工未提交修改。
-        self._run("add", "-f", "--", "data/football.db", "reports")
+        self._run("add", "-f", "--", "data/football.db", "reports", "miniprogram/data/daily-report.js")
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=self.root).returncode == 0:
             return None
         self._run("-c", "user.name=Kimi Claw", "-c", "user.email=kimi-claw@localhost",
@@ -58,10 +59,12 @@ class GitRepository:
 
 class DailyAutomation:
     def __init__(self, repo_root: str | Path, db_path: str | Path | None = None,
-                 output_dir: str | Path | None = None):
+                 output_dir: str | Path | None = None, miniprogram_dir: str | Path | None = None):
         self.repo_root = Path(repo_root).resolve()
         self.db_path = Path(db_path) if db_path else self.repo_root / "data" / "football.db"
         self.output_dir = Path(output_dir) if output_dir else self.repo_root / "reports"
+        self.miniprogram_data_path = (Path(miniprogram_dir) if miniprogram_dir
+                                      else self.repo_root / "miniprogram") / "data" / "daily-report.js"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.git = GitRepository(self.repo_root)
 
@@ -127,6 +130,7 @@ class DailyAutomation:
             predictions = FootballPredictor(self.db_path).predict_all(match_date, refresh=refresh)
             reporter = ReportGenerator(self.db_path, self.output_dir)
             report_paths = reporter.generate_daily_report(match_date)
+            miniprogram_data_path = export_miniprogram_report(report_paths["json"], self.miniprogram_data_path)
             backtest = Backtester(self.db_path).evaluate()
             backtest_path = self.output_dir / f"回测结果_{match_date}.json"
             backtest_path.write_text(json.dumps(backtest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -138,6 +142,7 @@ class DailyAutomation:
                 "new_predictions": len(predictions), "warnings": warnings,
                 "reports": {key: self._relative(path) for key, path in report_paths.items()},
                 "backtest": self._relative(backtest_path),
+                "miniprogram_data": self._relative(miniprogram_data_path),
                 "enrichment": enrichment_info,
             }
             status_path = self.output_dir / f"每日运行状态_{match_date}.json"
@@ -179,6 +184,7 @@ class DailyAutomation:
                  f"- 已核对推断版本：{status['predictions_checked']} 条",
                  f"- 今日新增推断：{status['new_predictions']} 条",
                  f"- 每日报告：{status['reports']['markdown']}",
+                 f"- 小程序数据：{status['miniprogram_data']}",
                  f"- 回测结果：{status['backtest']}"]
         if overall.get("predictions"):
             lines += [f"- 胜平负准确率：{overall['outcome_accuracy']:.1%}",

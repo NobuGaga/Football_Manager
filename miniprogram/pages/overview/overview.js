@@ -18,6 +18,10 @@ Page({
     this.setData({ matrix });
   },
 
+  goDaily() {
+    wx.navigateTo({ url: '/pages/daily/daily' });
+  },
+
   goPipeline() {
     wx.switchTab({ url: '/pages/pipeline/pipeline' });
   },

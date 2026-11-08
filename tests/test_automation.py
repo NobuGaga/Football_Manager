@@ -51,7 +51,7 @@ class AutomationTest(unittest.TestCase):
     def test_local_daily_pipeline_generates_chinese_summary(self):
         db = self.root / "football.db"
         FixtureImporter(db).import_file(ROOT / "examples" / "fixtures.csv")
-        status = DailyAutomation(ROOT, db, self.root / "reports").run(
+        status = DailyAutomation(ROOT, db, self.root / "reports", miniprogram_dir=self.root / "miniprogram").run(
             date="2099-10-25", results_date="2099-10-25",
             fixtures=str(ROOT / "examples" / "fixtures.csv"),
             results=str(ROOT / "examples" / "results.csv"),
@@ -62,6 +62,10 @@ class AutomationTest(unittest.TestCase):
         self.assertIn("昨日赛果回填：1 场", summary)
         self.assertIn("今日新增推断：1 条", summary)
         self.assertTrue((self.root / "reports" / "回测结果_2099-10-25.json").exists())
+        mini_data = Path(status["miniprogram_data"]).read_text(encoding="utf-8")
+        self.assertIn('"reportDate": "2099-10-25"', mini_data)
+        self.assertIn('"matchCount": 1', mini_data)
+        self.assertNotIn("score_probabilities", mini_data)
 
     def test_cross_day_business_date_drives_whole_daily_pipeline(self):
         db = self.root / "football.db"
@@ -77,7 +81,7 @@ class AutomationTest(unittest.TestCase):
             "比赛编号": "周日001", "比赛日期": "2099-10-25", "主队": "主队A", "客队": "客队B",
             "实际比分": "2:1",
         }], ensure_ascii=False), encoding="utf-8")
-        status = DailyAutomation(ROOT, db, self.root / "reports").run(
+        status = DailyAutomation(ROOT, db, self.root / "reports", miniprogram_dir=self.root / "miniprogram").run(
             date="2099-10-25", results_date="2099-10-24",
             fixtures=str(fixture_file), results=str(result_file),
         )
@@ -118,6 +122,7 @@ class AutomationTest(unittest.TestCase):
         tracked = subprocess.check_output(["git", "-c", "core.quotepath=false", "--git-dir", str(remote), "ls-tree", "-r", "--name-only", "main"], text=True)
         self.assertIn("reports/每日中文摘要_2099-10-25.md", tracked)
         self.assertIn("data/football.db", tracked)
+        self.assertIn("miniprogram/data/daily-report.js", tracked)
 
     @staticmethod
     def _git(cwd: Path, *args: str):

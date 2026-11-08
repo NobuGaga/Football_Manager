@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const ci = require('miniprogram-ci');
+const { dailyReport } = require('../data/daily-report.js');
 
 function parseRobot(value) {
   const robot = Number(value || '1');
@@ -43,7 +44,7 @@ async function main() {
       privateKeyPath,
       ignores: ['node_modules/**/*', 'scripts/**/*'],
     });
-    const desc = process.env.WECHAT_UPLOAD_DESC || 'Kimi Claw 自动上传';
+    const desc = process.env.WECHAT_UPLOAD_DESC || `Kimi Claw 每日更新 ${dailyReport.reportDate}`;
 
     await ci.upload({
       project,
@@ -60,6 +61,7 @@ async function main() {
       onProgressUpdate: () => {},
     });
     console.log(`微信小程序开发版本上传完成：${version}（CI 机器人 ${robot}）`);
+    console.log(`每日报告：${dailyReport.reportDate}，共 ${dailyReport.matchCount} 场`);
     console.log('若该机器人尚未绑定体验版，请在微信公众平台完成一次性设置；后续同机器人上传会自动更新体验版。');
   } finally {
     fs.rmSync(privateKeyPath, { force: true });
