@@ -1,7 +1,7 @@
 {
   "description": "足球经理的推断 · Taro 跨端微信小程序",
   "appid": "touristappid",
-  "compileType": "miniprogram",
+  "compileType": "minigame",
   "libVersion": "latest",
   "miniprogramRoot": "./dist/weapp/",
   "projectname": "football-manager-cross-platform",
