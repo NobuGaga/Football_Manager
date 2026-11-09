@@ -134,7 +134,10 @@ const projectFiles = [
   { path: 'reports/', type: '产物', description: '保存每日四格式报告、回测结果、运行状态与中文摘要，是需要写回仓库的数据产物。', tag: 'OUTPUT' },
 ];
 
+const skillTestText = '测试实现需求 skill 试验';
+
 module.exports = {
+  skillTestText,
   stats,
   principles,
   flowSteps,

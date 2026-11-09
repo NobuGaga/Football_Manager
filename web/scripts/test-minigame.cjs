@@ -77,6 +77,7 @@ function tap(runtime, zone) {
   assert.equal(runtime.canvas.height, 1688);
   assert.equal(app.page, 'overview');
   assert.equal(app.matches.length, dailyReport.matches.length);
+  assert.ok(runtime.ctx.texts.includes(project.skillTestText), '小游戏首页应绘制技能试验文本');
   assert.ok(app.maxScroll > 0);
 
   const dailyZone = app.zones.find((zone) => zone.action.type === 'page' && zone.action.page === 'daily');

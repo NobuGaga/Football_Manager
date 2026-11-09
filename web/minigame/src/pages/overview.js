@@ -14,6 +14,12 @@ module.exports = function renderOverview(app, y) {
   y = app.write('都有迹可循。', x, y, w, { size: 30, weight: 'bold', color: c.accent, lineHeight: 39 }) + 12;
   y = app.write('从官方对阵到赛后回测，一条带时间边界、版本记录与安全约束的完整数据流水线。', x, y, w, { size: 14, color: c.secondary, lineHeight: 23 }) + 18;
 
+  const skillTestTextHeight = p.paragraphHeight(project.skillTestText, w - 28, { size: 13, weight: 'bold', lineHeight: 20 });
+  const skillTestCardHeight = skillTestTextHeight + 22;
+  p.roundRect(x, y, w, skillTestCardHeight, 12, c.cardAlt, c.accent);
+  p.paragraph(project.skillTestText, x + 14, y + 11, w - 28, { size: 13, weight: 'bold', color: c.accent, lineHeight: 20 });
+  y += skillTestCardHeight + 16;
+
   y = app.button('查看每日推断  →', x, y, w, 46, { type: 'page', page: 'daily' }, { primary: true }) + 10;
   const half = (w - 10) / 2;
   app.button('探索数据流水线', x, y, half, 44, { type: 'page', page: 'pipeline' });

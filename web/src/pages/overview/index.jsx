@@ -1,7 +1,7 @@
 import { Button, Text, View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Notice, Page, SectionHeading } from '../../components/Page';
-import { principles, stats } from '../../data/project';
+import { principles, skillTestText, stats } from '../../data/project';
 import { createNavigator } from '../../utils/navigation-core';
 import { createMatrix } from '../../utils/report';
 import { useCopy } from '../../utils/useCopy';
@@ -28,6 +28,7 @@ export default function Overview() {
           <View className='hero-eyebrow mono'>— 足球经理的推断 · 多联赛概率分析</View>
           <View className='hero-title'>让每一次推断，<Text>都有迹可循。</Text></View>
           <View className='hero-description'>从官方对阵到赛后回测，一条带时间边界、版本记录与安全约束的完整数据流水线。</View>
+          <View className='skill-test-banner'><Text>{skillTestText}</Text></View>
           <View className='hero-actions'>
             <Button className='primary-button' onClick={goDaily}>查看每日推断<Text className='button-arrow'>→</Text></Button>
             <Button className='secondary-button' onClick={goPipeline}>探索数据流水线</Button>
