@@ -1,10 +1,10 @@
 {
-  "description": "足球经理的推断 · Taro 跨端微信小程序",
+  "description": "足球经理的推断 · Canvas 微信小游戏",
   "appid": "touristappid",
   "compileType": "minigame",
   "libVersion": "latest",
   "miniprogramRoot": "./dist/weapp/",
-  "projectname": "football-manager-cross-platform",
+  "projectname": "football-manager-minigame",
   "setting": {
     "es6": true,
     "enhance": true,

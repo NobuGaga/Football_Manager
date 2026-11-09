@@ -18,18 +18,21 @@ assert.match(defaultVersion(), /^\d+\.\d+\.\d+$/);
 
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'football-manager-ci-'));
 try {
-  assert.throws(() => validateCompiledProject(fixture), /Taro 微信小程序编译产物/);
+  assert.throws(() => validateCompiledProject(fixture), /微信小游戏编译产物/);
   const output = path.join(fixture, 'dist', 'weapp');
-  fs.mkdirSync(path.join(output, 'pages', 'daily'), { recursive: true });
-  const pages = ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure'].map((page) => `pages/${page}/index`);
-  fs.writeFileSync(path.join(output, 'app.json'), JSON.stringify({ pages }));
-  fs.writeFileSync(path.join(output, 'app.js'), '');
-  fs.writeFileSync(path.join(output, 'pages', 'daily', 'index.wxml'), '');
+  fs.mkdirSync(path.join(output, 'src'), { recursive: true });
+  fs.mkdirSync(path.join(output, 'data'), { recursive: true });
+  fs.writeFileSync(path.join(output, 'game.json'), JSON.stringify({ deviceOrientation: 'portrait' }));
+  fs.writeFileSync(path.join(output, 'game.js'), "require('./src/app.js');\n");
+  fs.writeFileSync(path.join(output, 'src', 'app.js'), 'module.exports = {};\n');
+  fs.writeFileSync(path.join(output, 'data', 'daily-report.js'), 'exports.dailyReport = {};\n');
   assert.throws(() => validateCompiledProject(fixture), /project.config.json/);
-  fs.writeFileSync(path.join(fixture, 'project.config.json'), '{}');
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'miniprogram' }));
+  assert.throws(() => validateCompiledProject(fixture), /compileType/);
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'minigame' }));
   assert.equal(validateCompiledProject(fixture), fixture);
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
 }
 
-console.log('CI_CONFIG_OK default_robot robot_range local_version taro_output_validation');
+console.log('MINIGAME_CI_CONFIG_OK default_robot robot_range local_version game_output_validation');

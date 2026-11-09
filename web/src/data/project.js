@@ -104,9 +104,9 @@ const automationSteps = [
   '补充赛前特征',
   '生成推断与四格式报告',
   '回测并输出中文摘要',
-  '导出 Web／微信小程序共享报告快照',
+  '导出 H5／微信小游戏共享报告快照',
   '提交并推送数据产物',
-  '测试、构建并上传微信体验版',
+  '测试、构建并上传微信小游戏体验版',
   'Claw 读取当日报告与回测',
   '生成并推送中文预测策略',
 ];
@@ -128,7 +128,8 @@ const projectFiles = [
   { path: 'src/reporter.py', type: '输出', description: '生成每日 JSON／CSV／Excel／Markdown 报告和回测 Excel。', tag: 'REPORT' },
   { path: 'src/result_checker.py', type: '复盘', description: '逐条关联已保存推断与实际赛果，写入复盘字段。', tag: 'RESULT' },
   { path: 'src/backtest.py', type: '复盘', description: '计算 Log Loss、Brier、概率校准、比分命中和预期进球误差。', tag: 'BACKTEST' },
-  { path: 'web/src/', type: '前端', description: 'Taro + React 统一页面、组件、样式和平台适配层，分别构建 H5 与微信小程序。', tag: 'H5 / WEAPP' },
+  { path: 'web/src/', type: '前端', description: 'Taro + React H5 页面，以及每日报告、工程内容和展示派生逻辑的共享数据源。', tag: 'H5 / DATA' },
+  { path: 'web/minigame/', type: '前端', description: 'Canvas 2D 微信小游戏运行时，复用共享数据并提供六个信息页面和触控交互。', tag: 'MINIGAME' },
   { path: 'data/football.db', type: '产物', description: '保存对阵、不可变快照、赛前特征、追加式推断、赛果与模型版本。', tag: 'RUNTIME' },
   { path: 'reports/', type: '产物', description: '保存每日四格式报告、回测结果、运行状态与中文摘要，是需要写回仓库的数据产物。', tag: 'OUTPUT' },
 ];

@@ -20,7 +20,7 @@ export default function Overview() {
           <Text className='brand-name'>足球经理的推断</Text>
           <Text className='brand-subtitle mono'>PROJECT HUB / 01</Text>
         </View>
-        <View className='baseline-badge'>Taro 跨端</View>
+        <View className='baseline-badge'>H5 + 小游戏</View>
       </View>
 
       <View className='hero-layout'>
@@ -80,7 +80,7 @@ export default function Overview() {
         ))}
       </View>
       <Notice>足球经理的推断基于赛前数据与概率模型，不构成收益保证或确定性投注建议。信息不足时，明确标记数据缺失与不确定性。</Notice>
-      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Web / 微信小程序共享 Taro React 源码</View>
+      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Taro React H5 · Canvas 2D 微信小游戏</View>
     </Page>
   );
 }

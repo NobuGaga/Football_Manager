@@ -2,15 +2,17 @@
   "name": "football-manager-cross-platform",
   "private": true,
   "version": "2.0.0",
-  "description": "足球经理的推断 · Taro React 跨端信息中心",
+  "description": "足球经理的推断 · Taro React H5 与 Canvas 微信小游戏",
   "scripts": {
     "build": "npm run build:h5 && npm run build:weapp",
     "build:h5": "taro build --type h5",
-    "build:weapp": "taro build --type weapp",
+    "build:weapp": "node scripts/build-minigame.cjs",
+    "build:minigame": "node scripts/build-minigame.cjs",
     "dev": "npm run dev:h5",
     "dev:h5": "taro build --type h5 --watch",
-    "dev:weapp": "taro build --type weapp --watch",
-    "test": "node scripts/test-pages.cjs"
+    "dev:weapp": "node scripts/build-minigame.cjs --watch",
+    "dev:minigame": "node scripts/build-minigame.cjs --watch",
+    "test": "node scripts/test-pages.cjs && node scripts/test-minigame.cjs"
   },
   "dependencies": {
     "@babel/runtime": "^7.24.4",

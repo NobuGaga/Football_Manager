@@ -2,7 +2,7 @@
   "name": "football-manager-miniprogram-ci",
   "version": "2.0.0",
   "private": true,
-  "description": "足球经理的推断 · Taro 微信小程序 CI 构建与上传工具",
+  "description": "足球经理的推断 · Canvas 微信小游戏 CI 构建与上传工具",
   "scripts": {
     "build": "npm --prefix ../web run build:weapp",
     "test": "node scripts/test-ci.cjs",
