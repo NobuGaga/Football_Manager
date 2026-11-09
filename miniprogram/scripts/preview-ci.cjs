@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const ci = require('miniprogram-ci');
+const { validateCompiledProject } = require('./upload-ci.cjs');
 
 async function main() {
   const appid = process.env.WECHAT_APPID;
@@ -13,6 +14,7 @@ async function main() {
     throw new Error('缺少 WECHAT_PRIVATE_KEY，请在 Kimi Claw 运行环境中配置代码上传私钥。');
   }
 
+  const projectPath = validateCompiledProject();
   const privateKeyPath = path.join(os.tmpdir(), `wechat-preview-${process.pid}.key`);
   const qrCodeOutput = process.env.WECHAT_PREVIEW_OUTPUT || path.join(os.tmpdir(), 'football-manager-wechat-preview.jpg');
   fs.writeFileSync(privateKeyPath, privateKey.replace(/\\n/g, '\n'), { mode: 0o600 });
@@ -22,9 +24,9 @@ async function main() {
     const project = new ci.Project({
       appid,
       type: 'miniProgram',
-      projectPath: path.resolve(__dirname, '..'),
+      projectPath,
       privateKeyPath,
-      ignores: ['node_modules/**/*', 'scripts/**/*'],
+      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*'],
     });
     const desc = process.env.WECHAT_UPLOAD_DESC || 'Kimi Claw 自用预览';
 
@@ -46,7 +48,7 @@ async function main() {
     if (!fs.existsSync(qrCodeOutput) || fs.statSync(qrCodeOutput).size === 0) {
       throw new Error('微信 CI 未生成有效的预览二维码文件。');
     }
-    console.log(`微信小程序预览二维码已生成：${qrCodeOutput}`);
+    console.log(`Taro 微信小程序预览二维码已生成：${qrCodeOutput}`);
   } finally {
     fs.rmSync(privateKeyPath, { force: true });
   }

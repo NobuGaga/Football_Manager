@@ -1,0 +1,41 @@
+{
+  "name": "football-manager-cross-platform",
+  "private": true,
+  "version": "2.0.0",
+  "description": "足球经理的推断 · Taro React 跨端信息中心",
+  "scripts": {
+    "build": "npm run build:h5 && npm run build:weapp",
+    "build:h5": "taro build --type h5",
+    "build:weapp": "taro build --type weapp",
+    "dev": "npm run dev:h5",
+    "dev:h5": "taro build --type h5 --watch",
+    "dev:weapp": "taro build --type weapp --watch",
+    "test": "node scripts/test-pages.cjs"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.24.4",
+    "@tarojs/components": "4.3.2",
+    "@tarojs/helper": "4.3.2",
+    "@tarojs/plugin-framework-react": "4.3.2",
+    "@tarojs/plugin-platform-h5": "4.3.2",
+    "@tarojs/plugin-platform-weapp": "4.3.2",
+    "@tarojs/react": "4.3.2",
+    "@tarojs/runtime": "4.3.2",
+    "@tarojs/shared": "4.3.2",
+    "@tarojs/taro": "4.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/preset-react": "^7.29.7",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.5",
+    "@tarojs/cli": "4.3.2",
+    "@tarojs/taro-loader": "4.3.2",
+    "@tarojs/webpack5-runner": "4.3.2",
+    "babel-preset-taro": "4.3.2",
+    "postcss": "^8.5.6",
+    "react-refresh": "^0.14.0",
+    "webpack": "5.91.0"
+  }
+}

@@ -2,7 +2,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const ci = require('miniprogram-ci');
-const { dailyReport } = require('../data/daily-report.js');
+const { dailyReport } = require('../../web/src/data/daily-report.js');
+
+const FRONTEND_ROOT = path.resolve(__dirname, '../../web');
 
 function parseRobot(value) {
   const robot = Number(value || '1');
@@ -14,6 +16,26 @@ function parseRobot(value) {
 
 function defaultVersion(now = new Date()) {
   return `1.0.${now.toISOString().replace(/\D/g, '').slice(2, 14)}`;
+}
+
+function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
+  const outputRoot = path.join(frontendRoot, 'dist', 'weapp');
+  const requiredFiles = ['app.json', 'app.js', 'pages/daily/index.wxml'];
+  for (const file of requiredFiles) {
+    if (!fs.existsSync(path.join(outputRoot, file))) {
+      throw new Error(`缺少 Taro 微信小程序编译产物 ${file}，请先运行 npm --prefix web run build:weapp`);
+    }
+  }
+  const appConfig = JSON.parse(fs.readFileSync(path.join(outputRoot, 'app.json'), 'utf8'));
+  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure']) {
+    if (!appConfig.pages.includes(`pages/${page}/index`)) {
+      throw new Error(`Taro 微信小程序编译产物缺少页面 ${page}`);
+    }
+  }
+  if (!fs.existsSync(path.join(frontendRoot, 'project.config.json'))) {
+    throw new Error('缺少 web/project.config.json，无法创建微信 CI 项目');
+  }
+  return frontendRoot;
 }
 
 async function main() {
@@ -32,17 +54,17 @@ async function main() {
     throw new Error('WECHAT_VERSION 必须使用 x.y.z 格式，例如 1.0.1。');
   }
 
+  const projectPath = validateCompiledProject();
   const privateKeyPath = path.join(os.tmpdir(), `wechat-upload-${process.pid}.key`);
   fs.writeFileSync(privateKeyPath, privateKey.replace(/\\n/g, '\n'), { mode: 0o600 });
 
   try {
-    const projectPath = path.resolve(__dirname, '..');
     const project = new ci.Project({
       appid,
       type: 'miniProgram',
       projectPath,
       privateKeyPath,
-      ignores: ['node_modules/**/*', 'scripts/**/*'],
+      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*'],
     });
     const desc = process.env.WECHAT_UPLOAD_DESC || `Kimi Claw 每日更新 ${dailyReport.reportDate}`;
 
@@ -60,7 +82,7 @@ async function main() {
       },
       onProgressUpdate: () => {},
     });
-    console.log(`微信小程序开发版本上传完成：${version}（CI 机器人 ${robot}）`);
+    console.log(`Taro 微信小程序开发版本上传完成：${version}（CI 机器人 ${robot}）`);
     console.log(`每日报告：${dailyReport.reportDate}，共 ${dailyReport.matchCount} 场`);
     console.log('若该机器人尚未绑定体验版，请在微信公众平台完成一次性设置；后续同机器人上传会自动更新体验版。');
   } finally {
@@ -75,4 +97,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { defaultVersion, parseRobot };
+module.exports = { FRONTEND_ROOT, defaultVersion, parseRobot, validateCompiledProject };

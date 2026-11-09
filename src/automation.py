@@ -46,7 +46,7 @@ class GitRepository:
 
     def commit_and_push(self, date: str, push: bool) -> str | None:
         # 只提交明确的数据产物，不暂存源码、凭证、缓存或人工未提交修改。
-        self._run("add", "-f", "--", "data/football.db", "reports", "miniprogram/data/daily-report.js")
+        self._run("add", "-f", "--", "data/football.db", "reports", "web/src/data/daily-report.js")
         if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=self.root).returncode == 0:
             return None
         self._run("-c", "user.name=Kimi Claw", "-c", "user.email=kimi-claw@localhost",
@@ -59,12 +59,12 @@ class GitRepository:
 
 class DailyAutomation:
     def __init__(self, repo_root: str | Path, db_path: str | Path | None = None,
-                 output_dir: str | Path | None = None, miniprogram_dir: str | Path | None = None):
+                 output_dir: str | Path | None = None, frontend_dir: str | Path | None = None):
         self.repo_root = Path(repo_root).resolve()
         self.db_path = Path(db_path) if db_path else self.repo_root / "data" / "football.db"
         self.output_dir = Path(output_dir) if output_dir else self.repo_root / "reports"
-        self.miniprogram_data_path = (Path(miniprogram_dir) if miniprogram_dir
-                                      else self.repo_root / "miniprogram") / "data" / "daily-report.js"
+        self.frontend_data_path = (Path(frontend_dir) if frontend_dir
+                                   else self.repo_root / "web" / "src") / "data" / "daily-report.js"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.git = GitRepository(self.repo_root)
 
@@ -125,7 +125,7 @@ class DailyAutomation:
             checklist_result = checklist_generator.generate(match_date)
             validation_result = StrategyValidator(self.db_path, self.output_dir).generate(match_date)
             history_result = HistoryManager(self.db_path).export(self.output_dir / "足球预测历史数据.csv")
-            miniprogram_data_path = export_miniprogram_report(report_paths["json"], self.miniprogram_data_path)
+            frontend_data_path = export_miniprogram_report(report_paths["json"], self.frontend_data_path)
             backtest = Backtester(self.db_path).evaluate()
             backtest_path = self.output_dir / f"回测结果_{match_date}.json"
             backtest_path.write_text(json.dumps(backtest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -143,7 +143,7 @@ class DailyAutomation:
                 "history": self._relative(history_result["csv"]),
                 "history_rows": history_result["rows"],
                 "backtest": self._relative(backtest_path),
-                "miniprogram_data": self._relative(miniprogram_data_path),
+                "miniprogram_data": self._relative(frontend_data_path),
             }
             status_path = self.output_dir / f"每日运行状态_{match_date}.json"
             summary_path = self.output_dir / f"每日中文摘要_{match_date}.md"
@@ -188,7 +188,7 @@ class DailyAutomation:
                  f"- 预测核对表：{status['checklist']}",
                  f"- 历史数据：{status['history']}（{status['history_rows']} 场）",
                  f"- 策略校验：{status['strategy_validation']}",
-                 f"- 小程序数据：{status['miniprogram_data']}",
+                 f"- 跨端报告数据：{status['miniprogram_data']}",
                  f"- 回测结果：{status['backtest']}"]
         if overall.get("predictions"):
             lines += [f"- 胜平负准确率：{overall['outcome_accuracy']:.1%}",

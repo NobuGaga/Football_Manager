@@ -1,0 +1,201 @@
+.command-card {
+  overflow: hidden;
+}
+
+.command-tabs {
+  display: flex;
+  padding: 12px;
+  border-bottom: 1px solid #2a342a;
+  background: #0e1510;
+  gap: 10px;
+}
+
+.command-tab {
+  min-height: 68px;
+  padding: 0 12px;
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: #929e8f;
+  font-size: 22px;
+  line-height: 68px;
+  text-align: center;
+}
+
+.command-active {
+  border-color: #34402f;
+  color: #eef3e9;
+  background: #1b241c;
+}
+
+.command-content {
+  padding: 28px;
+}
+
+.command-badge {
+  display: inline-flex;
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: #c8f55a;
+  background: #222d17;
+  font-size: 19px;
+}
+
+.command-title {
+  margin-top: 22px;
+  font-size: 31px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.command-description {
+  margin-top: 12px;
+  color: #929e8f;
+  font-size: 22px;
+  line-height: 1.75;
+}
+
+.terminal-window {
+  margin-top: 26px;
+  overflow: hidden;
+  border: 1px solid #303a30;
+  border-radius: 16px;
+  background: #090e0b;
+}
+
+.terminal-head {
+  display: flex;
+  min-height: 64px;
+  padding: 0 20px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #273027;
+  color: #859385;
+  font-size: 17px;
+}
+
+.copy-button {
+  min-height: 56px;
+  padding: 8px 12px;
+  color: #c8f55a;
+  font-size: 20px;
+}
+
+.terminal-code {
+  display: block;
+  padding: 24px 20px;
+  overflow-wrap: anywhere;
+  color: #d6e2d0;
+  font-size: 20px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+.command-notice .notice {
+  margin-top: 22px;
+}
+
+.runbook-card {
+  padding: 28px;
+}
+
+.runbook-step {
+  position: relative;
+  display: flex;
+  min-height: 64px;
+  align-items: flex-start;
+}
+
+.step-number {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  margin-right: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3b4934;
+  border-radius: 50%;
+  color: #c8f55a;
+  background: #121914;
+  font-size: 17px;
+}
+
+.step-line {
+  position: absolute;
+  top: 44px;
+  bottom: 0;
+  left: 21px;
+  width: 1px;
+  background: #33402f;
+}
+
+.runbook-step:last-child .step-line {
+  display: none;
+}
+
+.step-text {
+  padding-top: 6px;
+  color: #aab5a5;
+  font-size: 23px;
+}
+
+.safety-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.safety-card {
+  display: flex;
+  padding: 26px;
+  align-items: flex-start;
+}
+
+.safety-mark {
+  display: flex;
+  width: 58px;
+  height: 58px;
+  margin-right: 20px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: #c8f55a;
+  background: #222d17;
+  font-size: 19px;
+}
+
+.safety-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.safety-title {
+  font-size: 26px;
+  font-weight: 550;
+}
+
+.safety-description {
+  margin-top: 9px;
+  color: #929e8f;
+  font-size: 22px;
+  line-height: 1.75;
+}
+
+@media (min-width: 900px) {
+  .safety-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .safety-card {
+    flex-direction: column;
+  }
+
+  .safety-mark {
+    margin-bottom: 20px;
+  }
+}

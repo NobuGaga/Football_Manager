@@ -1,0 +1,220 @@
+.formula-card {
+  padding: 32px;
+  border-radius: 24px;
+  color: #152008;
+  background: #c8f55a;
+}
+
+.formula-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #536630;
+  font-size: 17px;
+  gap: 16px;
+}
+
+.formula-title {
+  margin-top: 30px;
+  font-size: 38px;
+  font-weight: 650;
+}
+
+.formula-description {
+  margin-top: 14px;
+  color: #415020;
+  font-size: 24px;
+  line-height: 1.8;
+}
+
+.formula-box {
+  display: flex;
+  margin-top: 28px;
+  padding: 28px;
+  flex-direction: column;
+  border-radius: 18px;
+  color: #edf5df;
+  background: #142009;
+}
+
+.formula-caption {
+  color: #a4b495;
+  font-size: 18px;
+}
+
+.formula-main {
+  margin-top: 14px;
+  color: #c8f55a;
+  font-size: 29px;
+}
+
+.formula-equation {
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+  font-size: 21px;
+  line-height: 1.8;
+}
+
+.correction-title {
+  margin-top: 26px;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.correction-copy {
+  margin-top: 8px;
+  color: #465523;
+  font-size: 21px;
+  line-height: 1.75;
+}
+
+.formula-tags {
+  display: flex;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.formula-tags > * {
+  padding: 8px 12px;
+  border: 1px solid #8ea840;
+  border-radius: 9px;
+  font-size: 19px;
+}
+
+.priority-card {
+  padding: 8px 26px;
+}
+
+.priority-item {
+  display: flex;
+  padding: 24px 0;
+  align-items: center;
+  border-bottom: 1px solid #2a342a;
+}
+
+.priority-item:last-child {
+  border-bottom: 0;
+}
+
+.priority-number {
+  display: flex;
+  width: 58px;
+  height: 58px;
+  margin-right: 20px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3a4734;
+  border-radius: 50%;
+  color: #c8f55a;
+  font-size: 18px;
+}
+
+.priority-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.priority-title {
+  font-size: 25px;
+  font-weight: 550;
+}
+
+.priority-detail {
+  margin-top: 7px;
+  color: #929e8f;
+  font-size: 21px;
+  line-height: 1.65;
+}
+
+.boundary-card {
+  margin-top: 22px;
+  padding: 30px;
+}
+
+.boundary-kicker {
+  color: #c8f55a;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.boundary-title {
+  margin-top: 16px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.boundary-copy {
+  margin-top: 10px;
+  color: #929e8f;
+  font-size: 22px;
+}
+
+.equation-button {
+  display: flex;
+  width: 100%;
+  min-height: 88px;
+  margin-top: 24px;
+  padding: 22px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #34402f;
+  border-radius: 14px;
+  color: #c8f55a;
+  background: #090e0b;
+  font-size: 18px;
+  gap: 8px;
+}
+
+.equation-button .mono {
+  color: #d4dfcf;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.equation-hint {
+  margin-top: 12px;
+  color: #859385;
+  font-size: 18px;
+  text-align: right;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  display: flex;
+  min-height: 176px;
+  padding: 22px;
+  flex-direction: column;
+}
+
+.metric-number {
+  color: #859385;
+  font-size: 17px;
+}
+
+.metric-name {
+  margin-top: auto;
+  padding-top: 22px;
+  font-size: 24px;
+  font-weight: 550;
+}
+
+.metric-label {
+  margin-top: 6px;
+  color: #929e8f;
+  font-size: 19px;
+}
+
+@media (min-width: 900px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

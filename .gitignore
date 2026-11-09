@@ -1,4 +1,4 @@
-data/
+/data/
 reports/
 docs/
 rules/
@@ -10,7 +10,7 @@ miniprogram/README.md
 delivery/wechat-miniprogram/publishing/隐私处理说明.txt
 tests/足球预测历史数据.csv
 tests/预测核对表_0528.csv
-web/
+.tools/
 delivery/wechat-miniprogram/compiled-self-use.zip
 delivery/wechat-miniprogram/source-self-use.zip
 delivery/wechat-miniprogram/release-materials.zip

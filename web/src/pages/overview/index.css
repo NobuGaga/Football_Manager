@@ -1,0 +1,256 @@
+.hero-eyebrow {
+  color: #97a397;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+
+.hero-title {
+  margin-top: 26px;
+  font-size: 62px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -3px;
+}
+
+.hero-title > * {
+  display: block;
+  color: #c8f55a;
+}
+
+.hero-description {
+  margin-top: 28px;
+  color: #9eaa9c;
+  font-size: 27px;
+  line-height: 1.85;
+}
+
+.hero-actions {
+  display: flex;
+  margin-top: 36px;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.model-card {
+  margin-top: 42px;
+  padding: 30px;
+  background: #121a14;
+}
+
+.hero-layout .model-card {
+  min-width: 0;
+}
+
+.model-caption {
+  color: #859385;
+  font-size: 17px;
+  letter-spacing: 2px;
+}
+
+.model-name {
+  margin-top: 10px;
+  font-size: 27px;
+}
+
+.matrix-heading {
+  display: flex;
+  margin-top: 38px;
+  align-items: center;
+  justify-content: space-between;
+  color: #a8b3a5;
+  font-size: 23px;
+  gap: 16px;
+}
+
+.matrix-note {
+  color: #859385;
+  font-size: 18px;
+}
+
+.score-matrix {
+  display: grid;
+  margin-top: 24px;
+  padding: 14px;
+  border: 1px solid #2d392e;
+  border-radius: 16px;
+  background: #0b110d;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.matrix-cell {
+  height: 48px;
+  border-radius: 7px;
+  background: #c8f55a;
+}
+
+.matrix-hot {
+  box-shadow: 0 0 24px #718c35;
+}
+
+.model-features {
+  display: flex;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #293429;
+  flex-wrap: wrap;
+  gap: 24px 34px;
+}
+
+.model-features > * {
+  display: flex;
+  align-items: center;
+  color: #b5c0b1;
+  font-size: 21px;
+}
+
+.feature-mark {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  margin-right: 12px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #c8f55a;
+  background: #202b17;
+  font-size: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  margin-top: 38px;
+  border-top: 1px solid #2a342a;
+  border-bottom: 1px solid #2a342a;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat-card {
+  min-width: 0;
+  padding: 30px 16px 30px 0;
+  border-bottom: 1px solid #252f26;
+}
+
+.stat-card:nth-child(2n) {
+  padding-left: 24px;
+  border-left: 1px solid #252f26;
+}
+
+.stat-card:nth-last-child(-n+2) {
+  border-bottom: 0;
+}
+
+.stat-value {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.stat-value > * {
+  margin-left: 8px;
+  color: #c8f55a;
+  font-family: -apple-system, "PingFang SC", sans-serif;
+  font-size: 21px;
+}
+
+.stat-label {
+  margin-top: 18px;
+  font-size: 24px;
+  font-weight: 550;
+}
+
+.stat-detail {
+  margin-top: 8px;
+  color: #859385;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.principle-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.principle-card {
+  padding: 28px;
+}
+
+.principle-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.principle-number {
+  color: #859385;
+  font-size: 19px;
+}
+
+.principle-mark {
+  display: flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #c8f55a;
+  background: #222c18;
+  font-size: 22px;
+}
+
+.principle-title {
+  margin-top: 24px;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.principle-description {
+  margin-top: 12px;
+  color: #95a192;
+  font-size: 24px;
+  line-height: 1.8;
+}
+
+@media (min-width: 900px) {
+  .hero-layout {
+    display: grid;
+    align-items: center;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 48px;
+  }
+
+  .hero-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .hero-actions .primary-button,
+  .hero-actions .secondary-button {
+    width: auto;
+  }
+
+  .model-card {
+    margin-top: 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stat-card,
+  .stat-card:nth-child(2n),
+  .stat-card:nth-last-child(-n+2) {
+    padding: 30px 24px;
+    border-bottom: 0;
+    border-left: 1px solid #252f26;
+  }
+
+  .stat-card:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .principle-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

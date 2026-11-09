@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.taro-cache/
+.swc/
+.vite/
+.chrome-inspect/
+.chrome-validate/
+project.private.config.json
+*.key
+*.log
+preview*.png
+preview*.jpg
+.DS_Store
