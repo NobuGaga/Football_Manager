@@ -176,7 +176,7 @@ function assertTextWithinCanvas(runtime, width, label) {
   const gameConfig = JSON.parse(fs.readFileSync(path.join(root, 'dist/weapp/game.json'), 'utf8'));
   assert.equal(gameConfig.deviceOrientation, 'portrait');
   const projectConfig = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
-  assert.equal(projectConfig.compileType, 'minigame');
+  assert.equal(projectConfig.compileType, 'game');
   assert.equal(projectConfig.miniprogramRoot, './dist/weapp/');
   assert.ok(fs.statSync(path.join(root, 'dist/weapp/game.js')).size > 0);
   assert.ok(fs.existsSync(path.join(root, 'dist/weapp/data/daily-report.js')));

@@ -1,7 +1,7 @@
 {
   "description": "足球经理的推断 · Canvas 微信小游戏",
   "appid": "touristappid",
-  "compileType": "minigame",
+  "compileType": "game",
   "libVersion": "latest",
   "miniprogramRoot": "./dist/weapp/",
   "projectname": "football-manager-minigame",

@@ -38,8 +38,8 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
     throw new Error('缺少 web/project.config.json，无法创建微信 CI 项目');
   }
   const projectConfig = JSON.parse(fs.readFileSync(projectConfigPath, 'utf8'));
-  if (projectConfig.compileType !== 'minigame') {
-    throw new Error('web/project.config.json 的 compileType 必须为 minigame');
+  if (projectConfig.compileType !== 'game') {
+    throw new Error('web/project.config.json 的 compileType 必须为 game');
   }
   return frontendRoot;
 }

@@ -29,9 +29,9 @@
 
 .match-list {
   display: grid;
-  margin-top: 30px;
+  margin-top: 26px;
   grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
+  gap: 14px;
 }
 
 .match-card {
@@ -42,25 +42,28 @@
   background: #12351f;
 }
 
+.match-card::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: #527a4c;
+  content: '';
+}
+
 .match-featured {
-  padding: 30px;
-  border-radius: 28px;
+  padding: 24px 26px;
+  border-radius: 22px;
+}
+
+.match-featured::before {
+  background: #b9f54a;
 }
 
 .match-compact {
-  padding: 24px 26px 24px 30px;
-  border-radius: 18px;
-}
-
-.match-compact::before {
-  position: absolute;
-  top: 24px;
-  bottom: 24px;
-  left: 0;
-  width: 5px;
-  border-radius: 0 4px 4px 0;
-  background: #b9f54a;
-  content: '';
+  padding: 18px 20px 18px 24px;
+  border-radius: 14px;
 }
 
 .match-topline,
@@ -69,108 +72,129 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
+}
+
+.match-topline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
 }
 
 .match-code {
   display: inline-flex;
-  padding: 6px 14px;
-  border-radius: 24px;
+  padding: 5px 12px;
+  border-radius: 20px;
   color: #b9f54a;
   background: #214b2a;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 650;
   line-height: 1.4;
-}
-
-.match-time {
-  color: #afc5a8;
-  font-size: 18px;
-  text-align: right;
+  white-space: nowrap;
 }
 
 .match-league {
-  margin-top: 14px;
+  min-width: 0;
+  padding-top: 5px;
   color: #afc5a8;
-  font-size: 20px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
-.scoreboard {
-  display: flex;
-  margin: 30px 0 26px;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
+.match-time {
+  padding-top: 5px;
+  color: #afc5a8;
+  font-size: 16px;
+  line-height: 1.45;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.scoreboard-team {
+.match-model {
+  margin-top: 6px;
+  color: #91ad8c;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.match-main {
   display: flex;
-  width: 33%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.featured-main {
+  margin: 24px 0 20px;
+}
+
+.compact-main {
+  margin: 16px 0 14px;
+}
+
+.match-teams-scan {
+  display: flex;
   min-width: 0;
-  align-items: center;
+  flex: 1;
   flex-direction: column;
   color: #f4faec;
   font-size: 27px;
   font-weight: 650;
-  line-height: 1.45;
-  text-align: center;
+  line-height: 1.42;
+  gap: 5px;
+}
+
+.match-teams-scan > * {
   overflow-wrap: anywhere;
 }
 
-.team-badge {
-  display: flex;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 16px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #b9f54a;
-  border-radius: 50%;
-  color: #b9f54a;
-  background: #214b2a;
-  font-size: 31px;
-  font-weight: 700;
+.match-compact .match-teams-scan {
+  font-size: 24px;
+  gap: 3px;
 }
 
-.scoreboard-center {
+.match-tendency-scan {
   display: flex;
-  padding-top: 4px;
-  align-items: center;
-  flex: 1;
+  min-width: 150px;
+  align-items: flex-end;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
-.scoreboard-vs {
-  color: #769773;
-  font-size: 25px;
-  font-weight: 700;
-}
-
-.scoreboard-label {
-  margin-top: 14px;
-  color: #91ad8c;
+.tendency-label {
+  color: #b9f54a;
   font-size: 17px;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
-.tendency-pill {
-  margin-top: 10px;
-  padding: 7px 15px;
-  border-radius: 24px;
-  color: #10200b;
-  background: #b9f54a;
-  font-size: 20px;
+.tendency-value {
+  margin-top: 4px;
+  color: #b9f54a;
+  font-size: 39px;
   font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
   white-space: nowrap;
+}
+
+.match-compact .tendency-value {
+  font-size: 34px;
 }
 
 .probability-bar {
   display: flex;
   width: 100%;
-  height: 12px;
-  margin: 20px 0 18px;
-  gap: 5px;
+  height: 9px;
+  margin: 12px 0 14px;
+  gap: 4px;
+}
+
+.match-compact .probability-bar {
+  height: 7px;
+  margin: 8px 0 12px;
 }
 
 .probability-segment {
@@ -199,24 +223,24 @@
 .probability-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .probability-grid > * {
   display: flex;
-  padding: 16px 8px;
-  flex-direction: column;
+  padding: 12px 8px;
   align-items: center;
-  border-radius: 12px;
+  justify-content: center;
+  border-radius: 10px;
   color: #afc5a8;
   background: #0e2b1a;
-  font-size: 19px;
-  gap: 5px;
+  font-size: 17px;
+  gap: 10px;
 }
 
 .probability-grid .mono {
   color: #f4faec;
-  font-size: 25px;
+  font-size: 22px;
 }
 
 .probability-grid > *.highest {
@@ -227,69 +251,10 @@
   color: #b9f54a;
 }
 
-.compact-main {
-  display: flex;
-  margin-top: 20px;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 22px;
-}
-
-.compact-teams {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  color: #f4faec;
-  font-size: 27px;
-  font-weight: 650;
-  line-height: 1.5;
-  gap: 4px;
-}
-
-.compact-teams > * {
-  overflow-wrap: anywhere;
-}
-
-.compact-teams > *:first-child::before,
-.compact-teams > *:last-child::before {
-  margin-right: 12px;
-  color: #91ad8c;
-  font-size: 18px;
-  font-weight: 400;
-}
-
-.compact-teams > *:first-child::before {
-  content: '主';
-}
-
-.compact-teams > *:last-child::before {
-  content: '客';
-}
-
-.compact-tendency {
-  display: flex;
-  align-items: flex-end;
-  flex-direction: column;
-  flex-shrink: 0;
-  color: #91ad8c;
-  font-size: 17px;
-}
-
-.tendency-value {
-  margin-top: 8px;
-  color: #b9f54a;
-  font-size: 27px;
-  font-weight: 700;
-  text-align: right;
-  white-space: nowrap;
-}
-
 .compact-probabilities {
   display: grid;
-  margin: -2px 0 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .compact-probabilities > * {
@@ -297,13 +262,13 @@
   align-items: center;
   justify-content: center;
   color: #91ad8c;
-  font-size: 18px;
-  gap: 9px;
+  font-size: 16px;
+  gap: 7px;
 }
 
 .compact-probabilities .mono {
   color: #e3eddd;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .compact-probabilities > *.highest .mono {
@@ -312,41 +277,41 @@
 }
 
 .match-details {
-  margin-top: 20px;
-  padding-top: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid #315d37;
 }
 
 .match-compact .match-details {
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 12px;
+  padding-top: 11px;
 }
 
 .score-row {
   align-items: flex-start;
   color: #91ad8c;
-  font-size: 19px;
+  font-size: 16px;
 }
 
 .score-values {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px 14px;
+  gap: 6px 10px;
 }
 
 .score-item {
-  padding: 5px 10px;
-  border-radius: 9px;
+  padding: 4px 8px;
+  border-radius: 8px;
   color: #e3eddd;
   background: #214b2a;
 }
 
 .data-row {
-  margin-top: 16px;
+  margin-top: 11px;
   align-items: flex-start;
   color: #afc5a8;
-  font-size: 19px;
+  font-size: 16px;
 }
 
 .completeness-text {
@@ -356,18 +321,18 @@
 }
 
 .method-text {
-  padding: 4px 10px;
-  border-radius: 9px;
+  padding: 3px 8px;
+  border-radius: 8px;
   color: #e8c780;
   background: #463d24;
   text-align: right;
 }
 
 .risk-text {
-  margin-top: 14px;
+  margin-top: 9px;
   color: #d8b978;
-  font-size: 19px;
-  line-height: 1.65;
+  font-size: 16px;
+  line-height: 1.55;
   overflow-wrap: anywhere;
 }
 

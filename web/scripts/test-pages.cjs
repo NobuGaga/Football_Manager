@@ -28,10 +28,16 @@ const dailySource = fs.readFileSync(path.join(root, 'src', 'pages', 'daily', 'in
 assert.match(dailySource, /index === 0/);
 assert.match(dailySource, /function FeaturedMatch/);
 assert.match(dailySource, /function CompactMatch/);
+assert.match(dailySource, /function MatchCard/);
+assert.match(dailySource, /function MatchMain/);
 assert.match(dailySource, /function ProbabilityBar/);
-assert.equal((dailySource.match(/<MatchDetails item=\{item\} \/>/g) || []).length, 2, '首场与紧凑卡都必须展示比分、完整度、方法和风险');
+assert.match(dailySource, /tendencyLabel/);
+assert.match(dailySource, /tendencyPercent/);
+assert.equal((dailySource.match(/<MatchDetails item=\{item\} \/>/g) || []).length, 1, '首场与紧凑卡必须共用完整详情，不得省略比分、完整度、方法和风险');
 const dailyStyles = fs.readFileSync(path.join(root, 'src', 'pages', 'daily', 'index.css'), 'utf8');
 assert.match(dailyStyles, /\.match-compact/);
+assert.match(dailyStyles, /\.match-teams-scan/);
+assert.match(dailyStyles, /\.match-tendency-scan/);
 assert.match(dailyStyles, /\.probability-segment\.active/);
 assert.equal(createMatrix().length, 49);
 assert.equal(createMatrix()[24].hot, true);

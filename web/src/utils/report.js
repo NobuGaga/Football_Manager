@@ -28,6 +28,8 @@ function decorateMatches(report) {
       drawPercent: percent(match.probabilities.draw),
       awayPercent: percent(match.probabilities.away_win),
       tendency: `${highest.label} ${percent(highest.value)}`,
+      tendencyLabel: highest.label,
+      tendencyPercent: percent(highest.value),
       completenessText: `${Math.round(match.dataCompleteness * 100)}%`,
       methodText: match.method === 'odds_only_fallback' ? '赔率降级估计 · 弱参考' : match.method || '模型推断',
       topScores: match.topScores.map((item) => ({ ...item, probabilityText: percent(item.probability) })),

@@ -5,10 +5,6 @@ import { decorateMatches } from '../../utils/report';
 
 const matches = decorateMatches(dailyReport);
 
-function TeamBadge({ name }) {
-  return <View className='team-badge'>{Array.from(name || '待')[0]}</View>;
-}
-
 function ProbabilityBar({ item }) {
   const segments = [
     { key: 'home', label: '主胜', value: item.probabilities.home_win },
@@ -68,42 +64,46 @@ function MatchTopline({ item }) {
     <View className='match-heading'>
       <View className='match-topline'>
         <Text className='match-code'>{item.matchCode}</Text>
+        <Text className='match-league'>{item.league}</Text>
         <Text className='match-time mono'>{item.startTimeText}</Text>
       </View>
-      <View className='match-league'>{item.league} · {item.aiModel} / {item.strategyCategory}</View>
+      <View className='match-model'>{item.aiModel} / {item.strategyCategory}</View>
+    </View>
+  );
+}
+
+function MatchMain({ item, compact = false }) {
+  return (
+    <View className={`match-main ${compact ? 'compact-main' : 'featured-main'}`}>
+      <View className='match-teams-scan'>
+        <Text>{item.homeTeam}</Text><Text>{item.awayTeam}</Text>
+      </View>
+      <View className='match-tendency-scan'>
+        <Text className='tendency-label'>最高 · {item.tendencyLabel}</Text>
+        <Text className='tendency-value mono'>{item.tendencyPercent}</Text>
+      </View>
+    </View>
+  );
+}
+
+function MatchCard({ item, compact = false }) {
+  return (
+    <View className={`match-card card ${compact ? 'match-compact' : 'match-featured'}`}>
+      <MatchTopline item={item} />
+      <MatchMain item={item} compact={compact} />
+      <ProbabilityBar item={item} />
+      <ProbabilityValues item={item} compact={compact} />
+      <MatchDetails item={item} />
     </View>
   );
 }
 
 function FeaturedMatch({ item }) {
-  return (
-    <View className='match-card match-featured card'>
-      <MatchTopline item={item} />
-      <View className='scoreboard'>
-        <View className='scoreboard-team'><TeamBadge name={item.homeTeam} /><Text>{item.homeTeam}</Text></View>
-        <View className='scoreboard-center'><Text className='scoreboard-vs mono'>VS</Text><Text className='scoreboard-label'>最高倾向</Text><Text className='tendency-pill'>{item.tendency}</Text></View>
-        <View className='scoreboard-team'><TeamBadge name={item.awayTeam} /><Text>{item.awayTeam}</Text></View>
-      </View>
-      <ProbabilityBar item={item} />
-      <ProbabilityValues item={item} />
-      <MatchDetails item={item} />
-    </View>
-  );
+  return <MatchCard item={item} />;
 }
 
 function CompactMatch({ item }) {
-  return (
-    <View className='match-card match-compact card'>
-      <MatchTopline item={item} />
-      <View className='compact-main'>
-        <View className='compact-teams'><Text>{item.homeTeam}</Text><Text>{item.awayTeam}</Text></View>
-        <View className='compact-tendency'><Text>最高概率倾向</Text><Text className='tendency-value'>{item.tendency}</Text></View>
-      </View>
-      <ProbabilityBar item={item} />
-      <ProbabilityValues item={item} compact />
-      <MatchDetails item={item} />
-    </View>
-  );
+  return <MatchCard item={item} compact />;
 }
 
 export default function Daily() {

@@ -29,7 +29,7 @@ try {
   assert.throws(() => validateCompiledProject(fixture), /project.config.json/);
   fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'miniprogram' }));
   assert.throws(() => validateCompiledProject(fixture), /compileType/);
-  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'minigame' }));
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'game' }));
   assert.equal(validateCompiledProject(fixture), fixture);
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
