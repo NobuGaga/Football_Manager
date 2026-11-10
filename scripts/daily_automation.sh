@@ -34,9 +34,9 @@ fi
 python3 main.py "${args[@]}"
 
 if [[ "${DAILY_NO_GIT:-0}" == "1" ]]; then
-  echo "手动验收：每日报告已打包到小程序，本次不上传体验版。"
+  echo "手动验收：每日报告已打包到小游戏，本次不上传体验版。"
 elif [[ "${DAILY_MINIPROGRAM_UPLOAD:-1}" == "1" ]]; then
   bash scripts/wechat_daily_upload.sh
 else
-  echo "提示：DAILY_MINIPROGRAM_UPLOAD=0，已跳过每日小程序体验版上传。"
+  echo "提示：DAILY_MINIPROGRAM_UPLOAD=0，已跳过每日小游戏体验版上传。"
 fi
