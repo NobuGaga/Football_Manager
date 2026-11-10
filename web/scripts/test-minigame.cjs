@@ -13,9 +13,11 @@ const project = require('../src/data/project.js');
 
 function createContext() {
   const texts = [];
+  const textBounds = [];
   const gradient = { addColorStop() {} };
   return {
     texts,
+    textBounds,
     font: 'normal 14px sans-serif',
     fillStyle: '',
     strokeStyle: '',
@@ -31,7 +33,13 @@ function createContext() {
       const width = Array.from(String(text)).reduce((sum, character) => sum + (character.charCodeAt(0) > 255 ? size : size * 0.56), 0);
       return { width };
     },
-    fillText(text) { texts.push(String(text)); },
+    fillText(text, x, y) {
+      const value = String(text);
+      const width = this.measureText(value).width;
+      const left = this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x;
+      texts.push(value);
+      textBounds.push({ text: value, left, right: left + width, top: y });
+    },
   };
 }
 
@@ -69,6 +77,13 @@ function tap(runtime, zone) {
   runtime.listeners.touchEnd({ touches: [], changedTouches: [point] });
 }
 
+function assertTextWithinCanvas(runtime, width, label) {
+  for (const bound of runtime.ctx.textBounds) {
+    assert.ok(bound.left >= -0.5, `${label} 文字左溢出：${bound.text} / ${bound.left}`);
+    assert.ok(bound.right <= width + 0.5, `${label} 文字右溢出：${bound.text} / ${bound.right}`);
+  }
+}
+
 (async () => {
   const runtime = createRuntime();
   const app = new MiniGameApp(runtime.platform).start();
@@ -79,16 +94,33 @@ function tap(runtime, zone) {
   assert.equal(app.matches.length, dailyReport.matches.length);
   assert.ok(runtime.ctx.texts.includes(project.skillTestText), '小游戏首页应绘制技能试验文本');
   assert.ok(app.maxScroll > 0);
+  assertTextWithinCanvas(runtime, app.width, '概览首屏');
 
   const dailyZone = app.zones.find((zone) => zone.action.type === 'page' && zone.action.page === 'daily');
   assert.ok(dailyZone, '概览应提供每日推断入口');
   tap(runtime, dailyZone);
   assert.equal(app.page, 'daily');
   assert.ok(app.maxScroll > 1000, '长报告应支持纵向滚动');
+  assertTextWithinCanvas(runtime, app.width, '每日首屏');
+  const compactMatch = app.matches[1];
+  for (const expected of [
+    compactMatch.homeTeam,
+    compactMatch.awayTeam,
+    compactMatch.homePercent,
+    compactMatch.drawPercent,
+    compactMatch.awayPercent,
+    compactMatch.topScores[0].score,
+    compactMatch.completenessText,
+    compactMatch.methodText,
+    compactMatch.primaryRisk,
+  ]) {
+    assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `紧凑卡应实际绘制 ${expected}`);
+  }
   app.scrollBy(160);
   assert.equal(app.scroll, 160);
   app.scrollBy(Number.POSITIVE_INFINITY);
   assert.equal(app.scroll, app.maxScroll);
+  assertTextWithinCanvas(runtime, app.width, '每日底部');
   app.scrollBy(Number.NEGATIVE_INFINITY);
   assert.equal(app.scroll, 0);
 

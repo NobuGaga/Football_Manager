@@ -1,3 +1,32 @@
+.page.daily {
+  color: #f4faec;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(64, 123, 66, 0.3) 0%, rgba(11, 37, 24, 0) 34%),
+    linear-gradient(150deg, #164d2c 0%, #0b2518 52%, #081d13 100%);
+}
+
+.daily .section-kicker {
+  color: #b9f54a;
+}
+
+.daily .section-description {
+  color: #b5c9ae;
+}
+
+.daily .notice {
+  border-color: #6a633a;
+  background: #2a3820;
+}
+
+.daily .notice-mark {
+  color: #2c210e;
+  background: #e8bd67;
+}
+
+.daily .notice-text {
+  color: #e0d4b4;
+}
+
 .match-list {
   display: grid;
   margin-top: 30px;
@@ -6,13 +35,36 @@
 }
 
 .match-card {
+  position: relative;
   min-width: 0;
-  padding: 28px;
+  overflow: hidden;
+  border-color: #3a6a40;
+  background: #12351f;
+}
+
+.match-featured {
+  padding: 30px;
+  border-radius: 28px;
+}
+
+.match-compact {
+  padding: 24px 26px 24px 30px;
+  border-radius: 18px;
+}
+
+.match-compact::before {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 0;
+  width: 5px;
+  border-radius: 0 4px 4px 0;
+  background: #b9f54a;
+  content: '';
 }
 
 .match-topline,
 .data-row,
-.tendency-row,
 .score-row {
   display: flex;
   align-items: center;
@@ -21,57 +73,131 @@
 }
 
 .match-code {
-  color: #c8f55a;
-  font-size: 23px;
+  display: inline-flex;
+  padding: 6px 14px;
+  border-radius: 24px;
+  color: #b9f54a;
+  background: #214b2a;
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
 .match-time {
-  color: #859385;
-  font-size: 19px;
+  color: #afc5a8;
+  font-size: 18px;
   text-align: right;
 }
 
 .match-league {
-  margin-top: 20px;
-  color: #8e9b8b;
-  font-size: 22px;
+  margin-top: 14px;
+  color: #afc5a8;
+  font-size: 20px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
-.match-teams {
+.scoreboard {
   display: flex;
-  margin-top: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 31px;
-  font-weight: 600;
-  line-height: 1.5;
+  margin: 30px 0 26px;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 14px;
 }
 
-.match-teams > * {
-  color: #859385;
-  font-size: 18px;
-  font-weight: 400;
+.scoreboard-team {
+  display: flex;
+  width: 33%;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  color: #f4faec;
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
-.tendency-row {
-  margin-top: 24px;
-  padding-top: 22px;
-  border-top: 1px solid #2a342a;
-  color: #8e9b8b;
-  font-size: 22px;
+.team-badge {
+  display: flex;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b9f54a;
+  border-radius: 50%;
+  color: #b9f54a;
+  background: #214b2a;
+  font-size: 31px;
+  font-weight: 700;
 }
 
-.tendency-value {
-  color: #c8f55a;
-  font-size: 26px;
-  font-weight: 600;
-  text-align: right;
+.scoreboard-center {
+  display: flex;
+  padding-top: 4px;
+  align-items: center;
+  flex: 1;
+  flex-direction: column;
+}
+
+.scoreboard-vs {
+  color: #769773;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.scoreboard-label {
+  margin-top: 14px;
+  color: #91ad8c;
+  font-size: 17px;
+}
+
+.tendency-pill {
+  margin-top: 10px;
+  padding: 7px 15px;
+  border-radius: 24px;
+  color: #10200b;
+  background: #b9f54a;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.probability-bar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  margin: 20px 0 18px;
+  gap: 5px;
+}
+
+.probability-segment {
+  min-width: 3px;
+  height: 100%;
+  border-radius: 6px;
+  background: #6f8570;
+}
+
+.probability-segment.home {
+  background: #78936f;
+}
+
+.probability-segment.draw {
+  background: #4f6c55;
+}
+
+.probability-segment.away {
+  background: #91a188;
+}
+
+.probability-segment.active {
+  background: #b9f54a;
 }
 
 .probability-grid {
   display: grid;
-  margin-top: 18px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
@@ -82,22 +208,124 @@
   flex-direction: column;
   align-items: center;
   border-radius: 12px;
-  color: #8e9b8b;
-  background: #0c120e;
-  font-size: 20px;
+  color: #afc5a8;
+  background: #0e2b1a;
+  font-size: 19px;
   gap: 5px;
 }
 
 .probability-grid .mono {
-  color: #eef3e9;
+  color: #f4faec;
   font-size: 25px;
 }
 
-.score-row {
+.probability-grid > *.highest {
+  background: #214b2a;
+}
+
+.probability-grid > *.highest .mono {
+  color: #b9f54a;
+}
+
+.compact-main {
+  display: flex;
   margin-top: 20px;
   align-items: flex-start;
-  color: #859385;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.compact-teams {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  color: #f4faec;
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1.5;
+  gap: 4px;
+}
+
+.compact-teams > * {
+  overflow-wrap: anywhere;
+}
+
+.compact-teams > *:first-child::before,
+.compact-teams > *:last-child::before {
+  margin-right: 12px;
+  color: #91ad8c;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.compact-teams > *:first-child::before {
+  content: '主';
+}
+
+.compact-teams > *:last-child::before {
+  content: '客';
+}
+
+.compact-tendency {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: #91ad8c;
+  font-size: 17px;
+}
+
+.tendency-value {
+  margin-top: 8px;
+  color: #b9f54a;
+  font-size: 27px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compact-probabilities {
+  display: grid;
+  margin: -2px 0 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.compact-probabilities > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #91ad8c;
+  font-size: 18px;
+  gap: 9px;
+}
+
+.compact-probabilities .mono {
+  color: #e3eddd;
   font-size: 20px;
+}
+
+.compact-probabilities > *.highest .mono {
+  color: #b9f54a;
+  font-weight: 700;
+}
+
+.match-details {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #315d37;
+}
+
+.match-compact .match-details {
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.score-row {
+  align-items: flex-start;
+  color: #91ad8c;
+  font-size: 19px;
 }
 
 .score-values {
@@ -108,36 +336,61 @@
 }
 
 .score-item {
-  color: #c1cbbd;
+  padding: 5px 10px;
+  border-radius: 9px;
+  color: #e3eddd;
+  background: #214b2a;
 }
 
 .data-row {
-  margin-top: 20px;
+  margin-top: 16px;
   align-items: flex-start;
-  color: #8e9b8b;
-  font-size: 20px;
+  color: #afc5a8;
+  font-size: 19px;
 }
 
-.data-row > *:last-child {
+.completeness-text {
+  flex-shrink: 0;
+  color: #e8c780;
+  font-weight: 650;
+}
+
+.method-text {
+  padding: 4px 10px;
+  border-radius: 9px;
+  color: #e8c780;
+  background: #463d24;
   text-align: right;
 }
 
 .risk-text {
   margin-top: 14px;
-  color: #b7a77b;
-  font-size: 20px;
-  line-height: 1.7;
+  color: #d8b978;
+  font-size: 19px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .empty-card {
   margin-top: 30px;
   padding: 40px;
-  color: #8e9b8b;
+  border-color: #3a6a40;
+  color: #afc5a8;
+  background: #12351f;
   text-align: center;
+}
+
+.daily .footer-note {
+  border-color: #315d37;
+  color: #91ad8c;
 }
 
 @media (min-width: 1000px) {
   .match-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .match-featured {
+    grid-column: 1 / -1;
   }
 }

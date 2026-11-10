@@ -18,31 +18,32 @@ export default function Overview() {
         <View className='brand-mark'>FM</View>
         <View className='brand-copy'>
           <Text className='brand-name'>足球经理的推断</Text>
-          <Text className='brand-subtitle mono'>PROJECT HUB / 01</Text>
+          <Text className='brand-subtitle mono'>FOOTBALL INTELLIGENCE</Text>
         </View>
-        <View className='baseline-badge'>H5 + 小游戏</View>
+        <View className='baseline-badge'>比赛中心</View>
       </View>
 
       <View className='hero-layout'>
         <View className='hero-copy'>
-          <View className='hero-eyebrow mono'>— 足球经理的推断 · 多联赛概率分析</View>
+          <View className='hero-eyebrow mono'>MATCHDAY · 多联赛概率分析</View>
           <View className='hero-title'>让每一次推断，<Text>都有迹可循。</Text></View>
-          <View className='hero-description'>从官方对阵到赛后回测，一条带时间边界、版本记录与安全约束的完整数据流水线。</View>
+          <View className='hero-description'>看见概率，也看见不确定性。从官方对阵到赛后回测，保留完整证据与安全边界。</View>
           <View className='skill-test-banner'><Text>{skillTestText}</Text></View>
           <View className='hero-actions'>
-            <Button className='primary-button' onClick={goDaily}>查看每日推断<Text className='button-arrow'>→</Text></Button>
+            <Button className='primary-button' onClick={goDaily}>进入今日比赛中心<Text className='button-arrow'>→</Text></Button>
             <Button className='secondary-button' onClick={goPipeline}>探索数据流水线</Button>
             <Button className='secondary-button' onClick={() => copyText('bash scripts/daily_automation.sh', '每日命令已复制')}>复制每日命令</Button>
           </View>
         </View>
 
         <View className='model-card card'>
+          <View className='pitch-lines' />
           <View className='card-topline'>
             <View>
-              <View className='model-caption mono'>MODEL BASELINE</View>
+              <View className='model-caption mono'>SCORE MATRIX</View>
               <View className='model-name mono'>poisson-dc-v1</View>
             </View>
-            <View className='outline-badge'>● 可复现基线</View>
+            <View className='outline-badge'>模型 V1 · 可复现</View>
           </View>
           <View className='matrix-heading'>
             <Text>比分概率矩阵</Text>

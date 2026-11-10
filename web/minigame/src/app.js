@@ -270,8 +270,9 @@ class MiniGameApp {
     this.zones = [];
     ctx.clearRect(0, 0, w, h);
     const gradient = ctx.createLinearGradient(0, 0, w, h);
-    gradient.addColorStop(0, this.colors.background);
-    gradient.addColorStop(1, '#172318');
+    const stadiumPage = this.page === 'overview' || this.page === 'daily';
+    gradient.addColorStop(0, stadiumPage ? '#164d2c' : this.colors.background);
+    gradient.addColorStop(1, stadiumPage ? '#081d13' : '#172318');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
 
