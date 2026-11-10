@@ -102,6 +102,11 @@ function assertTextWithinCanvas(runtime, width, label) {
   assert.equal(app.page, 'daily');
   assert.ok(app.maxScroll > 1000, '长报告应支持纵向滚动');
   assertTextWithinCanvas(runtime, app.width, '每日首屏');
+  assert.ok(runtime.ctx.texts.includes('今日比赛中心'), '每日页应使用 C 方案标题');
+  assert.ok(runtime.ctx.texts.includes('VS'), '首场应绘制 C 方案记分牌');
+  for (const expected of [app.matches[0].homeTeam, app.matches[0].awayTeam, app.matches[0].tendencyPercent]) {
+    assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `首场记分牌应实际绘制 ${expected}`);
+  }
   const compactMatch = app.matches[1];
   for (const expected of [
     compactMatch.homeTeam,

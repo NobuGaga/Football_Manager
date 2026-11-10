@@ -1,9 +1,15 @@
 import { Text, View } from '@tarojs/components';
-import { Notice, Page } from '../../components/Page';
+import Taro from '@tarojs/taro';
+import { Page } from '../../components/Page';
 import { dailyReport } from '../../data/daily-report';
 import { decorateMatches } from '../../utils/report';
 
 const matches = decorateMatches(dailyReport);
+const reportDateText = `${dailyReport.reportDate.slice(5).replace('-', ' 月 ')} 日`;
+
+function TeamBadge({ name }) {
+  return <View className='team-badge'>{Array.from(name || '待')[0]}</View>;
+}
 
 function ProbabilityBar({ item }) {
   const segments = [
@@ -24,14 +30,14 @@ function ProbabilityBar({ item }) {
   );
 }
 
-function ProbabilityValues({ item, compact = false }) {
+function ProbabilityValues({ item }) {
   const values = [
     ['主胜', item.homePercent],
     ['平局', item.drawPercent],
     ['客胜', item.awayPercent],
   ];
   return (
-    <View className={compact ? 'compact-probabilities' : 'probability-grid'}>
+    <View className='compact-probabilities'>
       {values.map(([label, value]) => (
         <View key={label} className={item.tendency.startsWith(label) ? 'highest' : ''}>
           <Text>{label}</Text><Text className='mono'>{value}</Text>
@@ -41,7 +47,7 @@ function ProbabilityValues({ item, compact = false }) {
   );
 }
 
-function MatchDetails({ item }) {
+function MatchDetails({ item, compact = false }) {
   return (
     <View className='match-details'>
       <View className='score-row'>
@@ -51,10 +57,13 @@ function MatchDetails({ item }) {
         </View>
       </View>
       <View className='data-row'>
-        <Text className='completeness-text'>完整度 {item.completenessText}</Text>
+        <View className='completeness-block'>
+          <Text className='completeness-text'>完整度 {item.completenessText}</Text>
+          {!compact && <View className='completeness-track'><View className='completeness-fill' style={{ width: item.completenessText }} /></View>}
+        </View>
         <Text className='method-text'>{item.methodText}</Text>
       </View>
-      <View className='risk-text'>{item.primaryRisk}{item.remainingRiskCount > 0 && <Text> 等 {item.remainingRiskCount + 1} 项风险</Text>}</View>
+      <View className='risk-text'><Text className='risk-mark'>!</Text>{item.primaryRisk}{item.remainingRiskCount > 0 && <Text> 等 {item.remainingRiskCount + 1} 项风险</Text>}</View>
     </View>
   );
 }
@@ -72,9 +81,37 @@ function MatchTopline({ item }) {
   );
 }
 
-function MatchMain({ item, compact = false }) {
+function Scoreboard({ item }) {
   return (
-    <View className={`match-main ${compact ? 'compact-main' : 'featured-main'}`}>
+    <View className='scoreboard'>
+      <View className='scoreboard-team'><TeamBadge name={item.homeTeam} /><Text>{item.homeTeam}</Text></View>
+      <View className='scoreboard-center'>
+        <Text className='scoreboard-vs mono'>VS</Text>
+        <Text className='scoreboard-label'>最高倾向</Text>
+        <Text className='tendency-pill'>{item.tendencyLabel}</Text>
+      </View>
+      <View className='scoreboard-team'><TeamBadge name={item.awayTeam} /><Text>{item.awayTeam}</Text></View>
+    </View>
+  );
+}
+
+function FeaturedProbability({ item }) {
+  const others = [
+    ['主胜', '主', item.homePercent],
+    ['平局', '平', item.drawPercent],
+    ['客胜', '客', item.awayPercent],
+  ].filter(([label]) => label !== item.tendencyLabel);
+  return (
+    <View className='featured-probability'>
+      <View className='featured-tendency'><Text>{item.tendencyLabel}</Text><Text className='mono'>{item.tendencyPercent}</Text></View>
+      <Text className='featured-other mono'>{others.map(([, label, value]) => `${label} ${value}`).join('  /  ')}</Text>
+    </View>
+  );
+}
+
+function MatchMain({ item }) {
+  return (
+    <View className='match-main compact-main'>
       <View className='match-teams-scan'>
         <Text>{item.homeTeam}</Text><Text>{item.awayTeam}</Text>
       </View>
@@ -90,10 +127,10 @@ function MatchCard({ item, compact = false }) {
   return (
     <View className={`match-card card ${compact ? 'match-compact' : 'match-featured'}`}>
       <MatchTopline item={item} />
-      <MatchMain item={item} compact={compact} />
+      {compact ? <MatchMain item={item} /> : <><Scoreboard item={item} /><FeaturedProbability item={item} /></>}
       <ProbabilityBar item={item} />
-      <ProbabilityValues item={item} compact={compact} />
-      <MatchDetails item={item} />
+      {compact && <ProbabilityValues item={item} />}
+      <MatchDetails item={item} compact={compact} />
     </View>
   );
 }
@@ -109,12 +146,16 @@ function CompactMatch({ item }) {
 export default function Daily() {
   return (
     <Page className='daily'>
-      <View className='section-heading daily-heading'>
-        <Text className='section-kicker mono'>MATCHDAY PROBABILITY REPORT</Text>
-        <Text className='section-title'>每日推断</Text>
-        <Text className='section-description'>{dailyReport.reportDate} · {dailyReport.matchCount} 场 / {dailyReport.predictionCount} 条策略 · 由 Python 每日任务打包</Text>
+      <View className='daily-header'>
+        <View className='daily-back' role='button' aria-label='返回概览' onClick={() => Taro.navigateBack()}>←</View>
+        <Text className='daily-title'>今日比赛中心</Text>
+        <View className='daily-date'>{reportDateText}</View>
       </View>
-      <Notice>{dailyReport.disclaimer} 数据完整度较低时仅作弱参考。</Notice>
+      <View className='daily-summary'><Text>{dailyReport.matchCount} 场</Text><Text>/ {dailyReport.predictionCount} 条策略</Text></View>
+      <View className='daily-notice'>
+        <Text className='daily-notice-title'>概率估计仅供分析</Text>
+        <Text className='daily-notice-text'>低完整度仅作弱参考，不构成收益保证或确定性投注建议。</Text>
+      </View>
 
       {matches.length > 0 ? (
         <View className='match-list'>

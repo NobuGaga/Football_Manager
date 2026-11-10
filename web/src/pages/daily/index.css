@@ -5,33 +5,78 @@
     linear-gradient(150deg, #164d2c 0%, #0b2518 52%, #081d13 100%);
 }
 
-.daily .section-kicker {
+.daily-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.daily-back {
+  display: flex;
+  width: 72px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
   color: #b9f54a;
+  font-size: 42px;
+  cursor: pointer;
 }
 
-.daily .section-description {
-  color: #b5c9ae;
+.daily-title {
+  min-width: 0;
+  flex: 1;
+  color: #f4faec;
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
-.daily .notice {
-  border-color: #6a633a;
-  background: #2a3820;
+.daily-date {
+  padding: 8px 16px;
+  border-radius: 28px;
+  color: #d9ebcf;
+  background: #255b35;
+  font-size: 18px;
+  white-space: nowrap;
 }
 
-.daily .notice-mark {
-  color: #2c210e;
-  background: #e8bd67;
+.daily-summary {
+  display: flex;
+  margin: 24px 0 26px;
+  align-items: baseline;
+  color: #c2d3bc;
+  font-size: 23px;
+  font-weight: 600;
+  gap: 12px;
 }
 
-.daily .notice-text {
-  color: #e0d4b4;
+.daily-notice {
+  display: flex;
+  padding: 20px 24px;
+  border: 1px solid #4c7040;
+  border-radius: 16px;
+  flex-direction: column;
+  background: #1b4628;
+}
+
+.daily-notice-title {
+  color: #d9e7ce;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.daily-notice-text {
+  margin-top: 5px;
+  color: #b6c9a9;
+  font-size: 18px;
+  line-height: 1.6;
 }
 
 .match-list {
   display: grid;
-  margin-top: 26px;
+  margin-top: 28px;
   grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  gap: 18px;
 }
 
 .match-card {
@@ -42,28 +87,15 @@
   background: #12351f;
 }
 
-.match-card::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: #527a4c;
-  content: '';
-}
-
 .match-featured {
-  padding: 24px 26px;
-  border-radius: 22px;
-}
-
-.match-featured::before {
-  background: #b9f54a;
+  padding: 28px;
+  border-color: #467847;
+  border-radius: 24px;
 }
 
 .match-compact {
-  padding: 18px 20px 18px 24px;
-  border-radius: 14px;
+  padding: 22px 24px;
+  border-radius: 18px;
 }
 
 .match-topline,
@@ -86,7 +118,7 @@
   padding: 5px 12px;
   border-radius: 20px;
   color: #b9f54a;
-  background: #214b2a;
+  background: #244e29;
   font-size: 18px;
   font-weight: 650;
   line-height: 1.4;
@@ -119,6 +151,102 @@
   overflow-wrap: anywhere;
 }
 
+.scoreboard {
+  display: flex;
+  margin: 34px 0 30px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.scoreboard-team {
+  display: flex;
+  width: 33%;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  color: #f4faec;
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.team-badge {
+  display: flex;
+  width: 74px;
+  height: 74px;
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b9f54a;
+  border-radius: 50%;
+  color: #b9f54a;
+  background: #214b2a;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.scoreboard-center {
+  display: flex;
+  padding-top: 4px;
+  align-items: center;
+  flex: 1;
+  flex-direction: column;
+}
+
+.scoreboard-vs {
+  color: #769773;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.scoreboard-label {
+  margin-top: 12px;
+  color: #91ad8c;
+  font-size: 16px;
+}
+
+.tendency-pill {
+  margin-top: 10px;
+  padding: 6px 16px;
+  border-radius: 24px;
+  color: #10200b;
+  background: #b9f54a;
+  font-size: 19px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.featured-probability {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.featured-tendency {
+  display: flex;
+  align-items: baseline;
+  color: #b9f54a;
+  font-size: 34px;
+  font-weight: 700;
+  gap: 16px;
+}
+
+.featured-tendency .mono {
+  font-size: 43px;
+}
+
+.featured-other {
+  color: #c2d3bc;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
 .match-main {
   display: flex;
   align-items: flex-start;
@@ -126,12 +254,8 @@
   gap: 20px;
 }
 
-.featured-main {
-  margin: 24px 0 20px;
-}
-
 .compact-main {
-  margin: 16px 0 14px;
+  margin: 18px 0 16px;
 }
 
 .match-teams-scan {
@@ -140,19 +264,14 @@
   flex: 1;
   flex-direction: column;
   color: #f4faec;
-  font-size: 27px;
+  font-size: 25px;
   font-weight: 650;
   line-height: 1.42;
-  gap: 5px;
+  gap: 4px;
 }
 
 .match-teams-scan > * {
   overflow-wrap: anywhere;
-}
-
-.match-compact .match-teams-scan {
-  font-size: 24px;
-  gap: 3px;
 }
 
 .match-tendency-scan {
@@ -173,15 +292,11 @@
 .tendency-value {
   margin-top: 4px;
   color: #b9f54a;
-  font-size: 39px;
+  font-size: 35px;
   font-weight: 700;
   line-height: 1.25;
   text-align: right;
   white-space: nowrap;
-}
-
-.match-compact .tendency-value {
-  font-size: 34px;
 }
 
 .probability-bar {
@@ -193,7 +308,7 @@
 }
 
 .match-compact .probability-bar {
-  height: 7px;
+  height: 8px;
   margin: 8px 0 12px;
 }
 
@@ -218,37 +333,6 @@
 
 .probability-segment.active {
   background: #b9f54a;
-}
-
-.probability-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.probability-grid > * {
-  display: flex;
-  padding: 12px 8px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  color: #afc5a8;
-  background: #0e2b1a;
-  font-size: 17px;
-  gap: 10px;
-}
-
-.probability-grid .mono {
-  color: #f4faec;
-  font-size: 22px;
-}
-
-.probability-grid > *.highest {
-  background: #214b2a;
-}
-
-.probability-grid > *.highest .mono {
-  color: #b9f54a;
 }
 
 .compact-probabilities {
@@ -277,8 +361,8 @@
 }
 
 .match-details {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid #315d37;
 }
 
@@ -301,39 +385,64 @@
 }
 
 .score-item {
-  padding: 4px 8px;
+  padding: 4px 9px;
   border-radius: 8px;
-  color: #e3eddd;
-  background: #214b2a;
+  color: #f0f6e9;
+  background: #22472a;
 }
 
 .data-row {
-  margin-top: 11px;
+  margin-top: 13px;
   align-items: flex-start;
   color: #afc5a8;
   font-size: 16px;
 }
 
-.completeness-text {
+.completeness-block {
+  min-width: 116px;
   flex-shrink: 0;
+}
+
+.completeness-text {
   color: #e8c780;
   font-weight: 650;
 }
 
+.completeness-track {
+  width: 116px;
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #365337;
+}
+
+.completeness-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #e8bd67;
+}
+
 .method-text {
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 8px;
-  color: #e8c780;
+  color: #e9c780;
   background: #463d24;
   text-align: right;
 }
 
 .risk-text {
-  margin-top: 9px;
+  margin-top: 11px;
   color: #d8b978;
   font-size: 16px;
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.risk-mark {
+  display: inline-flex;
+  margin-right: 8px;
+  font-weight: 700;
 }
 
 .empty-card {
@@ -357,5 +466,12 @@
 
   .match-featured {
     grid-column: 1 / -1;
+  }
+
+  .match-featured .scoreboard,
+  .match-featured .featured-probability {
+    max-width: 760px;
+    margin-right: auto;
+    margin-left: auto;
   }
 }
