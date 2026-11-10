@@ -20,6 +20,18 @@ from scraper import SportteryScraper
 from utils import utc_now
 
 
+LOCAL_PRODUCT_PATHS = (
+    "data/football.db",
+    "reports",
+    "rules",
+    "docs",
+    "README.md",
+    "AGENTS.md",
+    "web/src/data/daily-report.js",
+    "delivery/wechat-miniprogram/validation-20261108/compiled.zip",
+)
+
+
 class GitRepository:
     def __init__(self, root: str | Path):
         self.root = Path(root).resolve()
@@ -39,22 +51,22 @@ class GitRepository:
             raise RuntimeError("Git 工作区不干净；为避免覆盖人工修改，每日任务已中止：\n" + dirty)
         branch = self._run("rev-parse", "--abbrev-ref", "HEAD")
         if branch == "HEAD":
-            raise RuntimeError("Git 处于 detached HEAD，不能执行每日自动提交")
+            raise RuntimeError("Git 处于 detached HEAD，不能执行每日流程")
 
     def pull(self) -> None:
         self._run("pull", "--rebase")
 
-    def commit_and_push(self, date: str, push: bool) -> str | None:
-        # 只提交明确的数据产物，不暂存源码、凭证、缓存或人工未提交修改。
-        self._run("add", "-f", "--", "data/football.db", "reports", "web/src/data/daily-report.js")
-        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=self.root).returncode == 0:
-            return None
-        self._run("-c", "user.name=Kimi Claw", "-c", "user.email=kimi-claw@localhost",
-                  "commit", "-m", f"Daily football prediction: {date}")
-        commit = self._run("rev-parse", "--short", "HEAD")
-        if push:
-            self._run("push")
-        return commit
+    def assert_local_products_untracked(self) -> None:
+        tracked = self._run("ls-files", "--", *LOCAL_PRODUCT_PATHS)
+        staged = self._run("diff", "--cached", "--name-only", "--diff-filter=ACMRT",
+                           "--", *LOCAL_PRODUCT_PATHS)
+        violations = []
+        if tracked:
+            violations.append("已跟踪：\n" + tracked)
+        if staged:
+            violations.append("已暂存：\n" + staged)
+        if violations:
+            raise RuntimeError("本地关键文件不得进入 Git 跟踪或暂存：\n" + "\n".join(violations))
 
 
 class DailyAutomation:
@@ -149,11 +161,13 @@ class DailyAutomation:
             summary_path = self.output_dir / f"每日中文摘要_{match_date}.md"
             status["status_file"] = self._relative(status_path)
             status["summary_file"] = self._relative(summary_path)
+            # push 仅为旧命令兼容保留；任何情况下都不提交或推送本地关键文件。
+            self.git.assert_local_products_untracked()
+            status["local_products_only"] = True
+            status["commit"] = None
+            status["pushed"] = False
             status_path.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
             summary_path.write_text(self._markdown_summary(status, backtest), encoding="utf-8")
-            commit = self.git.commit_and_push(match_date, push) if push else None
-            status["commit"] = commit
-            status["pushed"] = bool(push and commit)
             return status
 
     @contextmanager
@@ -189,7 +203,8 @@ class DailyAutomation:
                  f"- 历史数据：{status['history']}（{status['history_rows']} 场）",
                  f"- 策略校验：{status['strategy_validation']}",
                  f"- 跨端报告数据：{status['miniprogram_data']}",
-                 f"- 回测结果：{status['backtest']}"]
+                 f"- 回测结果：{status['backtest']}",
+                 "- 本地关键文件：仅保存本地，未进入 Git 跟踪或暂存"]
         if overall.get("predictions"):
             lines += [f"- 胜平负准确率：{overall['outcome_accuracy']:.1%}",
                       f"- 首选／前三比分命中率：{overall['top1_score_accuracy']:.1%}／{overall['top3_score_accuracy']:.1%}",

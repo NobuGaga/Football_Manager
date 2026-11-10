@@ -130,7 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
     all_cmd.add_argument("--output-dir", default="reports")
     all_cmd.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
 
-    daily = sub.add_parser("daily", help="每日赛果、推断、双选策略、核对表、历史和 Git 推送全流程")
+    daily = sub.add_parser("daily", help="每日赛果、推断、双选策略、核对表、历史和本地产物安全检查全流程")
     daily.add_argument("--date", help="体彩营业日，默认 Asia/Shanghai 今天")
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
     daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
@@ -140,7 +140,7 @@ def build_parser() -> argparse.ArgumentParser:
     daily.add_argument("--refresh", action="store_true", help="追加临场推断版本")
     daily.add_argument("--require-results", action="store_true", help="昨日有比赛但未可靠回填时中止")
     daily.add_argument("--pull", action="store_true", help="开始前 git pull --rebase")
-    daily.add_argument("--push", action="store_true", help="成功后仅提交数据产物并 git push")
+    daily.add_argument("--push", action="store_true", help="旧命令兼容参数；不会提交或推送本地关键文件")
     return parser
 
 
@@ -269,8 +269,6 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(Path(status["summary_file"]).read_text(encoding="utf-8") if Path(status["summary_file"]).is_absolute()
               else (repo_root / status["summary_file"]).read_text(encoding="utf-8"))
-        if status.get("commit"):
-            print(f"Git 提交：{status['commit']}；已推送：{status['pushed']}")
     return 0
 
 

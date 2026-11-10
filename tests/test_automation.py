@@ -69,7 +69,7 @@ class AutomationTest(unittest.TestCase):
         self.assertEqual(basic["business_date"], "2099-10-25")
         self.assertEqual(basic["match_date"], "2099-10-26")
 
-    def test_successful_run_commits_and_pushes_only_data_products(self):
+    def test_successful_run_keeps_data_products_local_without_commit_or_push(self):
         work = self.root / "work"
         remote = self.root / "remote.git"
         shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(
@@ -86,22 +86,36 @@ class AutomationTest(unittest.TestCase):
         self._git(work, "remote", "add", "origin", str(remote))
         self._git(work, "push", "-u", "origin", "main")
         FixtureImporter(work / "data" / "football.db").import_file(work / "examples" / "fixtures.csv")
-        self._git(work, "add", "-f", "data/football.db")
-        self._git(work, "commit", "-m", "fixture")
-        self._git(work, "push")
+        remote_before = subprocess.check_output(
+            ["git", "--git-dir", str(remote), "rev-parse", "main"], text=True).strip()
+        local_before = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=work, text=True).strip()
 
         status = DailyAutomation(work).run(
             date="2099-10-25", results_date="2099-10-25",
             fixtures=str(work / "examples" / "fixtures.csv"),
             results=str(work / "examples" / "results.csv"), pull=True, push=True,
         )
-        self.assertTrue(status["pushed"])
-        message = subprocess.check_output(["git", "--git-dir", str(remote), "log", "main", "-1", "--pretty=%s"], text=True).strip()
-        self.assertEqual(message, "Daily football prediction: 2099-10-25")
+        self.assertTrue(status["local_products_only"])
+        self.assertFalse(status["pushed"])
+        self.assertIsNone(status["commit"])
+        remote_after = subprocess.check_output(
+            ["git", "--git-dir", str(remote), "rev-parse", "main"], text=True).strip()
+        local_after = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=work, text=True).strip()
+        self.assertEqual(remote_after, remote_before)
+        self.assertEqual(local_after, local_before)
         tracked = subprocess.check_output(["git", "-c", "core.quotepath=false", "--git-dir", str(remote), "ls-tree", "-r", "--name-only", "main"], text=True)
-        self.assertIn("reports/每日中文摘要_2099-10-25.md", tracked)
-        self.assertIn("data/football.db", tracked)
-        self.assertIn("web/src/data/daily-report.js", tracked)
+        self.assertNotIn("reports/", tracked)
+        self.assertNotIn("data/football.db", tracked)
+        self.assertNotIn("web/src/data/daily-report.js", tracked)
+        self.assertTrue((work / "data" / "football.db").exists())
+        self.assertTrue((work / "reports" / "每日中文摘要_2099-10-25.md").exists())
+        self.assertTrue((work / "web" / "src" / "data" / "daily-report.js").exists())
+        summary = (work / "reports" / "每日中文摘要_2099-10-25.md").read_text(encoding="utf-8")
+        self.assertIn("本地关键文件：仅保存本地，未进入 Git 跟踪或暂存", summary)
+
+        self._git(work, "add", "-f", "data/football.db")
+        with self.assertRaisesRegex(RuntimeError, "本地关键文件"):
+            DailyAutomation(work).git.assert_local_products_untracked()
 
     @staticmethod
     def _git(cwd: Path, *args: str):

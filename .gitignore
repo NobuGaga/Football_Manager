@@ -3,7 +3,9 @@ reports/
 docs/
 rules/
 miniprogram/data/
+web/src/data/daily-report.js
 delivery/wechat-miniprogram/import-project/data/
+delivery/wechat-miniprogram/validation-20261108/compiled.zip
 README.md
 AGENTS.md
 miniprogram/README.md

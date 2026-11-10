@@ -7,7 +7,7 @@ cd "$REPO_ROOT"
 
 args=(daily)
 if [[ "${DAILY_NO_GIT:-0}" != "1" ]]; then
-  args+=(--pull --push)
+  args+=(--pull)
 fi
 if [[ -n "${DAILY_DATE:-}" ]]; then
   args+=(--date "$DAILY_DATE")
