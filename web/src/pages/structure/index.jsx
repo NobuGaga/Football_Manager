@@ -37,8 +37,8 @@ export default function Structure() {
       <View className='environment-card card'>
         <View><Text>RUNTIME</Text><Text className='environment-value'>Python 3.10+</Text></View>
         <View><Text>DATABASE</Text><Text className='environment-value'>SQLite</Text></View>
-        <View><Text>FRONTEND</Text><Text className='environment-value'>Taro + Canvas</Text></View>
-        <View><Text>TARGETS</Text><Text className='environment-value'>H5 / minigame</Text></View>
+        <View><Text>FRONTEND</Text><Text className='environment-value'>Taro + React</Text></View>
+        <View><Text>TARGETS</Text><Text className='environment-value'>H5 / 微信小程序</Text></View>
       </View>
       <Button className='primary-button test-button' onClick={() => copyText('python3 -m unittest discover -s tests -v', '测试命令已复制')}>复制测试命令</Button>
       <Notice mark='i'>本页面用于浏览工程信息，不直接读取本地数据库，也不会执行仓库命令或修改 Git 历史。</Notice>

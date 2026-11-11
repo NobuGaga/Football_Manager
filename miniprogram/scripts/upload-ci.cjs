@@ -5,6 +5,14 @@ const ci = require('miniprogram-ci');
 const { dailyReport } = require('../../web/src/data/daily-report.js');
 
 const FRONTEND_ROOT = path.resolve(__dirname, '../../web');
+const EXPECTED_PAGES = [
+  'pages/overview/index',
+  'pages/daily/index',
+  'pages/pipeline/index',
+  'pages/model/index',
+  'pages/automation/index',
+  'pages/structure/index',
+];
 
 function parseRobot(value) {
   const robot = Number(value || '1');
@@ -20,26 +28,42 @@ function defaultVersion(now = new Date()) {
 
 function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
   const outputRoot = path.join(frontendRoot, 'dist', 'weapp');
-  const requiredFiles = ['game.json', 'game.js', 'src/app.js', 'data/daily-report.js'];
+  const requiredFiles = [
+    'app.json',
+    'app.js',
+    'app.wxss',
+    'pages/overview/index.js',
+    'pages/overview/index.wxml',
+    'pages/daily/index.js',
+    'pages/daily/index.wxml',
+  ];
   for (const file of requiredFiles) {
     if (!fs.existsSync(path.join(outputRoot, file))) {
-      throw new Error(`缺少微信小游戏编译产物 ${file}，请先运行 npm --prefix web run build:weapp`);
+      throw new Error(`缺少微信小程序编译产物 ${file}，请先运行 npm --prefix web run build:weapp`);
     }
   }
-  if (fs.statSync(path.join(outputRoot, 'game.js')).size === 0) {
-    throw new Error('微信小游戏入口 game.js 不能为空');
+  if (fs.statSync(path.join(outputRoot, 'app.js')).size === 0) {
+    throw new Error('微信小程序入口 app.js 不能为空');
   }
-  const gameConfig = JSON.parse(fs.readFileSync(path.join(outputRoot, 'game.json'), 'utf8'));
-  if (!gameConfig.deviceOrientation) {
-    throw new Error('game.json 缺少 deviceOrientation');
+  const appConfig = JSON.parse(fs.readFileSync(path.join(outputRoot, 'app.json'), 'utf8'));
+  for (const page of EXPECTED_PAGES) {
+    if (!appConfig.pages || !appConfig.pages.includes(page)) {
+      throw new Error(`app.json 缺少页面 ${page}`);
+    }
+  }
+  if (!appConfig.tabBar || appConfig.tabBar.list.length !== 5) {
+    throw new Error('app.json 必须保留 5 个底部标签');
+  }
+  if (appConfig.sitemapLocation && !fs.existsSync(path.join(outputRoot, appConfig.sitemapLocation))) {
+    throw new Error(`app.json 引用的文件不存在：${appConfig.sitemapLocation}`);
   }
   const projectConfigPath = path.join(frontendRoot, 'project.config.json');
   if (!fs.existsSync(projectConfigPath)) {
     throw new Error('缺少 web/project.config.json，无法创建微信 CI 项目');
   }
   const projectConfig = JSON.parse(fs.readFileSync(projectConfigPath, 'utf8'));
-  if (projectConfig.compileType !== 'game') {
-    throw new Error('web/project.config.json 的 compileType 必须为 game');
+  if (projectConfig.compileType !== 'miniprogram') {
+    throw new Error('web/project.config.json 的 compileType 必须为 miniprogram');
   }
   return frontendRoot;
 }
@@ -67,10 +91,10 @@ async function main() {
   try {
     const project = new ci.Project({
       appid,
-      type: 'miniGame',
+      type: 'miniProgram',
       projectPath,
       privateKeyPath,
-      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*'],
+      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
     });
     const desc = process.env.WECHAT_UPLOAD_DESC || `Kimi Claw 每日更新 ${dailyReport.reportDate}`;
 
@@ -86,7 +110,7 @@ async function main() {
       },
       onProgressUpdate: () => {},
     });
-    console.log(`Canvas 微信小游戏开发版本上传完成：${version}（CI 机器人 ${robot}）`);
+    console.log(`微信小程序开发版本上传完成：${version}（CI 机器人 ${robot}）`);
     console.log(`每日报告：${dailyReport.reportDate}，共 ${dailyReport.matchCount} 场`);
     console.log('若该机器人尚未绑定体验版，请在微信公众平台完成一次性设置；后续同机器人上传会自动更新体验版。');
   } finally {
@@ -96,7 +120,7 @@ async function main() {
 
 if (require.main === module) {
   main().catch((error) => {
-    console.error(`微信小游戏上传失败：${error.message}`);
+    console.error(`微信小程序上传失败：${error.message}`);
     process.exitCode = 1;
   });
 }

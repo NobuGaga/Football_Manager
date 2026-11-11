@@ -40,7 +40,7 @@
   letter-spacing: -3px;
 }
 
-.hero-title > * {
+.hero-title > text {
   display: block;
   color: #b9f54a;
 }
@@ -100,7 +100,10 @@
   background: #12351f;
 }
 
-.model-card > *:not(.pitch-lines) {
+.model-card .card-topline,
+.model-card .matrix-heading,
+.model-card .score-matrix,
+.model-card .model-features {
   position: relative;
   z-index: 1;
 }
@@ -193,7 +196,7 @@
   gap: 24px 34px;
 }
 
-.model-features > * {
+.model-features > view {
   display: flex;
   align-items: center;
   color: #d2e1ca;
@@ -227,12 +230,12 @@
   border-bottom: 1px solid #315d37;
 }
 
-.stat-card:nth-child(2n) {
+.stat-card.stat-even {
   padding-left: 24px;
   border-left: 1px solid #315d37;
 }
 
-.stat-card:nth-last-child(-n+2) {
+.stat-card.stat-last-row {
   border-bottom: 0;
 }
 
@@ -241,7 +244,7 @@
   line-height: 1;
 }
 
-.stat-value > * {
+.stat-value > text {
   margin-left: 8px;
   color: #b9f54a;
   font-family: -apple-system, "PingFang SC", sans-serif;
@@ -354,14 +357,14 @@
   }
 
   .stat-card,
-  .stat-card:nth-child(2n),
-  .stat-card:nth-last-child(-n+2) {
+  .stat-card.stat-even,
+  .stat-card.stat-last-row {
     padding: 30px 24px;
     border-bottom: 0;
     border-left: 1px solid #315d37;
   }
 
-  .stat-card:first-child {
+  .stat-card.stat-first {
     padding-left: 0;
     border-left: 0;
   }

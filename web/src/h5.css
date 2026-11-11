@@ -1,0 +1,35 @@
+html,
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  color: #eef3e9;
+  background: #0b100d;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28px;
+  line-height: 1.6;
+}
+
+button:focus-visible {
+  outline: 2px solid #c8f55a;
+  outline-offset: 3px;
+}
+
+html body .taro_router > .taro_page {
+  background-color: #0b100d;
+  transform: none !important;
+  transition: none !important;
+}
+
+html body .taro_router > .taro_page.taro_page_shade {
+  display: none !important;
+}
+
+.weui-tabbar__icon:not([src]),
+.weui-tabbar__icon[src=''] {
+  display: none;
+}
+
+.weui-tabbar__label {
+  margin: 0;
+}

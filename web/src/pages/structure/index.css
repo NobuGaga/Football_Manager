@@ -121,7 +121,7 @@
   gap: 20px;
 }
 
-.file-meta > *:last-child {
+.file-meta > text:last-child {
   color: #a6b1a1;
   text-align: right;
 }
@@ -137,13 +137,13 @@
   gap: 24px;
 }
 
-.environment-card > * {
+.environment-card > view {
   display: flex;
   min-width: 0;
   flex-direction: column;
 }
 
-.environment-card > * > *:first-child {
+.environment-card > view > text:first-child {
   color: #859385;
   font-family: Consolas, monospace;
   font-size: 17px;

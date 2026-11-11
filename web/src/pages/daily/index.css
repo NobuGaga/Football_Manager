@@ -270,7 +270,7 @@
   gap: 4px;
 }
 
-.match-teams-scan > * {
+.match-teams-scan > text {
   overflow-wrap: anywhere;
 }
 
@@ -341,7 +341,7 @@
   gap: 8px;
 }
 
-.compact-probabilities > * {
+.compact-probabilities > view {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -355,7 +355,7 @@
   font-size: 18px;
 }
 
-.compact-probabilities > *.highest .mono {
+.compact-probabilities > view.highest .mono {
   color: #b9f54a;
   font-weight: 700;
 }

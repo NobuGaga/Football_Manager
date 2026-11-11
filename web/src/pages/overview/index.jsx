@@ -62,8 +62,8 @@ export default function Overview() {
       </View>
 
       <View className='stats-grid'>
-        {stats.map((item) => (
-          <View key={item.label} className='stat-card'>
+        {stats.map((item, index) => (
+          <View key={item.label} className={`stat-card ${index % 2 === 1 ? 'stat-even' : ''} ${index >= stats.length - 2 ? 'stat-last-row' : ''} ${index === 0 ? 'stat-first' : ''}`}>
             <View className='stat-value mono'>{item.value}<Text>{item.unit}</Text></View>
             <View className='stat-label'>{item.label}</View>
             <View className='stat-detail'>{item.detail}</View>
@@ -82,7 +82,7 @@ export default function Overview() {
         ))}
       </View>
       <Notice>足球经理的推断基于赛前数据与概率模型，不构成收益保证或确定性投注建议。信息不足时，明确标记数据缺失与不确定性。</Notice>
-      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Taro React H5 · Canvas 2D 微信小游戏</View>
+      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Taro React H5 · 微信小程序</View>
     </Page>
   );
 }

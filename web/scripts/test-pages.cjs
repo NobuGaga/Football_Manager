@@ -129,13 +129,15 @@ for (const page of pages) assert.ok(appConfig.includes(`pages/${page}/index`));
 assert.ok(appConfig.includes('tabBar'));
 assert.ok(!appConfig.includes('web-view'));
 const appStyles = fs.readFileSync(path.join(root, 'src', 'app.css'), 'utf8');
-assert.match(appStyles, /taro_router > \.taro_page[\s\S]*transform: none !important/);
-assert.match(appStyles, /taro_page\.taro_page_shade[\s\S]*display: none !important/);
+const h5Styles = fs.readFileSync(path.join(root, 'src', 'h5.css'), 'utf8');
+assert.match(h5Styles, /taro_router > \.taro_page[\s\S]*transform: none !important/);
+assert.match(h5Styles, /taro_page\.taro_page_shade[\s\S]*display: none !important/);
+assert.doesNotMatch(appStyles, /:not\(|\[src|nth-child|nth-last-child/);
 
-assert.ok(project.projectFiles.some((item) => item.path === 'web/minigame/'));
+assert.ok(project.projectFiles.some((item) => item.path === 'web/dist/weapp/'));
 const packageJson = require('../package.json');
 assert.ok(packageJson.scripts['build:h5'].includes('taro build'));
-assert.ok(packageJson.scripts['build:weapp'].includes('build-minigame.cjs'));
+assert.ok(packageJson.scripts['build:weapp'].includes('taro build --type weapp'));
 assert.equal(packageJson.dependencies['@tarojs/taro'], packageJson.dependencies['@tarojs/components']);
 assert.equal(packageJson.dependencies['@tarojs/taro'], packageJson.devDependencies['@tarojs/cli']);
 
