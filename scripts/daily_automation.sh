@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Kimi Claw cron 入口。凭证只从环境读取，不写入仓库或日志。
+# Kimi Claw cron 入口。凭证只从环境或本地安全密钥文件加载，不打印、不提交。
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,9 +34,9 @@ fi
 python3 main.py "${args[@]}"
 
 if [[ "${DAILY_NO_GIT:-0}" == "1" ]]; then
-  echo "手动验收：每日报告已打包到小程序，本次不上传体验版。"
+  echo "手动验收：每日报告已打包到微信小游戏，本次不上传体验版。"
 elif [[ "${DAILY_MINIPROGRAM_UPLOAD:-1}" == "1" ]]; then
   bash scripts/wechat_daily_upload.sh
 else
-  echo "提示：DAILY_MINIPROGRAM_UPLOAD=0，已跳过每日小程序体验版上传。"
+  echo "提示：DAILY_MINIPROGRAM_UPLOAD=0，已跳过每日微信小游戏体验版上传。"
 fi

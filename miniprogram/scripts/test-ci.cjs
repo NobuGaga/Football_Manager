@@ -18,37 +18,42 @@ assert.match(defaultVersion(), /^\d+\.\d+\.\d+$/);
 
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'football-manager-ci-'));
 try {
-  assert.throws(() => validateCompiledProject(fixture), /微信小程序编译产物/);
+  assert.throws(() => validateCompiledProject(fixture), /微信小游戏编译产物/);
   const output = path.join(fixture, 'dist', 'weapp');
-  fs.mkdirSync(path.join(output, 'pages', 'overview'), { recursive: true });
-  fs.mkdirSync(path.join(output, 'pages', 'daily'), { recursive: true });
-  const pages = [
-    'pages/overview/index',
-    'pages/daily/index',
-    'pages/pipeline/index',
-    'pages/model/index',
-    'pages/automation/index',
-    'pages/structure/index',
-  ];
-  fs.writeFileSync(path.join(output, 'app.json'), JSON.stringify({
-    pages,
-    tabBar: { list: pages.slice(0, 5).map((pagePath) => ({ pagePath })) },
-    sitemapLocation: 'sitemap.json',
-  }));
-  fs.writeFileSync(path.join(output, 'app.js'), 'App({});\n');
-  fs.writeFileSync(path.join(output, 'app.wxss'), 'page {}\n');
-  fs.writeFileSync(path.join(output, 'sitemap.json'), '{}\n');
-  for (const page of ['overview', 'daily']) {
-    fs.writeFileSync(path.join(output, 'pages', page, 'index.js'), 'Page({});\n');
-    fs.writeFileSync(path.join(output, 'pages', page, 'index.wxml'), '<view />\n');
+  fs.mkdirSync(path.join(output, 'src', 'pages'), { recursive: true });
+  fs.mkdirSync(path.join(output, 'data'), { recursive: true });
+  fs.mkdirSync(path.join(output, 'utils'), { recursive: true });
+  fs.writeFileSync(path.join(output, 'game.json'), JSON.stringify({ deviceOrientation: 'portrait' }));
+  fs.writeFileSync(path.join(output, 'game.js'), "require('./src/app.js');\n");
+  for (const file of ['app.js', 'draw.js']) {
+    fs.writeFileSync(path.join(output, 'src', file), 'module.exports = {};\n');
+  }
+  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure']) {
+    fs.writeFileSync(path.join(output, 'src', 'pages', `${page}.js`), 'module.exports = {};\n');
+  }
+  for (const file of ['daily-report.js', 'project.js']) {
+    fs.writeFileSync(path.join(output, 'data', file), 'module.exports = {};\n');
+  }
+  for (const file of ['report.js', 'clipboard-core.js']) {
+    fs.writeFileSync(path.join(output, 'utils', file), 'module.exports = {};\n');
   }
   assert.throws(() => validateCompiledProject(fixture), /project.config.json/);
-  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'game' }));
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({
+    compileType: 'miniprogram',
+    miniprogramRoot: './dist/weapp/',
+  }));
   assert.throws(() => validateCompiledProject(fixture), /compileType/);
-  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({ compileType: 'miniprogram' }));
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({
+    compileType: 'game',
+    miniprogramRoot: './dist/weapp/',
+  }));
+  assert.equal(validateCompiledProject(fixture), fixture);
+  fs.writeFileSync(path.join(output, 'app.json'), '{}\n');
+  assert.throws(() => validateCompiledProject(fixture), /混入了微信小程序文件/);
+  fs.rmSync(path.join(output, 'app.json'));
   assert.equal(validateCompiledProject(fixture), fixture);
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
 }
 
-console.log('MINIPROGRAM_CI_CONFIG_OK default_robot robot_range local_version weapp_output_validation');
+console.log('MINIGAME_CI_CONFIG_OK default_robot robot_range local_version game_output_validation no_weapp_mix');

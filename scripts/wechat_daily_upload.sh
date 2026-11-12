@@ -12,19 +12,19 @@ if [[ -n "$UPLOAD_SOURCES_STATUS" ]]; then
 fi
 
 if ! command -v "$NODE_BIN" >/dev/null 2>&1; then
-  echo "错误：未找到 Node.js（${NODE_BIN}），无法测试、构建并上传每日小程序。" >&2
+  echo "错误：未找到 Node.js（${NODE_BIN}），无法测试、构建并上传每日微信小游戏。" >&2
   exit 1
 fi
 NODE_PATH="$(command -v "$NODE_BIN")"
 export PATH="$(dirname "$NODE_PATH"):$PATH"
 if ! command -v "$NPM_BIN" >/dev/null 2>&1; then
-  echo "错误：未找到 npm（${NPM_BIN}），无法构建微信小程序。" >&2
+  echo "错误：未找到 npm（${NPM_BIN}），无法构建 Canvas 微信小游戏。" >&2
   exit 1
 fi
 
 cd "$REPO_ROOT/web"
 "$NPM_BIN" test
-"$NPM_BIN" run build:weapp
+"$NPM_BIN" run build:minigame
 
 cd "$REPO_ROOT/miniprogram"
 "$NPM_BIN" test

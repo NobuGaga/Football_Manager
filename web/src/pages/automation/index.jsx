@@ -28,7 +28,7 @@ export default function Automation() {
           </View>
         </View>
       </View>
-      <View className='command-notice'><Notice>正式任务要求 Git 工作区干净；关联失败时不提交半成品。本页面只展示命令，不会在你的设备上执行。</Notice></View>
+      <View className='command-notice'><Notice>正式任务要求 Git 工作区干净；关联失败时立即中止，不上传半成品。本页面只展示命令，不会在你的设备上执行。</Notice></View>
 
       <SectionHeading compact kicker='DAILY RUNBOOK' title='每日执行顺序' />
       <View className='runbook-card card'>

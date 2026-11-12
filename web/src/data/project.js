@@ -78,13 +78,13 @@ const metrics = [
 
 const commandModes = [
   {
-    id: 'daily', label: '每日任务', badge: '推荐入口', title: '一键完成回填、推断、回测与提交',
-    description: '开始前检查非并发锁与 Git 工作区，成功后只暂存数据库、报告和跨端报告快照。',
+    id: 'daily', label: '每日任务', badge: '推荐入口', title: '一键完成回填、推断、回测与体验版上传',
+    description: '数据库、报告和跨端报告快照仅保存本地，不进入 Git；随后测试、构建并上传微信小游戏。',
     command: 'bash scripts/daily_automation.sh',
   },
   {
     id: 'manual', label: '手动验收', badge: '禁用 Git', title: '先用官方文件验证完整流程',
-    description: '不拉取、不提交、不推送；对阵与赛果日期需要按实际营业日补充。',
+    description: '不拉取、不提交、不推送、不上传小游戏；对阵与赛果日期需要按实际营业日补充。',
     command: 'DAILY_NO_GIT=1 \\\nDAILY_FIXTURES_FILE=/绝对路径/今日对阵.csv \\\nDAILY_RESULTS_FILE=/绝对路径/昨日赛果.csv \\\nDAILY_DATE=YYYY-MM-DD \\\nDAILY_RESULTS_DATE=YYYY-MM-DD \\\nbash scripts/daily_automation.sh',
   },
   {
@@ -104,22 +104,22 @@ const automationSteps = [
   '补充赛前特征',
   '生成推断与四格式报告',
   '回测并输出中文摘要',
-  '导出 H5／微信小程序共享报告快照',
-  '提交并推送数据产物',
-  '测试、构建并上传微信小程序体验版',
+  '导出 H5／微信小游戏共享报告快照',
+  '核查本地关键文件未进入 Git',
+  '测试、转换构建并上传微信小游戏开发版本',
   'Claw 读取当日报告与回测',
   '生成并推送中文预测策略',
 ];
 
 const safetyRules = [
-  { title: '最小提交范围', description: '只暂存数据库、reports/ 和跨端报告快照，不提交缓存与凭证。', mark: 'Git' },
+  { title: '关键文件仅本地保存', description: '数据库、reports/ 和跨端报告快照不暂存、不提交、不推送；缓存与凭证同样排除。', mark: 'Git' },
   { title: '失败保留现场', description: '不自动 stash、不强制 push，关联冲突与未完结赛果进入待处理。', mark: '停' },
   { title: '重复执行受控', description: '文件锁阻止并发；临场更新追加版本，同日初版不重复生成。', mark: '锁' },
 ];
 
 const projectFiles = [
   { path: 'main.py', type: '入口', description: 'argparse 全部命令入口，包含导入、推断、报告、回测和 daily 自动化。', tag: 'CLI' },
-  { path: 'src/automation.py', type: '编排', description: '负责 Git 安全检查、每日流程编排、非并发锁、中文摘要与安全提交。', tag: 'AUTOMATION' },
+  { path: 'src/automation.py', type: '编排', description: '负责 Git 安全检查、每日流程编排、非并发锁、中文摘要与本地产物安全保护。', tag: 'AUTOMATION' },
   { path: 'src/database.py', type: '数据', description: '定义 SQLite schema、数据库连接，以及旧 matches 数据的无损迁移。', tag: 'SQLITE' },
   { path: 'src/importers.py', type: '数据', description: '处理对阵、球队映射、赛前特征与赛果导入，执行字段和时间校验。', tag: 'IMPORT' },
   { path: 'src/predictor.py', type: '模型', description: '实现 Poisson + Dixon–Coles 基线，生成完整比分概率与三向概率。', tag: 'MODEL' },
@@ -128,16 +128,14 @@ const projectFiles = [
   { path: 'src/reporter.py', type: '输出', description: '生成每日 JSON／CSV／Excel／Markdown 报告和回测 Excel。', tag: 'REPORT' },
   { path: 'src/result_checker.py', type: '复盘', description: '逐条关联已保存推断与实际赛果，写入复盘字段。', tag: 'RESULT' },
   { path: 'src/backtest.py', type: '复盘', description: '计算 Log Loss、Brier、概率校准、比分命中和预期进球误差。', tag: 'BACKTEST' },
-  { path: 'web/src/', type: '前端', description: 'Taro + React H5 页面，以及每日报告、工程内容和展示派生逻辑的共享数据源。', tag: 'H5 / DATA' },
-  { path: 'web/dist/weapp/', type: '前端', description: '由 Taro 生成的微信小程序产物，包含 app.js、app.json、六个页面的 JS／WXML 和样式文件。', tag: 'WEAPP' },
+  { path: 'web/src/', type: '前端', description: '保留 Taro + React H5 视觉设计，并提供每日报告、工程内容和展示派生逻辑的共享数据源。', tag: 'H5 / DATA' },
+  { path: 'web/minigame/', type: '前端', description: 'Canvas 2D 微信小游戏运行时，将共享数据转换为六个信息页面、纵向滚动和触控交互。', tag: 'MINIGAME' },
+  { path: 'web/dist/weapp/', type: '产物', description: '由 web/scripts/build-minigame.cjs 转换生成的小游戏产物，包含 game.js、game.json、Canvas 页面和共享数据；禁止手改。', tag: 'BUILD' },
   { path: 'data/football.db', type: '产物', description: '保存对阵、不可变快照、赛前特征、追加式推断、赛果与模型版本。', tag: 'RUNTIME' },
-  { path: 'reports/', type: '产物', description: '保存每日四格式报告、回测结果、运行状态与中文摘要，是需要写回仓库的数据产物。', tag: 'OUTPUT' },
+  { path: 'reports/', type: '产物', description: '保存每日四格式报告、回测结果、运行状态与中文摘要，仅保留在本地，不进入 Git。', tag: 'OUTPUT' },
 ];
 
-const skillTestText = '测试实现需求 skill 试验';
-
 module.exports = {
-  skillTestText,
   stats,
   principles,
   flowSteps,

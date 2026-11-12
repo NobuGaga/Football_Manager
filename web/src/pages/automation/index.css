@@ -2,6 +2,11 @@
   overflow: hidden;
 }
 
+.command-tab,
+.copy-button {
+  background: transparent;
+}
+
 .command-tabs {
   display: flex;
   padding: 12px;

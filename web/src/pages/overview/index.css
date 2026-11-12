@@ -52,19 +52,6 @@
   line-height: 1.85;
 }
 
-.skill-test-banner {
-  margin-top: 24px;
-  padding: 20px 22px;
-  border: 1px solid #4c7040;
-  border-radius: 14px;
-  color: #d9e7ce;
-  background: #1b4628;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
 .hero-actions {
   display: flex;
   margin-top: 36px;

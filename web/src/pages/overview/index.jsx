@@ -1,7 +1,7 @@
 import { Button, Text, View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Notice, Page, SectionHeading } from '../../components/Page';
-import { principles, skillTestText, stats } from '../../data/project';
+import { principles, stats } from '../../data/project';
 import { createNavigator } from '../../utils/navigation-core';
 import { createMatrix } from '../../utils/report';
 import { useCopy } from '../../utils/useCopy';
@@ -28,7 +28,6 @@ export default function Overview() {
           <View className='hero-eyebrow mono'>MATCHDAY · 多联赛概率分析</View>
           <View className='hero-title'>让每一次推断，<Text>都有迹可循。</Text></View>
           <View className='hero-description'>看见概率，也看见不确定性。从官方对阵到赛后回测，保留完整证据与安全边界。</View>
-          <View className='skill-test-banner'><Text>{skillTestText}</Text></View>
           <View className='hero-actions'>
             <Button className='primary-button' onClick={goDaily}>进入今日比赛中心<Text className='button-arrow'>→</Text></Button>
             <Button className='secondary-button' onClick={goPipeline}>探索数据流水线</Button>
@@ -82,7 +81,7 @@ export default function Overview() {
         ))}
       </View>
       <Notice>足球经理的推断基于赛前数据与概率模型，不构成收益保证或确定性投注建议。信息不足时，明确标记数据缺失与不确定性。</Notice>
-      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Taro React H5 · 微信小程序</View>
+      <View className='footer-note'>Python CLI · SQLite · Poisson / Dixon–Coles{'\n'}Taro React H5 · Canvas 2D 微信小游戏</View>
     </Page>
   );
 }

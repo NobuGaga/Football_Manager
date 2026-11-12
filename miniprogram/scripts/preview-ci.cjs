@@ -23,7 +23,7 @@ async function main() {
   try {
     const project = new ci.Project({
       appid,
-      type: 'miniProgram',
+      type: 'miniGame',
       projectPath,
       privateKeyPath,
       ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
@@ -46,13 +46,13 @@ async function main() {
     if (!fs.existsSync(qrCodeOutput) || fs.statSync(qrCodeOutput).size === 0) {
       throw new Error('微信 CI 未生成有效的预览二维码文件。');
     }
-    console.log(`微信小程序预览二维码已生成：${qrCodeOutput}`);
+    console.log(`Canvas 微信小游戏预览二维码已生成：${qrCodeOutput}`);
   } finally {
     fs.rmSync(privateKeyPath, { force: true });
   }
 }
 
 main().catch((error) => {
-  console.error(`微信小程序预览生成失败：${error.message}`);
+  console.error(`微信小游戏预览生成失败：${error.message}`);
   process.exitCode = 1;
 });

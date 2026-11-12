@@ -7,7 +7,6 @@ export default defineAppConfig({
     'pages/automation/index',
     'pages/structure/index',
   ],
-  sitemapLocation: 'sitemap.json',
   window: {
     navigationBarBackgroundColor: '#0b100d',
     navigationBarTextStyle: 'white',

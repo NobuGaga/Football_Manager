@@ -21,7 +21,8 @@ html body .taro_router > .taro_page {
   transition: none !important;
 }
 
-html body .taro_router > .taro_page.taro_page_shade {
+html body .taro_router > .taro_page.taro_page_shade,
+html body .taro_router > .taro_page.taro_navigation_page:not(.taro_page_show):not(.taro_tabbar_page) {
   display: none !important;
 }
 

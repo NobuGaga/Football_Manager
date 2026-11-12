@@ -15,9 +15,7 @@ export default defineConfig(async (merge) => {
     outputRoot: `dist/${process.env.TARO_ENV}`,
     defineConstants: {},
     copy: {
-      patterns: process.env.TARO_ENV === 'weapp'
-        ? [{ from: 'src/sitemap.json', to: 'dist/weapp/sitemap.json' }]
-        : [],
+      patterns: [],
       options: {},
     },
     framework: 'react',
@@ -41,6 +39,9 @@ export default defineConfig(async (merge) => {
       },
     },
     h5: {
+      devServer: {
+        host: process.env.TARO_DEV_SERVER_HOST || '0.0.0.0',
+      },
       publicPath: '/',
       staticDirectory: 'static',
       router: {

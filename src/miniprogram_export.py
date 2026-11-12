@@ -10,7 +10,7 @@ def export_miniprogram_report(report_path: str | Path, output_path: str | Path) 
     report = json.loads(report_path.read_text(encoding="utf-8"))
     matches = report.get("matches", [])
     if report.get("prediction_count", len(matches)) != len(matches):
-        raise ValueError("每日报告策略数量与明细不一致，停止生成小程序数据")
+        raise ValueError("每日报告策略数量与明细不一致，停止生成跨端报告数据")
 
     compact_matches = []
     for match in matches:
