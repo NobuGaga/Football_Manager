@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const ci = require('miniprogram-ci');
+const fileRules = require('miniprogram-ci/dist/utils/filerules.js');
 const { dailyReport } = require('../../web/src/data/daily-report.js');
 
 const FRONTEND_ROOT = path.resolve(__dirname, '../../web');
@@ -26,6 +27,7 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
     'game.js',
     'src/app.js',
     'src/draw.js',
+    'src/pages/stadium-theme.js',
     'data/daily-report.js',
     'data/project.js',
     'utils/report.js',
@@ -57,6 +59,12 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
   }
   if (projectConfig.miniprogramRoot !== './dist/weapp/') {
     throw new Error('web/project.config.json 的 miniprogramRoot 必须指向 ./dist/weapp/');
+  }
+  const packIgnores = projectConfig.packOptions?.ignore || [];
+  for (const file of requiredFiles) {
+    if (fileRules.isFileIgnored(file, packIgnores)) {
+      throw new Error(`上传规则排除了微信小游戏运行文件 ${file}，请检查 project.config.json 的 packOptions.ignore`);
+    }
   }
   return frontendRoot;
 }

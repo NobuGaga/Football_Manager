@@ -17,7 +17,6 @@
   "packOptions": {
     "ignore": [
       { "type": "folder", "value": "node_modules" },
-      { "type": "folder", "value": "src" },
       { "type": "folder", "value": "config" },
       { "type": "file", "value": "project.private.config.json" }
     ]

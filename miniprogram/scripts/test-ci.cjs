@@ -28,7 +28,7 @@ try {
   for (const file of ['app.js', 'draw.js']) {
     fs.writeFileSync(path.join(output, 'src', file), 'module.exports = {};\n');
   }
-  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure']) {
+  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure', 'stadium-theme']) {
     fs.writeFileSync(path.join(output, 'src', 'pages', `${page}.js`), 'module.exports = {};\n');
   }
   for (const file of ['daily-report.js', 'project.js']) {
@@ -46,6 +46,19 @@ try {
   fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({
     compileType: 'game',
     miniprogramRoot: './dist/weapp/',
+    packOptions: { ignore: [{ type: 'folder', value: 'src' }] },
+  }));
+  assert.throws(() => validateCompiledProject(fixture), /上传规则排除了微信小游戏运行文件 src\/app\.js/);
+  fs.writeFileSync(path.join(fixture, 'project.config.json'), JSON.stringify({
+    compileType: 'game',
+    miniprogramRoot: './dist/weapp/',
+    packOptions: {
+      ignore: [
+        { type: 'folder', value: 'node_modules' },
+        { type: 'folder', value: 'config' },
+        { type: 'file', value: 'project.private.config.json' },
+      ],
+    },
   }));
   assert.equal(validateCompiledProject(fixture), fixture);
   fs.writeFileSync(path.join(output, 'app.json'), '{}\n');
@@ -56,4 +69,4 @@ try {
   fs.rmSync(fixture, { recursive: true, force: true });
 }
 
-console.log('MINIGAME_CI_CONFIG_OK default_robot robot_range local_version game_output_validation no_weapp_mix');
+console.log('MINIGAME_CI_CONFIG_OK default_robot robot_range local_version game_output_validation pack_ignore_validation no_weapp_mix');
