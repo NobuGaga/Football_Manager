@@ -5,9 +5,9 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NODE_BIN="${NODE_BIN:-node}"
 NPM_BIN="${NPM_BIN:-npm}"
 
-UPLOAD_SOURCES_STATUS="$(git -C "$REPO_ROOT" status --short -- web miniprogram scripts)"
+UPLOAD_SOURCES_STATUS="$(git -C "$REPO_ROOT" status --short -- web deploy/wechat scripts)"
 if [[ -n "$UPLOAD_SOURCES_STATUS" ]]; then
-  echo '错误：web/、miniprogram/ 或 scripts/ 存在未提交改动，停止上传混合版本。' >&2
+  echo '错误：web/、deploy/wechat/ 或 scripts/ 存在未提交改动，停止上传混合版本。' >&2
   exit 1
 fi
 
@@ -26,7 +26,7 @@ cd "$REPO_ROOT/web"
 "$NPM_BIN" test
 "$NPM_BIN" run build:minigame
 
-cd "$REPO_ROOT/miniprogram"
+cd "$REPO_ROOT/deploy/wechat"
 "$NPM_BIN" test
 
 source "$REPO_ROOT/scripts/wechat_credentials.sh"

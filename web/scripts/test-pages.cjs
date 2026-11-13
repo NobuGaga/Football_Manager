@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
-const { dailyReport } = require('../src/data/daily-report.js');
+const { dailyReport } = require('../generated/daily-report.js');
 const project = require('../src/data/project.js');
 const { boundedIndex, createMatrix, decorateMatches } = require('../src/utils/report.js');
 const { writeClipboard } = require('../src/utils/clipboard-core.js');

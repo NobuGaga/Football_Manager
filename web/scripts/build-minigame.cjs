@@ -6,7 +6,7 @@ const source = path.join(root, 'minigame');
 const output = path.join(root, 'dist', 'weapp');
 const sharedFiles = [
   ['src/data/project.js', 'data/project.js'],
-  ['src/data/daily-report.js', 'data/daily-report.js'],
+  ['generated/daily-report.js', 'data/daily-report.js'],
   ['src/utils/report.js', 'utils/report.js'],
   ['src/utils/clipboard-core.js', 'utils/clipboard-core.js'],
 ];
@@ -39,6 +39,7 @@ if (process.argv.includes('--watch')) {
   const watched = [
     source,
     path.join(root, 'src', 'data'),
+    path.join(root, 'generated'),
     path.join(root, 'src', 'utils'),
   ];
   let timer = null;

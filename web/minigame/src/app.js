@@ -62,6 +62,7 @@ class MiniGameApp {
     this.zones = [];
     this.touch = null;
     this.handlers = {};
+    this.frameHandle = null;
     this.painter = new Painter(this.ctx, () => this.height);
     this.refreshMetrics();
   }
@@ -227,11 +228,29 @@ class MiniGameApp {
     return success;
   }
 
+  scheduleRender() {
+    if (this.frameHandle !== null) return;
+    const draw = () => {
+      this.frameHandle = null;
+      this.render();
+    };
+    if (typeof this.platform.requestAnimationFrame === 'function') {
+      this.frameHandle = this.platform.requestAnimationFrame(draw);
+    } else if (this.canvas && typeof this.canvas.requestAnimationFrame === 'function') {
+      this.frameHandle = this.canvas.requestAnimationFrame(draw);
+    } else if (typeof requestAnimationFrame === 'function') {
+      this.frameHandle = requestAnimationFrame(draw);
+    } else {
+      this.frameHandle = setTimeout(draw, 16);
+      if (this.frameHandle && this.frameHandle.unref) this.frameHandle.unref();
+    }
+  }
+
   scrollBy(delta) {
     const next = Math.max(0, Math.min(this.maxScroll, this.scroll + delta));
     if (next !== this.scroll) {
       this.scroll = next;
-      this.render();
+      this.scheduleRender();
     }
   }
 

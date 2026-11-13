@@ -26,7 +26,7 @@ async function main() {
       type: 'miniGame',
       projectPath,
       privateKeyPath,
-      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
+      ignores: ['node_modules/**/*', 'src/**/*', 'generated/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
     });
     const desc = process.env.WECHAT_UPLOAD_DESC || 'Kimi Claw 自用预览';
 

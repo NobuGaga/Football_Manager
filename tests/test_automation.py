@@ -27,7 +27,7 @@ class AutomationTest(unittest.TestCase):
     def test_local_daily_pipeline_generates_chinese_summary(self):
         db = self.root / "football.db"
         FixtureImporter(db).import_file(ROOT / "examples" / "fixtures.csv")
-        status = DailyAutomation(ROOT, db, self.root / "reports", frontend_dir=self.root / "web" / "src").run(
+        status = DailyAutomation(ROOT, db, self.root / "reports", frontend_dir=self.root / "web").run(
             date="2099-10-25", results_date="2099-10-25",
             fixtures=str(ROOT / "examples" / "fixtures.csv"),
             results=str(ROOT / "examples" / "results.csv"),
@@ -57,7 +57,7 @@ class AutomationTest(unittest.TestCase):
             "比赛编号": "周日001", "比赛日期": "2099-10-25", "主队": "主队A", "客队": "客队B",
             "实际比分": "2:1",
         }], ensure_ascii=False), encoding="utf-8")
-        status = DailyAutomation(ROOT, db, self.root / "reports", frontend_dir=self.root / "web" / "src").run(
+        status = DailyAutomation(ROOT, db, self.root / "reports", frontend_dir=self.root / "web").run(
             date="2099-10-25", results_date="2099-10-24",
             fixtures=str(fixture_file), results=str(result_file),
         )
@@ -106,10 +106,10 @@ class AutomationTest(unittest.TestCase):
         tracked = subprocess.check_output(["git", "-c", "core.quotepath=false", "--git-dir", str(remote), "ls-tree", "-r", "--name-only", "main"], text=True)
         self.assertNotIn("reports/", tracked)
         self.assertNotIn("data/football.db", tracked)
-        self.assertNotIn("web/src/data/daily-report.js", tracked)
+        self.assertNotIn("web/generated/daily-report.js", tracked)
         self.assertTrue((work / "data" / "football.db").exists())
         self.assertTrue((work / "reports" / "每日中文摘要_2099-10-25.md").exists())
-        self.assertTrue((work / "web" / "src" / "data" / "daily-report.js").exists())
+        self.assertTrue((work / "web" / "generated" / "daily-report.js").exists())
         summary = (work / "reports" / "每日中文摘要_2099-10-25.md").read_text(encoding="utf-8")
         self.assertIn("本地关键文件：仅保存本地，未进入 Git 跟踪或暂存", summary)
 

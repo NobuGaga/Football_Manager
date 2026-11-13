@@ -3,9 +3,9 @@ const os = require('node:os');
 const path = require('node:path');
 const ci = require('miniprogram-ci');
 const fileRules = require('miniprogram-ci/dist/utils/filerules.js');
-const { dailyReport } = require('../../web/src/data/daily-report.js');
+const { dailyReport } = require('../../../web/generated/daily-report.js');
 
-const FRONTEND_ROOT = path.resolve(__dirname, '../../web');
+const FRONTEND_ROOT = path.resolve(__dirname, '../../../web');
 const EXPECTED_PAGES = ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure'];
 
 function parseRobot(value) {
@@ -95,7 +95,7 @@ async function main() {
       type: 'miniGame',
       projectPath,
       privateKeyPath,
-      ignores: ['node_modules/**/*', 'src/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
+      ignores: ['node_modules/**/*', 'src/**/*', 'generated/**/*', 'config/**/*', 'dist/h5/**/*', 'scripts/**/*', 'minigame/**/*'],
     });
     const desc = process.env.WECHAT_UPLOAD_DESC || `Kimi Claw 每日更新 ${dailyReport.reportDate}`;
 

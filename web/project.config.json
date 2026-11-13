@@ -18,6 +18,7 @@
     "ignore": [
       { "type": "folder", "value": "node_modules" },
       { "type": "folder", "value": "config" },
+      { "type": "folder", "value": "generated" },
       { "type": "file", "value": "project.private.config.json" }
     ]
   }

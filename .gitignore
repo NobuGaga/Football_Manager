@@ -2,15 +2,15 @@
 reports/
 docs/
 rules/
-miniprogram/data/
-web/src/data/daily-report.js
-delivery/wechat-miniprogram/import-project/data/
+deploy/wechat/data/
+web/generated/daily-report.js
+/delivery/validation/
 delivery/wechat-miniprogram/validation-20261108/compiled.zip
 /delivery/ui-c-d-preview/
 README.md
 AGENTS.md
 /PROJECT_STRUCTURE.md
-miniprogram/README.md
+deploy/wechat/README.md
 delivery/wechat-miniprogram/publishing/隐私处理说明.txt
 tests/足球预测历史数据.csv
 tests/预测核对表_0528.csv
@@ -19,7 +19,6 @@ delivery/wechat-miniprogram/compiled-self-use.zip
 delivery/wechat-miniprogram/source-self-use.zip
 delivery/wechat-miniprogram/release-materials.zip
 delivery/wechat-miniprogram/preview-*/
-delivery/wechat-miniprogram/import-project/project.config.json
 delivery/wechat-miniprogram/publishing/app-profile.json
 delivery/wechat-miniprogram/publishing/账号类型核验.json
 delivery/wechat-miniprogram/publishing/发布资料.txt

@@ -8,8 +8,13 @@ execFileSync(process.execPath, [path.join(root, 'scripts', 'build-minigame.cjs')
 
 const { MiniGameApp, TABS } = require('../dist/weapp/src/app.js');
 const { Painter } = require('../dist/weapp/src/draw.js');
-const { dailyReport } = require('../src/data/daily-report.js');
+const { dailyReport } = require('../generated/daily-report.js');
 const project = require('../src/data/project.js');
+
+function textWidth(ctx, text) {
+  const size = Number.parseInt(ctx.font.match(/(\d+)px/)?.[1] || '14', 10);
+  return Array.from(String(text)).reduce((sum, character) => sum + (character.charCodeAt(0) > 255 ? size : size * 0.56), 0);
+}
 
 function createContext() {
   const texts = [];
@@ -18,6 +23,8 @@ function createContext() {
   return {
     texts,
     textBounds,
+    measureTextCalls: 0,
+    clearRectCalls: 0,
     font: 'normal 14px sans-serif',
     fillStyle: '',
     strokeStyle: '',
@@ -26,16 +33,16 @@ function createContext() {
     textBaseline: 'top',
     save() {}, restore() {}, beginPath() {}, closePath() {},
     moveTo() {}, lineTo() {}, quadraticCurveTo() {}, arc() {},
-    fill() {}, stroke() {}, fillRect() {}, clearRect() {}, rect() {}, clip() {}, scale() {},
+    fill() {}, stroke() {}, fillRect() {}, rect() {}, clip() {}, scale() {},
+    clearRect() { this.clearRectCalls++; },
     createLinearGradient: () => gradient,
     measureText(text) {
-      const size = Number.parseInt(this.font.match(/(\d+)px/)?.[1] || '14', 10);
-      const width = Array.from(String(text)).reduce((sum, character) => sum + (character.charCodeAt(0) > 255 ? size : size * 0.56), 0);
-      return { width };
+      this.measureTextCalls++;
+      return { width: textWidth(this, text) };
     },
     fillText(text, x, y) {
       const value = String(text);
-      const width = this.measureText(value).width;
+      const width = textWidth(this, value);
       const left = this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x;
       texts.push(value);
       textBounds.push({ text: value, left, right: left + width, top: y });
@@ -48,14 +55,20 @@ function createRuntime({ clipboardFails = false } = {}) {
   const canvas = { width: 0, height: 0, getContext: () => ctx };
   const listeners = {};
   const clipboard = [];
+  const animationFrames = [];
+  const windowInfo = {
+    windowWidth: 390,
+    windowHeight: 844,
+    pixelRatio: 2,
+    safeArea: { top: 47, bottom: 810 },
+  };
   const platform = {
     createCanvas: () => canvas,
-    getWindowInfo: () => ({
-      windowWidth: 390,
-      windowHeight: 844,
-      pixelRatio: 2,
-      safeArea: { top: 47, bottom: 810 },
-    }),
+    getWindowInfo: () => windowInfo,
+    requestAnimationFrame(callback) {
+      animationFrames.push(callback);
+      return animationFrames.length;
+    },
     onTouchStart: (handler) => { listeners.touchStart = handler; },
     onTouchMove: (handler) => { listeners.touchMove = handler; },
     onTouchEnd: (handler) => { listeners.touchEnd = handler; },
@@ -68,7 +81,13 @@ function createRuntime({ clipboardFails = false } = {}) {
       else success({ errMsg: 'setClipboardData:ok' });
     },
   };
-  return { platform, canvas, ctx, listeners, clipboard };
+  return { platform, canvas, ctx, listeners, clipboard, animationFrames, windowInfo };
+}
+
+function flushAnimationFrame(runtime) {
+  assert.ok(runtime.animationFrames.length > 0, '应存在等待绘制的动画帧');
+  const callbacks = runtime.animationFrames.splice(0);
+  callbacks.forEach((callback) => callback());
 }
 
 function tap(runtime, zone) {
@@ -123,13 +142,45 @@ function assertTextWithinCanvas(runtime, width, label) {
   ]) {
     assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `紧凑卡应实际绘制 ${expected}`);
   }
+  const warmedMeasureCalls = runtime.ctx.measureTextCalls;
+  const warmedClearCalls = runtime.ctx.clearRectCalls;
+  const startScroll = app.scroll;
+  runtime.listeners.touchStart({ touches: [{ clientX: 100, clientY: 400 }] });
+  for (let index = 1; index <= 20; index++) {
+    runtime.listeners.touchMove({ touches: [{ clientX: 100, clientY: 400 - index * 4 }] });
+  }
+  runtime.listeners.touchEnd({ changedTouches: [{ clientX: 100, clientY: 320 }] });
+  assert.ok(app.scroll > startScroll, '连续触控应更新滚动位置');
+  assert.equal(runtime.animationFrames.length, 1, '连续触控应合并为一个待绘制帧');
+  assert.equal(runtime.ctx.clearRectCalls, warmedClearCalls, '触控事件不应反复同步清屏');
+  flushAnimationFrame(runtime);
+  assert.equal(runtime.ctx.clearRectCalls, warmedClearCalls + 1, '合并后的帧应只绘制一次');
+  assert.equal(runtime.ctx.measureTextCalls, warmedMeasureCalls, '布局缓存命中后不应重复测量文字');
+
+  app.scrollBy(Number.NEGATIVE_INFINITY);
+  flushAnimationFrame(runtime);
   app.scrollBy(160);
   assert.equal(app.scroll, 160);
+  flushAnimationFrame(runtime);
   app.scrollBy(Number.POSITIVE_INFINITY);
   assert.equal(app.scroll, app.maxScroll);
+  runtime.ctx.texts.length = 0;
+  runtime.ctx.textBounds.length = 0;
+  flushAnimationFrame(runtime);
+  const lastMatch = app.matches.at(-1);
+  assert.ok(runtime.ctx.texts.includes(lastMatch.homeTeam), '底部应实际绘制最后一场比赛');
   assertTextWithinCanvas(runtime, app.width, '每日底部');
   app.scrollBy(Number.NEGATIVE_INFINITY);
   assert.equal(app.scroll, 0);
+  flushAnimationFrame(runtime);
+
+  const measureBeforeResize = runtime.ctx.measureTextCalls;
+  runtime.windowInfo.windowWidth = 360;
+  runtime.ctx.textBounds.length = 0;
+  app.refreshMetrics();
+  app.render();
+  assert.ok(runtime.ctx.measureTextCalls > measureBeforeResize, '宽度变化后应重新计算文字布局');
+  assertTextWithinCanvas(runtime, app.width, '每日页宽度变化');
 
   for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
     app.setPage(page);
@@ -191,7 +242,7 @@ function assertTextWithinCanvas(runtime, width, label) {
     assert.ok(!fs.existsSync(path.join(root, 'dist/weapp', file)), `小游戏产物不得混入 ${file}`);
   }
   for (const [source, converted] of [
-    ['src/data/daily-report.js', 'data/daily-report.js'],
+    ['generated/daily-report.js', 'data/daily-report.js'],
     ['src/data/project.js', 'data/project.js'],
     ['src/utils/report.js', 'utils/report.js'],
     ['src/utils/clipboard-core.js', 'utils/clipboard-core.js'],

@@ -131,18 +131,36 @@ function drawDetails(app, match, cursor, metrics, compact) {
   p.paragraph(`!  ${metrics.risk}`, x + 14, cursor, inner, { size: metrics.size, color: '#d8b978', lineHeight: 17 });
 }
 
-function matchCard(app, match, y, compact) {
+function matchCardLayout(app, match, compact) {
+  const header = headerMetrics(app, match);
+  const main = compact ? compactMainMetrics(app, match) : scoreboardMetrics(app, match);
+  const details = detailMetrics(app, match, compact);
+  const height = header.height + main.height + (compact ? 8 : 2)
+    + (compact ? 36 : 24) + detailsHeight(details, compact);
+  return { header, main, details, height };
+}
+
+function dailyCardLayouts(app) {
+  const cached = app.dailyLayoutCache;
+  if (cached && cached.width === app.width && cached.padding === app.padding && cached.matches === app.matches) {
+    return cached.layouts;
+  }
+  const layouts = app.matches.map((match, index) => matchCardLayout(app, match, index > 0));
+  app.dailyLayoutCache = { width: app.width, padding: app.padding, matches: app.matches, layouts };
+  return layouts;
+}
+
+function matchCard(app, match, y, compact, layout) {
+  const { header, main, details, height } = layout;
+  if (!app.painter.visible(y, height)) return y + height + (compact ? 10 : 12);
+
   const p = app.painter;
   const x = app.padding;
   const w = app.width - app.padding * 2;
   const inner = w - 28;
-  const header = headerMetrics(app, match);
-  const main = compact ? compactMainMetrics(app, match) : scoreboardMetrics(app, match);
-  const details = detailMetrics(app, match, compact);
   const mainTop = y + header.height;
   const barY = mainTop + main.height + (compact ? 8 : 2);
   const detailsY = barY + (compact ? 36 : 24);
-  const height = detailsY - y + detailsHeight(details, compact);
   card(app, y, height, compact ? 18 : 20);
 
   matchTopline(app, match, y, header);
@@ -198,8 +216,9 @@ module.exports = function renderDaily(app, y) {
   y = matchdayNotice(app, y);
 
   if (app.matches.length) {
+    const layouts = dailyCardLayouts(app);
     app.matches.forEach((match, index) => {
-      y = matchCard(app, match, y, index > 0);
+      y = matchCard(app, match, y, index > 0, layouts[index]);
     });
   } else {
     card(app, y, 96, 16);

@@ -4,9 +4,9 @@
   "private": true,
   "description": "足球经理的推断 · 微信小游戏 CI 构建与上传工具",
   "scripts": {
-    "build": "npm --prefix ../web run build:minigame",
-    "test": "node scripts/test-ci.cjs && bash ../scripts/test_wechat_credentials.sh",
-    "upload": "bash ../scripts/wechat_daily_upload.sh",
+    "build": "npm --prefix ../../web run build:minigame",
+    "test": "node scripts/test-ci.cjs && bash ../../scripts/test_wechat_credentials.sh",
+    "upload": "bash ../../scripts/wechat_daily_upload.sh",
     "preview": "npm run build && node scripts/preview-ci.cjs"
   },
   "devDependencies": {

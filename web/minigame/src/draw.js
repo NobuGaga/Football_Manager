@@ -9,6 +9,8 @@ class Painter {
   constructor(ctx, viewportHeight) {
     this.ctx = ctx;
     this.viewportHeight = viewportHeight;
+    this.wrapCache = new Map();
+    this.wrapCacheLimit = 2048;
   }
 
   visible(y, height = 1) {
@@ -23,8 +25,17 @@ class Painter {
   wrap(text, maxWidth, options = {}) {
     const { size = 14, weight = 'normal', mono = false } = options;
     this.setFont(size, weight, mono);
+    const value = String(text ?? '');
+    const key = `${fontString(size, weight, mono)}|${maxWidth}|${value}`;
+    const cached = this.wrapCache.get(key);
+    if (cached) {
+      this.wrapCache.delete(key);
+      this.wrapCache.set(key, cached);
+      return cached;
+    }
+
     const lines = [];
-    for (const rawLine of String(text ?? '').split('\n')) {
+    for (const rawLine of value.split('\n')) {
       if (!rawLine) {
         lines.push('');
         continue;
@@ -41,7 +52,12 @@ class Painter {
       }
       if (line) lines.push(line);
     }
-    return lines.length ? lines : [''];
+    const result = lines.length ? lines : [''];
+    this.wrapCache.set(key, result);
+    if (this.wrapCache.size > this.wrapCacheLimit) {
+      this.wrapCache.delete(this.wrapCache.keys().next().value);
+    }
+    return result;
   }
 
   paragraphHeight(text, maxWidth, options = {}) {

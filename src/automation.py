@@ -27,7 +27,7 @@ LOCAL_PRODUCT_PATHS = (
     "docs",
     "README.md",
     "AGENTS.md",
-    "web/src/data/daily-report.js",
+    "web/generated/daily-report.js",
     "delivery/wechat-miniprogram/validation-20261108/compiled.zip",
 )
 
@@ -76,7 +76,7 @@ class DailyAutomation:
         self.db_path = Path(db_path) if db_path else self.repo_root / "data" / "football.db"
         self.output_dir = Path(output_dir) if output_dir else self.repo_root / "reports"
         self.frontend_data_path = (Path(frontend_dir) if frontend_dir
-                                   else self.repo_root / "web" / "src") / "data" / "daily-report.js"
+                                   else self.repo_root / "web") / "generated" / "daily-report.js"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.git = GitRepository(self.repo_root)
 

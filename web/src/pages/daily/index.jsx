@@ -1,7 +1,7 @@
 import { Text, View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Page } from '../../components/Page';
-import { dailyReport } from '../../data/daily-report';
+import { dailyReport } from '../../../generated/daily-report';
 import { decorateMatches } from '../../utils/report';
 
 const matches = decorateMatches(dailyReport);

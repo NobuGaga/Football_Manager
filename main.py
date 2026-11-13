@@ -114,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     mini_export = sub.add_parser("export-miniprogram", help="将每日 JSON 报告打包为小程序数据")
     mini_export.add_argument("--date", required=True)
     mini_export.add_argument("--report", help="每日 JSON 路径，默认读取 reports/ 下对应日期报告")
-    mini_export.add_argument("--output", default="web/src/data/daily-report.js")
+    mini_export.add_argument("--output", default="web/generated/daily-report.js")
 
     backtest = sub.add_parser("backtest", help="计算 Log Loss、Brier、校准和比分指标")
     backtest.add_argument("--model-version")
