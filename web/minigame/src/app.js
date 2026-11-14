@@ -34,6 +34,12 @@ const colors = {
   risk: '#b7a77b',
 };
 
+const FLING_SAMPLE_MS = 100;
+const FLING_MIN_SPEED = 40;
+const FLING_MAX_SPEED = 2800;
+const FLING_STOP_SPEED = 20;
+const FLING_DECAY_MS = 220;
+
 function pointFromEvent(event) {
   const point = (event.changedTouches && event.changedTouches[0]) || (event.touches && event.touches[0]);
   return point ? { x: point.clientX, y: point.clientY } : null;
@@ -63,6 +69,9 @@ class MiniGameApp {
     this.touch = null;
     this.handlers = {};
     this.frameHandle = null;
+    this.inertiaActive = false;
+    this.inertiaVelocity = 0;
+    this.inertiaFrameTime = null;
     this.painter = new Painter(this.ctx, () => this.height);
     this.refreshMetrics();
   }
@@ -86,8 +95,12 @@ class MiniGameApp {
     this.handlers.touchStart = (event) => this.onTouchStart(event);
     this.handlers.touchMove = (event) => this.onTouchMove(event);
     this.handlers.touchEnd = (event) => this.onTouchEnd(event);
-    this.handlers.touchCancel = () => { this.touch = null; };
+    this.handlers.touchCancel = () => {
+      this.touch = null;
+      this.stopInertia();
+    };
     this.handlers.resize = () => {
+      this.stopInertia();
       this.refreshMetrics();
       this.render();
     };
@@ -179,6 +192,7 @@ class MiniGameApp {
 
   setPage(page) {
     if (!renderers[page]) return;
+    this.stopInertia();
     this.page = page;
     this.scroll = 0;
     this.maxScroll = 0;
@@ -192,15 +206,18 @@ class MiniGameApp {
       this.setPage(action.page);
     } else if (action.type === 'flow') {
       this.flowIndex = boundedIndex(action.index, this.project.flowSteps.length);
+      this.stopInertia();
       this.scroll = 0;
       this.render();
     } else if (action.type === 'flow-next') {
       this.flowIndex = boundedIndex(this.flowIndex + 1, this.project.flowSteps.length);
+      this.stopInertia();
       this.scroll = 0;
       this.render();
     } else if (action.type === 'mode') {
       if (this.project.commandModes.some((item) => item.id === action.id)) {
         this.commandMode = action.id;
+        this.stopInertia();
         this.scroll = 0;
         this.render();
       }
@@ -230,9 +247,11 @@ class MiniGameApp {
 
   scheduleRender() {
     if (this.frameHandle !== null) return;
-    const draw = () => {
+    const draw = (timestamp) => {
       this.frameHandle = null;
+      this.advanceInertia(timestamp);
       this.render();
+      if (this.inertiaActive) this.scheduleRender();
     };
     if (typeof this.platform.requestAnimationFrame === 'function') {
       this.frameHandle = this.platform.requestAnimationFrame(draw);
@@ -254,17 +273,77 @@ class MiniGameApp {
     }
   }
 
+  eventTime(event) {
+    return Number.isFinite(event.timeStamp) ? event.timeStamp : Date.now();
+  }
+
+  stopInertia() {
+    this.inertiaActive = false;
+    this.inertiaVelocity = 0;
+    this.inertiaFrameTime = null;
+  }
+
+  startInertia(velocity) {
+    if (!Number.isFinite(velocity)) {
+      this.stopInertia();
+      return;
+    }
+    const speed = Math.max(-FLING_MAX_SPEED, Math.min(FLING_MAX_SPEED, velocity));
+    const atBoundary = (this.scroll <= 0 && speed < 0) || (this.scroll >= this.maxScroll && speed > 0);
+    if (Math.abs(speed) < FLING_MIN_SPEED || this.maxScroll <= 0 || atBoundary) {
+      this.stopInertia();
+      return;
+    }
+    this.inertiaVelocity = speed;
+    this.inertiaFrameTime = null;
+    this.inertiaActive = true;
+    this.scheduleRender();
+  }
+
+  advanceInertia(timestamp) {
+    if (!this.inertiaActive) return;
+    const now = Number.isFinite(timestamp) ? timestamp : Date.now();
+    const elapsed = this.inertiaFrameTime === null
+      ? 16
+      : Math.max(0, Math.min(50, now - this.inertiaFrameTime));
+    this.inertiaFrameTime = now;
+    const unbounded = this.scroll + this.inertiaVelocity * elapsed / 1000;
+    const next = Math.max(0, Math.min(this.maxScroll, unbounded));
+    this.scroll = next;
+    this.inertiaVelocity *= Math.exp(-elapsed / FLING_DECAY_MS);
+    if (next !== unbounded || Math.abs(this.inertiaVelocity) < FLING_STOP_SPEED) this.stopInertia();
+  }
+
+  recordTouch(touch, point, time) {
+    touch.samples.push({ y: point.y, time });
+    while (touch.samples.length > 1 && time - touch.samples[0].time > FLING_SAMPLE_MS) {
+      touch.samples.shift();
+    }
+  }
+
+  flingVelocity(touch) {
+    const first = touch.samples[0];
+    const last = touch.samples[touch.samples.length - 1];
+    const elapsed = last.time - first.time;
+    return elapsed > 0 ? (first.y - last.y) * 1000 / elapsed : 0;
+  }
+
   onTouchStart(event) {
     const point = pointFromEvent(event);
     if (!point) return;
-    this.touch = { ...point, lastY: point.y, moved: false };
+    this.stopInertia();
+    const time = this.eventTime(event);
+    this.touch = { ...point, lastY: point.y, moved: false, samples: [{ y: point.y, time }] };
   }
 
   onTouchMove(event) {
     const point = pointFromEvent(event);
     if (!point || !this.touch) return;
     if (Math.abs(point.y - this.touch.y) > 6 || Math.abs(point.x - this.touch.x) > 6) this.touch.moved = true;
-    if (this.touch.moved) this.scrollBy(this.touch.lastY - point.y);
+    if (this.touch.moved) {
+      this.scrollBy(this.touch.lastY - point.y);
+      this.recordTouch(this.touch, point, this.eventTime(event));
+    }
     this.touch.lastY = point.y;
   }
 
@@ -272,7 +351,12 @@ class MiniGameApp {
     const point = pointFromEvent(event);
     const touch = this.touch;
     this.touch = null;
-    if (!point || !touch || touch.moved) return;
+    if (!point || !touch) return;
+    if (touch.moved) {
+      this.recordTouch(touch, point, this.eventTime(event));
+      this.startInertia(this.flingVelocity(touch));
+      return;
+    }
     const zone = [...this.zones].reverse().find((item) => (
       point.x >= item.x && point.x <= item.x + item.width
       && point.y >= item.y && point.y <= item.y + item.height
@@ -287,7 +371,6 @@ class MiniGameApp {
     const navHeight = this.getNavHeight();
     this.scroll = Math.max(0, Math.min(this.maxScroll, this.scroll));
     this.zones = [];
-    ctx.clearRect(0, 0, w, h);
     const gradient = ctx.createLinearGradient(0, 0, w, h);
     const stadiumPage = this.page === 'overview' || this.page === 'daily';
     gradient.addColorStop(0, stadiumPage ? '#164d2c' : this.colors.background);

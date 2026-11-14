@@ -25,6 +25,7 @@ function createContext() {
     textBounds,
     measureTextCalls: 0,
     clearRectCalls: 0,
+    gradientCalls: 0,
     font: 'normal 14px sans-serif',
     fillStyle: '',
     strokeStyle: '',
@@ -35,7 +36,7 @@ function createContext() {
     moveTo() {}, lineTo() {}, quadraticCurveTo() {}, arc() {},
     fill() {}, stroke() {}, fillRect() {}, rect() {}, clip() {}, scale() {},
     clearRect() { this.clearRectCalls++; },
-    createLinearGradient: () => gradient,
+    createLinearGradient() { this.gradientCalls++; return gradient; },
     measureText(text) {
       this.measureTextCalls++;
       return { width: textWidth(this, text) };
@@ -84,10 +85,10 @@ function createRuntime({ clipboardFails = false } = {}) {
   return { platform, canvas, ctx, listeners, clipboard, animationFrames, windowInfo };
 }
 
-function flushAnimationFrame(runtime) {
+function flushAnimationFrame(runtime, timestamp) {
   assert.ok(runtime.animationFrames.length > 0, '应存在等待绘制的动画帧');
   const callbacks = runtime.animationFrames.splice(0);
-  callbacks.forEach((callback) => callback());
+  callbacks.forEach((callback) => callback(timestamp));
 }
 
 function tap(runtime, zone) {
@@ -143,19 +144,48 @@ function assertTextWithinCanvas(runtime, width, label) {
     assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `紧凑卡应实际绘制 ${expected}`);
   }
   const warmedMeasureCalls = runtime.ctx.measureTextCalls;
-  const warmedClearCalls = runtime.ctx.clearRectCalls;
+  const warmedGradientCalls = runtime.ctx.gradientCalls;
   const startScroll = app.scroll;
-  runtime.listeners.touchStart({ touches: [{ clientX: 100, clientY: 400 }] });
+  runtime.listeners.touchStart({ timeStamp: 0, touches: [{ clientX: 100, clientY: 400 }] });
   for (let index = 1; index <= 20; index++) {
-    runtime.listeners.touchMove({ touches: [{ clientX: 100, clientY: 400 - index * 4 }] });
+    runtime.listeners.touchMove({ timeStamp: index * 8, touches: [{ clientX: 100, clientY: 400 - index * 4 }] });
   }
-  runtime.listeners.touchEnd({ changedTouches: [{ clientX: 100, clientY: 320 }] });
+  runtime.listeners.touchEnd({ timeStamp: 160, changedTouches: [{ clientX: 100, clientY: 320 }] });
   assert.ok(app.scroll > startScroll, '连续触控应更新滚动位置');
   assert.equal(runtime.animationFrames.length, 1, '连续触控应合并为一个待绘制帧');
-  assert.equal(runtime.ctx.clearRectCalls, warmedClearCalls, '触控事件不应反复同步清屏');
-  flushAnimationFrame(runtime);
-  assert.equal(runtime.ctx.clearRectCalls, warmedClearCalls + 1, '合并后的帧应只绘制一次');
+  assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls, '触控事件不应反复同步绘制背景');
+  assert.equal(app.inertiaActive, true, '快速滑动松手后应进入惯性滚动');
+  const releasedScroll = app.scroll;
+  flushAnimationFrame(runtime, 16);
+  assert.ok(app.scroll > releasedScroll, '惯性帧应在松手后继续滚动');
+  assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls + 1, '合并后的帧应只绘制一次背景');
+  assert.equal(runtime.ctx.clearRectCalls, 0, '不透明全屏背景绘制前不应再清屏');
   assert.equal(runtime.ctx.measureTextCalls, warmedMeasureCalls, '布局缓存命中后不应重复测量文字');
+  assert.equal(runtime.animationFrames.length, 1, '惯性滚动每次只应保留下一帧');
+  const firstVelocity = app.inertiaVelocity;
+  flushAnimationFrame(runtime, 32);
+  assert.ok(Math.abs(app.inertiaVelocity) < Math.abs(firstVelocity), '惯性速度应逐帧衰减');
+
+  let frameTime = 32;
+  while (runtime.animationFrames.length && frameTime < 2000) {
+    frameTime += 16;
+    flushAnimationFrame(runtime, frameTime);
+  }
+  assert.equal(app.inertiaActive, false, '惯性滚动应在低速时停止');
+  assert.equal(runtime.animationFrames.length, 0, '惯性停止后不得保留永久动画循环');
+  assert.ok(app.scroll >= 0 && app.scroll <= app.maxScroll, '惯性滚动不得越出内容边界');
+
+  runtime.listeners.touchStart({ timeStamp: 2200, touches: [{ clientX: 100, clientY: 400 }] });
+  for (let index = 1; index <= 20; index++) {
+    runtime.listeners.touchMove({ timeStamp: 2200 + index * 8, touches: [{ clientX: 100, clientY: 400 - index * 4 }] });
+  }
+  runtime.listeners.touchEnd({ timeStamp: 2360, changedTouches: [{ clientX: 100, clientY: 320 }] });
+  assert.equal(app.inertiaActive, true);
+  runtime.listeners.touchStart({ timeStamp: 2400, touches: [{ clientX: 100, clientY: 240 }] });
+  assert.equal(app.inertiaActive, false, '再次触摸应立即中断惯性滚动');
+  runtime.listeners.touchCancel();
+  flushAnimationFrame(runtime, 2416);
+  assert.equal(runtime.animationFrames.length, 0, '中断后不得继续申请惯性帧');
 
   app.scrollBy(Number.NEGATIVE_INFINITY);
   flushAnimationFrame(runtime);
