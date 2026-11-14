@@ -1,8 +1,16 @@
+const { buildInfo } = require('../../data/build-info.js');
+
 module.exports = function renderAutomation(app, y) {
   const { painter: p, colors: c, width, project } = app;
   const x = app.padding;
   const w = width - app.padding * 2;
   y = app.section(y, '04 / DAILY AUTOMATION', '每天一条安全、完整的执行链', 'Kimi Claw 定时执行并推送预测策略，GitHub 仅保存项目版本。');
+  y = app.simpleCard(y, {
+    kicker: 'BUILD VERSION',
+    title: '当前版本号',
+    body: buildInfo.version || '开发构建（未上传）',
+    compact: true,
+  });
 
   const tabW = w / 3;
   project.commandModes.forEach((item, index) => {

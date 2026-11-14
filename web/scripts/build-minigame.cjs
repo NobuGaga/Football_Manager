@@ -15,6 +15,10 @@ function build() {
   if (!fs.existsSync(path.join(source, 'game.js')) || !fs.existsSync(path.join(source, 'game.json'))) {
     throw new Error('缺少 web/minigame/game.js 或 game.json');
   }
+  const version = process.env.WECHAT_VERSION || '';
+  if (version && !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error('WECHAT_VERSION 必须使用 x.y.z 格式');
+  }
   fs.rmSync(output, { recursive: true, force: true });
   fs.mkdirSync(output, { recursive: true });
   fs.cpSync(source, output, { recursive: true });
@@ -23,6 +27,9 @@ function build() {
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.copyFileSync(path.join(root, from), target);
   }
+  const buildInfoTarget = path.join(output, 'data', 'build-info.js');
+  fs.mkdirSync(path.dirname(buildInfoTarget), { recursive: true });
+  fs.writeFileSync(buildInfoTarget, `module.exports = ${JSON.stringify({ buildInfo: { version } })};\n`);
   const gameConfig = JSON.parse(fs.readFileSync(path.join(output, 'game.json'), 'utf8'));
   if (!['portrait', 'landscape', 'landscapeLeft', 'landscapeRight'].includes(gameConfig.deviceOrientation)) {
     throw new Error('game.json 必须配置有效的 deviceOrientation');

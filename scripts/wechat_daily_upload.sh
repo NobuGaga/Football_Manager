@@ -22,6 +22,9 @@ if ! command -v "$NPM_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
+# 同一次测试、构建和上传共用版本号，确保页面展示与体验版一致。
+export WECHAT_VERSION="${WECHAT_VERSION:-$(date -u '+1.0.%y%m%d%H%M%S')}"
+
 cd "$REPO_ROOT/web"
 "$NPM_BIN" test
 "$NPM_BIN" run build:minigame

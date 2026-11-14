@@ -20,7 +20,7 @@ function defaultVersion(now = new Date()) {
   return `1.0.${now.toISOString().replace(/\D/g, '').slice(2, 14)}`;
 }
 
-function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
+function validateCompiledProject(frontendRoot = FRONTEND_ROOT, expectedVersion = '') {
   const outputRoot = path.join(frontendRoot, 'dist', 'weapp');
   const requiredFiles = [
     'game.json',
@@ -30,6 +30,7 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
     'src/pages/stadium-theme.js',
     'data/daily-report.js',
     'data/project.js',
+    'data/build-info.js',
     'utils/report.js',
     'utils/clipboard-core.js',
     ...EXPECTED_PAGES.map((page) => `src/pages/${page}.js`),
@@ -66,6 +67,12 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT) {
       throw new Error(`上传规则排除了微信小游戏运行文件 ${file}，请检查 project.config.json 的 packOptions.ignore`);
     }
   }
+  if (expectedVersion) {
+    const { buildInfo } = require(path.join(outputRoot, 'data', 'build-info.js'));
+    if (!buildInfo || buildInfo.version !== expectedVersion) {
+      throw new Error('微信小游戏页面版本号与上传版本号不一致，请重新运行 scripts/wechat_daily_upload.sh');
+    }
+  }
   return frontendRoot;
 }
 
@@ -85,7 +92,7 @@ async function main() {
     throw new Error('WECHAT_VERSION 必须使用 x.y.z 格式，例如 1.0.1。');
   }
 
-  const projectPath = validateCompiledProject();
+  const projectPath = validateCompiledProject(FRONTEND_ROOT, version);
   const privateKeyPath = path.join(os.tmpdir(), `wechat-upload-${process.pid}.key`);
   fs.writeFileSync(privateKeyPath, privateKey.replace(/\\n/g, '\n'), { mode: 0o600 });
 

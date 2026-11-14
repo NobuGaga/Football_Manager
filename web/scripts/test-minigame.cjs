@@ -227,6 +227,8 @@ function assertTextWithinCanvas(runtime, width, label) {
   assert.equal(app.flowIndex, project.flowSteps.length - 1);
 
   app.setPage('automation');
+  const expectedVersion = process.env.WECHAT_VERSION || '开发构建（未上传）';
+  assert.ok(runtime.ctx.texts.includes(expectedVersion), '自动化页应显示当前构建版本号');
   app.handleAction({ type: 'mode', id: 'review' });
   assert.equal(app.commandMode, 'review');
   const reviewCommand = project.commandModes.find((item) => item.id === 'review').command;

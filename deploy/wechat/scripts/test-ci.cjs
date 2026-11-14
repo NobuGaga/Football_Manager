@@ -34,6 +34,7 @@ try {
   for (const file of ['daily-report.js', 'project.js']) {
     fs.writeFileSync(path.join(output, 'data', file), 'module.exports = {};\n');
   }
+  fs.writeFileSync(path.join(output, 'data', 'build-info.js'), 'module.exports = { buildInfo: { version: "1.0.1" } };\n');
   for (const file of ['report.js', 'clipboard-core.js']) {
     fs.writeFileSync(path.join(output, 'utils', file), 'module.exports = {};\n');
   }
@@ -65,6 +66,8 @@ try {
   assert.throws(() => validateCompiledProject(fixture), /混入了微信小程序文件/);
   fs.rmSync(path.join(output, 'app.json'));
   assert.equal(validateCompiledProject(fixture), fixture);
+  assert.throws(() => validateCompiledProject(fixture, '1.0.2'), /页面版本号与上传版本号不一致/);
+  assert.equal(validateCompiledProject(fixture, '1.0.1'), fixture);
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
 }
