@@ -328,19 +328,29 @@ class MiniGameApp {
     return elapsed > 0 ? (first.y - last.y) * 1000 / elapsed : 0;
   }
 
+  isContentPoint(point) {
+    return point.y >= 0 && point.y < this.height - this.getNavHeight();
+  }
+
   onTouchStart(event) {
     const point = pointFromEvent(event);
     if (!point) return;
     this.stopInertia();
     const time = this.eventTime(event);
-    this.touch = { ...point, lastY: point.y, moved: false, samples: [{ y: point.y, time }] };
+    this.touch = {
+      ...point,
+      lastY: point.y,
+      moved: false,
+      allowScroll: this.isContentPoint(point),
+      samples: [{ y: point.y, time }],
+    };
   }
 
   onTouchMove(event) {
     const point = pointFromEvent(event);
     if (!point || !this.touch) return;
     if (Math.abs(point.y - this.touch.y) > 6 || Math.abs(point.x - this.touch.x) > 6) this.touch.moved = true;
-    if (this.touch.moved) {
+    if (this.touch.moved && this.touch.allowScroll) {
       this.scrollBy(this.touch.lastY - point.y);
       this.recordTouch(this.touch, point, this.eventTime(event));
     }
@@ -353,8 +363,10 @@ class MiniGameApp {
     this.touch = null;
     if (!point || !touch) return;
     if (touch.moved) {
-      this.recordTouch(touch, point, this.eventTime(event));
-      this.startInertia(this.flingVelocity(touch));
+      if (touch.allowScroll) {
+        this.recordTouch(touch, point, this.eventTime(event));
+        this.startInertia(this.flingVelocity(touch));
+      }
       return;
     }
     const zone = [...this.zones].reverse().find((item) => (
