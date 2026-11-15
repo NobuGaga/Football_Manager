@@ -132,7 +132,7 @@ class MiniGameApp {
     const w = this.width - this.padding * 2;
     y = this.write(kicker, x, y, w, { size: 10, weight: 'bold', color: this.colors.accent, mono: true, lineHeight: 15 }) + 8;
     y = this.write(title, x, y, w, { size: 24, weight: 'bold', lineHeight: 33 });
-    if (description) y = this.write(description, x, y + 8, w, { size: 13, color: this.colors.secondary, lineHeight: 21 });
+    if (description) y = this.write(description, x, y + 8, w, { size: 14, color: this.colors.secondary, lineHeight: 22 });
     return y + 20;
   }
 
@@ -152,8 +152,8 @@ class MiniGameApp {
     const x = this.padding;
     const w = this.width - this.padding * 2;
     const inner = w - 32;
-    const titleH = this.painter.paragraphHeight(title, inner, { size: compact ? 15 : 17, weight: 'bold', lineHeight: compact ? 23 : 26 });
-    const bodyH = this.painter.paragraphHeight(body, inner, { size: 12, color: this.colors.secondary, lineHeight: 20 });
+    const titleH = this.painter.paragraphHeight(title, inner, { size: compact ? 16 : 18, weight: 'bold', lineHeight: compact ? 24 : 28 });
+    const bodyH = this.painter.paragraphHeight(body, inner, { size: 14, color: this.colors.secondary, lineHeight: 22 });
     const height = (compact ? 62 : 74) + titleH + bodyH;
     this.card(y, height);
     let cursor = y + 14;
@@ -161,9 +161,9 @@ class MiniGameApp {
       this.painter.text(kicker, x + 16, cursor, { size: 10, weight: 'bold', color: this.colors.accent, mono: true });
       cursor += 24;
     }
-    this.painter.paragraph(title, x + 16, cursor, inner, { size: compact ? 15 : 17, weight: 'bold', lineHeight: compact ? 23 : 26 });
+    this.painter.paragraph(title, x + 16, cursor, inner, { size: compact ? 16 : 18, weight: 'bold', lineHeight: compact ? 24 : 28 });
     cursor += titleH + 8;
-    this.painter.paragraph(body, x + 16, cursor, inner, { size: 12, color: this.colors.secondary, lineHeight: 20 });
+    this.painter.paragraph(body, x + 16, cursor, inner, { size: 14, color: this.colors.secondary, lineHeight: 22 });
     return y + height + 12;
   }
 
@@ -174,7 +174,7 @@ class MiniGameApp {
     const textColor = primary || selected ? this.colors.accentText : this.colors.text;
     const stroke = primary || selected ? this.colors.accent : this.colors.border;
     this.painter.roundRect(x, y, width, height, options.small ? 10 : 13, fill, stroke);
-    const size = options.file ? 11 : options.small ? 11 : 13;
+    const size = options.file ? 12 : options.small ? 12 : 14;
     const textWidth = width - (options.file ? 54 : 20);
     this.painter.paragraph(label, x + 10, y + Math.max(9, (height - size * 1.4) / 2 - 1), textWidth, {
       size,
@@ -423,7 +423,7 @@ class MiniGameApp {
       const x = index * tabWidth;
       if (selected) p.rect(x + 14, top, tabWidth - 28, 3, this.colors.accent);
       p.text(tab.label, x + tabWidth / 2, top + 22, {
-        size: 12,
+        size: 14,
         weight: selected ? 'bold' : 'normal',
         color: selected ? this.colors.accent : this.colors.muted,
         align: 'center',
@@ -437,11 +437,11 @@ class MiniGameApp {
     const p = this.painter;
     const w = Math.min(this.width - 48, 320);
     const x = (this.width - w) / 2;
-    const textH = p.paragraphHeight(this.message, w - 28, { size: 12, align: 'center', lineHeight: 18 });
+    const textH = p.paragraphHeight(this.message, w - 28, { size: 14, align: 'center', lineHeight: 22 });
     const h = Math.max(44, textH + 24);
     const y = this.height - this.getNavHeight() - h - 16;
     p.roundRect(x, y, w, h, 14, '#25331c', this.colors.accent);
-    p.paragraph(this.message, x + 14, y + 12, w - 28, { size: 12, color: this.colors.accent, align: 'center', lineHeight: 18 });
+    p.paragraph(this.message, x + 14, y + 12, w - 28, { size: 14, color: this.colors.accent, align: 'center', lineHeight: 22 });
   }
 }
 

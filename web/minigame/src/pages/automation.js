@@ -21,20 +21,20 @@ module.exports = function renderAutomation(app, y) {
   const current = project.commandModes.find((item) => item.id === app.commandMode);
   const inner = w - 32;
   const titleH = p.paragraphHeight(current.title, inner, { size: 19, weight: 'bold', lineHeight: 28 });
-  const descH = p.paragraphHeight(current.description, inner, { size: 12, color: c.secondary, lineHeight: 20 });
-  const commandH = p.paragraphHeight(current.command, inner - 32, { size: 11, mono: true, lineHeight: 19 });
+  const descH = p.paragraphHeight(current.description, inner, { size: 14, color: c.secondary, lineHeight: 22 });
+  const commandH = p.paragraphHeight(current.command, inner - 32, { size: 12, mono: true, lineHeight: 20 });
   const cardH = 152 + titleH + descH + commandH;
   app.card(y, cardH);
   p.roundRect(x + 16, y + 14, 88, 25, 12, c.cardAlt, c.border);
   p.text(current.badge, x + 60, y + 21, { size: 10, color: c.accent, align: 'center' });
   p.paragraph(current.title, x + 16, y + 53, inner, { size: 19, weight: 'bold', lineHeight: 28 });
   let cursor = y + 53 + titleH + 10;
-  p.paragraph(current.description, x + 16, cursor, inner, { size: 12, color: c.secondary, lineHeight: 20 });
+  p.paragraph(current.description, x + 16, cursor, inner, { size: 14, color: c.secondary, lineHeight: 22 });
   cursor += descH + 14;
   p.roundRect(x + 16, cursor, inner, 54 + commandH, 12, '#090d0a', c.border);
   p.text('TERMINAL', x + 30, cursor + 13, { size: 10, color: c.muted, mono: true });
   app.button('复制', x + w - 80, cursor + 8, 50, 34, { type: 'copy', text: current.command, success: '运行命令已复制' }, { small: true });
-  p.paragraph(current.command, x + 30, cursor + 43, inner - 32, { size: 11, color: c.accent, mono: true, lineHeight: 19 });
+  p.paragraph(current.command, x + 30, cursor + 43, inner - 32, { size: 12, color: c.accent, mono: true, lineHeight: 20 });
   y += cardH + 12;
   y = app.notice(y, '正式任务要求 Git 工作区干净；关联失败时立即中止，不上传半成品。本页面只展示命令，不会在你的设备上执行。') + 6;
 

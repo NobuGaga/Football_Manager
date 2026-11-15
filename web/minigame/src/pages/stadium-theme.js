@@ -20,7 +20,7 @@ function card(app, y, height, radius = 18) {
 function button(app, label, x, y, width, height, action, options = {}) {
   const p = app.painter;
   const primary = options.primary;
-  const size = options.small ? 11 : 13;
+  const size = options.small ? 12 : 14;
   p.roundRect(x, y, width, height, options.small ? 10 : 14, primary ? colors.accent : colors.cardAlt, primary ? colors.accent : colors.border);
   p.paragraph(label, x + 10, y + Math.max(9, (height - size * 1.45) / 2 - 1), width - 20, {
     size,
@@ -40,7 +40,7 @@ function section(app, y, kicker, title, description = '') {
   const w = app.width - app.padding * 2;
   y = app.write(kicker, x, y, w, { size: 10, weight: 'bold', color: colors.accent, mono: true, lineHeight: 15 }) + 8;
   y = app.write(title, x, y, w, { size: 25, weight: 'bold', color: colors.text, lineHeight: 34 });
-  if (description) y = app.write(description, x, y + 8, w, { size: 12, color: colors.secondary, lineHeight: 20 });
+  if (description) y = app.write(description, x, y + 8, w, { size: 14, color: colors.secondary, lineHeight: 22 });
   return y + 20;
 }
 
@@ -48,12 +48,12 @@ function notice(app, y, text) {
   const p = app.painter;
   const x = app.padding;
   const w = app.width - app.padding * 2;
-  const textH = p.paragraphHeight(text, w - 64, { size: 11, lineHeight: 18 });
+  const textH = p.paragraphHeight(text, w - 64, { size: 12, lineHeight: 19 });
   const height = Math.max(58, textH + 26);
   p.roundRect(x, y, w, height, 14, '#2a3820', '#6a633a');
   p.circle(x + 23, y + 23, 10, colors.risk);
   p.text('i', x + 23, y + 17, { size: 11, weight: 'bold', color: '#2c210e', align: 'center' });
-  p.paragraph(text, x + 43, y + 13, w - 64, { size: 11, color: '#e0d4b4', lineHeight: 18 });
+  p.paragraph(text, x + 43, y + 13, w - 64, { size: 12, color: '#e0d4b4', lineHeight: 19 });
   return y + height + 12;
 }
 

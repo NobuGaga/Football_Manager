@@ -213,9 +213,12 @@ function assertTextWithinCanvas(runtime, width, label) {
   assertTextWithinCanvas(runtime, app.width, '每日页宽度变化');
 
   for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
+    runtime.ctx.texts.length = 0;
+    runtime.ctx.textBounds.length = 0;
     app.setPage(page);
     assert.equal(app.page, page);
     assert.ok(runtime.ctx.texts.length > 0, `${page} 应实际绘制文本`);
+    assertTextWithinCanvas(runtime, app.width, `${page} 窄屏`);
   }
 
   app.setPage('pipeline');
