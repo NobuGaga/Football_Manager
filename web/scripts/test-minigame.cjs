@@ -46,7 +46,7 @@ function createContext() {
       const width = textWidth(this, value);
       const left = this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x;
       texts.push(value);
-      textBounds.push({ text: value, left, right: left + width, top: y });
+      textBounds.push({ text: value, left, right: left + width, top: y, baseline: this.textBaseline });
     },
   };
 }
@@ -265,6 +265,45 @@ function assertTextWithinCanvas(runtime, width, label) {
   const lines = painter.wrap('bash scripts/daily_automation.sh --with-a-very-long-option', 120, { size: 12, mono: true });
   assert.ok(lines.length > 1);
   for (const line of lines) assert.ok(emptyRuntime.ctx.measureText(line).width <= 120);
+
+  const alignRuntime = createRuntime();
+  const alignApp = new MiniGameApp(alignRuntime.platform).start();
+
+  alignRuntime.ctx.textBounds.length = 0;
+  alignApp.button('单行按钮', 20, 100, 200, 46, { type: 'flow', index: 0 });
+  let alignBounds = alignRuntime.ctx.textBounds;
+  assert.equal(alignBounds.length, 1);
+  assert.equal(alignBounds[0].top, 113);
+  assert.equal((alignBounds[0].left + alignBounds[0].right) / 2, 120);
+  assert.equal(alignBounds[0].baseline, 'top');
+
+  alignRuntime.ctx.textBounds.length = 0;
+  alignApp.button('多行按钮居中测试', 20, 160, 100, 60, { type: 'flow', index: 0 });
+  alignBounds = alignRuntime.ctx.textBounds;
+  assert.equal(alignBounds.length, 2);
+  assert.deepEqual(alignBounds.map((item) => item.top), [170, 190]);
+  for (const bound of alignBounds) {
+    assert.equal((bound.left + bound.right) / 2, 70);
+  }
+
+  const { button: stadiumButton } = require('../dist/weapp/src/pages/stadium-theme.js');
+  alignRuntime.ctx.textBounds.length = 0;
+  stadiumButton(alignApp, '主题按钮', 20, 240, 200, 46, { type: 'flow', index: 0 });
+  alignBounds = alignRuntime.ctx.textBounds;
+  assert.equal(alignBounds.length, 1);
+  assert.equal(alignBounds[0].top, 253);
+  assert.equal((alignBounds[0].left + alignBounds[0].right) / 2, 120);
+
+  alignRuntime.ctx.textBounds.length = 0;
+  alignApp.setPage('overview');
+  const tabTop = alignApp.height - alignApp.getNavHeight();
+  const tabWidth = alignApp.width / TABS.length;
+  for (const [index, tab] of TABS.entries()) {
+    const bound = alignRuntime.ctx.textBounds.find((item) => item.text === tab.label && item.baseline === 'middle');
+    assert.ok(bound, `${tab.label} 页签应使用中线基线绘制`);
+    assert.equal(bound.top, tabTop + 31);
+    assert.ok(Math.abs((bound.left + bound.right) / 2 - (index + 0.5) * tabWidth) < 1e-8);
+  }
 
   const gameConfig = JSON.parse(fs.readFileSync(path.join(root, 'dist/weapp/game.json'), 'utf8'));
   assert.equal(gameConfig.deviceOrientation, 'portrait');

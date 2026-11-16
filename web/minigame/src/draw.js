@@ -73,17 +73,20 @@ class Painter {
       mono = false,
       align = 'left',
       lineHeight = Math.round(size * 1.55),
+      blockHeight = null,
     } = options;
     const lines = this.wrap(text, maxWidth, { size, weight, mono });
-    if (this.visible(y, lines.length * lineHeight)) {
+    const contentHeight = lines.length * lineHeight;
+    const drawY = Number.isFinite(blockHeight) ? y + (blockHeight - contentHeight) / 2 : y;
+    if (this.visible(drawY, contentHeight)) {
       this.setFont(size, weight, mono);
       this.ctx.fillStyle = color;
       this.ctx.textAlign = align;
       this.ctx.textBaseline = 'top';
       const drawX = align === 'center' ? x + maxWidth / 2 : align === 'right' ? x + maxWidth : x;
-      lines.forEach((line, index) => this.ctx.fillText(line, drawX, y + index * lineHeight));
+      lines.forEach((line, index) => this.ctx.fillText(line, drawX, drawY + index * lineHeight));
     }
-    return lines.length * lineHeight;
+    return contentHeight;
   }
 
   text(text, x, y, options = {}) {
@@ -93,12 +96,13 @@ class Painter {
       weight = 'normal',
       mono = false,
       align = 'left',
+      baseline = 'top',
     } = options;
     if (!this.visible(y, size + 4)) return;
     this.setFont(size, weight, mono);
     this.ctx.fillStyle = color;
     this.ctx.textAlign = align;
-    this.ctx.textBaseline = 'top';
+    this.ctx.textBaseline = baseline;
     this.ctx.fillText(String(text ?? ''), x, y);
   }
 

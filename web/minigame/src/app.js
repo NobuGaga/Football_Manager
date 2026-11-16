@@ -176,13 +176,14 @@ class MiniGameApp {
     this.painter.roundRect(x, y, width, height, options.small ? 10 : 13, fill, stroke);
     const size = options.file ? 12 : options.small ? 12 : 14;
     const textWidth = width - (options.file ? 54 : 20);
-    this.painter.paragraph(label, x + 10, y + Math.max(9, (height - size * 1.4) / 2 - 1), textWidth, {
+    this.painter.paragraph(label, x + 10, y, textWidth, {
       size,
       weight: selected || primary ? 'bold' : 'normal',
       color: textColor,
       align: options.file ? 'left' : 'center',
       mono: options.file,
       lineHeight: Math.round(size * 1.4),
+      blockHeight: height,
     });
     if (y + height >= 0 && y <= this.height - this.getNavHeight()) {
       this.zones.push({ x, y, width, height, action });
@@ -422,11 +423,12 @@ class MiniGameApp {
       const selected = this.page === tab.id;
       const x = index * tabWidth;
       if (selected) p.rect(x + 14, top, tabWidth - 28, 3, this.colors.accent);
-      p.text(tab.label, x + tabWidth / 2, top + 22, {
+      p.text(tab.label, x + tabWidth / 2, top + 31, {
         size: 14,
         weight: selected ? 'bold' : 'normal',
         color: selected ? this.colors.accent : this.colors.muted,
         align: 'center',
+        baseline: 'middle',
       });
       this.zones.push({ x, y: top, width: tabWidth, height: navHeight, action: { type: 'page', page: tab.id } });
     });

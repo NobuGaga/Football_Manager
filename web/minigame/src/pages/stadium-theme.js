@@ -22,12 +22,13 @@ function button(app, label, x, y, width, height, action, options = {}) {
   const primary = options.primary;
   const size = options.small ? 12 : 14;
   p.roundRect(x, y, width, height, options.small ? 10 : 14, primary ? colors.accent : colors.cardAlt, primary ? colors.accent : colors.border);
-  p.paragraph(label, x + 10, y + Math.max(9, (height - size * 1.45) / 2 - 1), width - 20, {
+  p.paragraph(label, x + 10, y, width - 20, {
     size,
     weight: primary ? 'bold' : 'normal',
     color: primary ? colors.accentText : colors.text,
     align: 'center',
     lineHeight: Math.round(size * 1.45),
+    blockHeight: height,
   });
   if (y + height >= 0 && y <= app.height - app.getNavHeight()) {
     app.zones.push({ x, y, width, height, action });
