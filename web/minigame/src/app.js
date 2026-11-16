@@ -184,6 +184,7 @@ class MiniGameApp {
       mono: options.file,
       lineHeight: Math.round(size * 1.4),
       blockHeight: height,
+      baseline: 'middle',
     });
     if (y + height >= 0 && y <= this.height - this.getNavHeight()) {
       this.zones.push({ x, y, width, height, action });

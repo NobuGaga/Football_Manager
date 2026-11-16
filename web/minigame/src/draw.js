@@ -74,17 +74,19 @@ class Painter {
       align = 'left',
       lineHeight = Math.round(size * 1.55),
       blockHeight = null,
+      baseline = 'top',
     } = options;
     const lines = this.wrap(text, maxWidth, { size, weight, mono });
     const contentHeight = lines.length * lineHeight;
     const drawY = Number.isFinite(blockHeight) ? y + (blockHeight - contentHeight) / 2 : y;
+    const baselineOffset = baseline === 'middle' ? lineHeight / 2 : 0;
     if (this.visible(drawY, contentHeight)) {
       this.setFont(size, weight, mono);
       this.ctx.fillStyle = color;
       this.ctx.textAlign = align;
-      this.ctx.textBaseline = 'top';
+      this.ctx.textBaseline = baseline;
       const drawX = align === 'center' ? x + maxWidth / 2 : align === 'right' ? x + maxWidth : x;
-      lines.forEach((line, index) => this.ctx.fillText(line, drawX, drawY + index * lineHeight));
+      lines.forEach((line, index) => this.ctx.fillText(line, drawX, drawY + index * lineHeight + baselineOffset));
     }
     return contentHeight;
   }

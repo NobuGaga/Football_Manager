@@ -29,6 +29,7 @@ function button(app, label, x, y, width, height, action, options = {}) {
     align: 'center',
     lineHeight: Math.round(size * 1.45),
     blockHeight: height,
+    baseline: 'middle',
   });
   if (y + height >= 0 && y <= app.height - app.getNavHeight()) {
     app.zones.push({ x, y, width, height, action });

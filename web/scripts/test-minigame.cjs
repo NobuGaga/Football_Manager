@@ -43,10 +43,14 @@ function createContext() {
     },
     fillText(text, x, y) {
       const value = String(text);
+      const size = Number.parseInt(this.font.match(/(\d+)px/)?.[1] || '14', 10);
       const width = textWidth(this, value);
       const left = this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x;
+      const vertical = this.textBaseline === 'middle'
+        ? { top: y - size * 0.4, bottom: y + size * 0.4 }
+        : { top: y + size * 0.1, bottom: y + size * 0.9 };
       texts.push(value);
-      textBounds.push({ text: value, left, right: left + width, top: y, baseline: this.textBaseline });
+      textBounds.push({ text: value, left, right: left + width, ...vertical, baselineY: y, baseline: this.textBaseline });
     },
   };
 }
@@ -102,6 +106,19 @@ function assertTextWithinCanvas(runtime, width, label) {
     assert.ok(bound.left >= -0.5, `${label} 文字左溢出：${bound.text} / ${bound.left}`);
     assert.ok(bound.right <= width + 0.5, `${label} 文字右溢出：${bound.text} / ${bound.right}`);
   }
+}
+
+function assertTextBlockCentered(bounds, y, height, label) {
+  assert.ok(bounds.length > 0, `${label} 应实际绘制文字`);
+  const top = Math.min(...bounds.map((item) => item.top));
+  const bottom = Math.max(...bounds.map((item) => item.bottom));
+  const actualCenter = (top + bottom) / 2;
+  const expectedCenter = y + height / 2;
+  assert.ok(
+    Math.abs(actualCenter - expectedCenter) <= 0.5,
+    `${label} 可见文字应垂直居中：实际 ${actualCenter}，预期 ${expectedCenter}`,
+  );
+  for (const bound of bounds) assert.equal(bound.baseline, 'middle', `${label} 应使用中线基线`);
 }
 
 (async () => {
@@ -273,15 +290,14 @@ function assertTextWithinCanvas(runtime, width, label) {
   alignApp.button('单行按钮', 20, 100, 200, 46, { type: 'flow', index: 0 });
   let alignBounds = alignRuntime.ctx.textBounds;
   assert.equal(alignBounds.length, 1);
-  assert.equal(alignBounds[0].top, 113);
+  assertTextBlockCentered(alignBounds, 100, 46, '通用单行按钮');
   assert.equal((alignBounds[0].left + alignBounds[0].right) / 2, 120);
-  assert.equal(alignBounds[0].baseline, 'top');
 
   alignRuntime.ctx.textBounds.length = 0;
   alignApp.button('多行按钮居中测试', 20, 160, 100, 60, { type: 'flow', index: 0 });
   alignBounds = alignRuntime.ctx.textBounds;
   assert.equal(alignBounds.length, 2);
-  assert.deepEqual(alignBounds.map((item) => item.top), [170, 190]);
+  assertTextBlockCentered(alignBounds, 160, 60, '通用多行按钮');
   for (const bound of alignBounds) {
     assert.equal((bound.left + bound.right) / 2, 70);
   }
@@ -291,7 +307,7 @@ function assertTextWithinCanvas(runtime, width, label) {
   stadiumButton(alignApp, '主题按钮', 20, 240, 200, 46, { type: 'flow', index: 0 });
   alignBounds = alignRuntime.ctx.textBounds;
   assert.equal(alignBounds.length, 1);
-  assert.equal(alignBounds[0].top, 253);
+  assertTextBlockCentered(alignBounds, 240, 46, '球场主题按钮');
   assert.equal((alignBounds[0].left + alignBounds[0].right) / 2, 120);
 
   alignRuntime.ctx.textBounds.length = 0;
@@ -300,8 +316,8 @@ function assertTextWithinCanvas(runtime, width, label) {
   const tabWidth = alignApp.width / TABS.length;
   for (const [index, tab] of TABS.entries()) {
     const bound = alignRuntime.ctx.textBounds.find((item) => item.text === tab.label && item.baseline === 'middle');
-    assert.ok(bound, `${tab.label} 页签应使用中线基线绘制`);
-    assert.equal(bound.top, tabTop + 31);
+    assert.ok(bound, `${tab.label} 页签应实际绘制`);
+    assertTextBlockCentered([bound], tabTop, 62, `${tab.label} 页签`);
     assert.ok(Math.abs((bound.left + bound.right) / 2 - (index + 0.5) * tabWidth) < 1e-8);
   }
 
