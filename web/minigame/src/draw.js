@@ -6,10 +6,9 @@ function fontString(size = 14, weight = 'normal', mono = false) {
 }
 
 class Painter {
-  constructor(ctx, viewportHeight, onDraw = null) {
+  constructor(ctx, viewportHeight) {
     this.ctx = ctx;
     this.viewportHeight = viewportHeight;
-    this.onDraw = onDraw;
     this.wrapCache = new Map();
     this.wrapCacheLimit = 2048;
   }
@@ -87,10 +86,7 @@ class Painter {
       this.ctx.textAlign = align;
       this.ctx.textBaseline = baseline;
       const drawX = align === 'center' ? x + maxWidth / 2 : align === 'right' ? x + maxWidth : x;
-      lines.forEach((line, index) => {
-        if (this.onDraw) this.onDraw('fillText');
-        this.ctx.fillText(line, drawX, drawY + index * lineHeight + baselineOffset);
-      });
+      lines.forEach((line, index) => this.ctx.fillText(line, drawX, drawY + index * lineHeight + baselineOffset));
     }
     return contentHeight;
   }
@@ -109,14 +105,12 @@ class Painter {
     this.ctx.fillStyle = color;
     this.ctx.textAlign = align;
     this.ctx.textBaseline = baseline;
-    if (this.onDraw) this.onDraw('fillText');
     this.ctx.fillText(String(text ?? ''), x, y);
   }
 
   rect(x, y, width, height, color) {
     if (!this.visible(y, height)) return;
     this.ctx.fillStyle = color;
-    if (this.onDraw) this.onDraw('fillRect');
     this.ctx.fillRect(x, y, width, height);
   }
 
@@ -135,7 +129,6 @@ class Painter {
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
-    if (this.onDraw) this.onDraw('roundRect');
     if (fill) {
       ctx.fillStyle = fill;
       ctx.fill();
@@ -155,7 +148,6 @@ class Painter {
     ctx.lineTo(x2, y2);
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
-    if (this.onDraw) this.onDraw('line');
     ctx.stroke();
   }
 
@@ -164,7 +156,6 @@ class Painter {
     const ctx = this.ctx;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    if (this.onDraw) this.onDraw('circle');
     if (fill) {
       ctx.fillStyle = fill;
       ctx.fill();

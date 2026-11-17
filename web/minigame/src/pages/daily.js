@@ -1,7 +1,4 @@
 const { colors: c, card, button, probabilityBar } = require('./stadium-theme.js');
-const { Painter } = require('../draw.js');
-
-const CARD_CACHE_LIMIT = 6;
 
 function headerMetrics(app, match) {
   const p = app.painter;
@@ -153,7 +150,7 @@ function dailyCardLayouts(app) {
   return layouts;
 }
 
-function drawMatchCard(app, match, y, compact, layout) {
+function matchCard(app, match, y, compact, layout) {
   const { header, main, details, height } = layout;
   if (!app.painter.visible(y, height)) return y + height + (compact ? 10 : 12);
 
@@ -190,84 +187,6 @@ function drawMatchCard(app, match, y, compact, layout) {
   return y + height + (compact ? 10 : 12);
 }
 
-function dailyCardCache(app) {
-  const cached = app.dailyCardCache;
-  if (cached && cached.width === app.width && cached.padding === app.padding && cached.dpr === app.dpr && cached.matches === app.matches) {
-    return cached;
-  }
-  app.dailyCardCache = {
-    width: app.width,
-    padding: app.padding,
-    dpr: app.dpr,
-    matches: app.matches,
-    entries: new Map(),
-    disabled: false,
-  };
-  return app.dailyCardCache;
-}
-
-function createCardCacheEntry(app, match, compact, layout) {
-  try {
-    const width = app.width - app.padding * 2 + 2;
-    const height = layout.height + 2;
-    const canvas = app.platform.createCanvas();
-    const context = canvas.getContext('2d');
-    if (!context) return null;
-    canvas.width = Math.ceil(width * app.dpr);
-    canvas.height = Math.ceil(height * app.dpr);
-    context.scale(app.dpr, app.dpr);
-    context.translate(1 - app.padding, 1);
-    const cardApp = Object.create(app);
-    const onDraw = app.profiler.enabled ? (type) => app.profiler.draw(type) : null;
-    cardApp.painter = new Painter(context, () => height, onDraw);
-    drawMatchCard(cardApp, match, 1, compact, layout);
-    return { canvas, width, height, x: app.padding - 1 };
-  } catch {
-    return null;
-  }
-}
-
-function matchCard(app, match, y, compact, layout, index) {
-  const gap = compact ? 10 : 12;
-  if (!app.painter.visible(y, layout.height)) return y + layout.height + gap;
-  const cache = dailyCardCache(app);
-  if (cache.disabled || typeof app.ctx.drawImage !== 'function' || typeof app.platform.createCanvas !== 'function') {
-    return drawMatchCard(app, match, y, compact, layout);
-  }
-
-  let entry = cache.entries.get(index);
-  if (entry) {
-    cache.entries.delete(index);
-  } else {
-    entry = createCardCacheEntry(app, match, compact, layout);
-    if (!entry) {
-      cache.disabled = true;
-      return drawMatchCard(app, match, y, compact, layout);
-    }
-  }
-  cache.entries.set(index, entry);
-  if (cache.entries.size > CARD_CACHE_LIMIT) {
-    const oldest = cache.entries.keys().next().value;
-    const evicted = cache.entries.get(oldest);
-    evicted.canvas.width = 1;
-    evicted.canvas.height = 1;
-    cache.entries.delete(oldest);
-  }
-  if (app.profiler.enabled) app.profiler.draw('drawImage');
-  app.ctx.drawImage(
-    entry.canvas,
-    0,
-    0,
-    entry.canvas.width,
-    entry.canvas.height,
-    entry.x,
-    y - 1,
-    entry.width,
-    entry.height,
-  );
-  return y + layout.height + gap;
-}
-
 function matchdayNotice(app, y) {
   const p = app.painter;
   const x = app.padding;
@@ -299,7 +218,7 @@ module.exports = function renderDaily(app, y) {
   if (app.matches.length) {
     const layouts = dailyCardLayouts(app);
     app.matches.forEach((match, index) => {
-      y = matchCard(app, match, y, index > 0, layouts[index], index);
+      y = matchCard(app, match, y, index > 0, layouts[index]);
     });
   } else {
     card(app, y, 96, 16);

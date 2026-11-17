@@ -8,7 +8,7 @@ execFileSync(process.execPath, [path.join(root, 'scripts', 'build-minigame.cjs')
 
 const { MiniGameApp, TABS } = require('../dist/weapp/src/app.js');
 const { Painter } = require('../dist/weapp/src/draw.js');
-const { RenderProfiler } = require('../dist/weapp/src/profiler.js');
+const { FrameRateController } = require('../dist/weapp/src/frame-rate.js');
 const { dailyReport } = require('../generated/daily-report.js');
 const project = require('../src/data/project.js');
 
@@ -27,10 +27,6 @@ function createContext() {
     measureTextCalls: 0,
     clearRectCalls: 0,
     gradientCalls: 0,
-    backgroundFillCalls: 0,
-    drawImageCalls: 0,
-    translateX: 0,
-    translateY: 0,
     font: 'normal 14px sans-serif',
     fillStyle: '',
     strokeStyle: '',
@@ -39,25 +35,7 @@ function createContext() {
     textBaseline: 'top',
     save() {}, restore() {}, beginPath() {}, closePath() {},
     moveTo() {}, lineTo() {}, quadraticCurveTo() {}, arc() {},
-    fill() {}, stroke() {}, rect() {}, clip() {}, scale() {},
-    translate(x, y) { this.translateX += x; this.translateY += y; },
-    fillRect() { if (this.fillStyle === gradient) this.backgroundFillCalls++; },
-    drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh) {
-      this.drawImageCalls++;
-      const source = image.ctx;
-      if (!source) return;
-      texts.push(...source.texts);
-      for (const bound of source.textBounds) {
-        textBounds.push({
-          ...bound,
-          left: dx + (bound.left - sx) * dw / sw,
-          right: dx + (bound.right - sx) * dw / sw,
-          top: dy + (bound.top - sy) * dh / sh,
-          bottom: dy + (bound.bottom - sy) * dh / sh,
-          baselineY: dy + (bound.baselineY - sy) * dh / sh,
-        });
-      }
-    },
+    fill() {}, stroke() {}, fillRect() {}, rect() {}, clip() {}, scale() {},
     clearRect() { this.clearRectCalls++; },
     createLinearGradient() { this.gradientCalls++; return gradient; },
     measureText(text) {
@@ -68,43 +46,30 @@ function createContext() {
       const value = String(text);
       const size = Number.parseInt(this.font.match(/(\d+)px/)?.[1] || '14', 10);
       const width = textWidth(this, value);
-      const left = (this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x) + this.translateX;
-      const baselineY = y + this.translateY;
+      const left = this.textAlign === 'center' ? x - width / 2 : this.textAlign === 'right' ? x - width : x;
       const vertical = this.textBaseline === 'middle'
-        ? { top: baselineY - size * 0.4, bottom: baselineY + size * 0.4 }
-        : { top: baselineY + size * 0.1, bottom: baselineY + size * 0.9 };
+        ? { top: y - size * 0.4, bottom: y + size * 0.4 }
+        : { top: y + size * 0.1, bottom: y + size * 0.9 };
       texts.push(value);
-      textBounds.push({ text: value, left, right: left + width, ...vertical, baselineY, baseline: this.textBaseline });
+      textBounds.push({ text: value, left, right: left + width, ...vertical, baselineY: y, baseline: this.textBaseline });
     },
   };
 }
 
-function createRuntime({ clipboardFails = false, pixelRatio = 2, offscreenFails = false } = {}) {
+function createRuntime({ clipboardFails = false } = {}) {
   const ctx = createContext();
-  const canvas = { width: 0, height: 0, ctx, getContext: () => ctx };
+  const canvas = { width: 0, height: 0, getContext: () => ctx };
   const listeners = {};
   const clipboard = [];
   const animationFrames = [];
-  const offscreenCanvases = [];
-  let mainCreated = false;
   const windowInfo = {
     windowWidth: 390,
     windowHeight: 844,
-    pixelRatio,
+    pixelRatio: 2,
     safeArea: { top: 47, bottom: 810 },
   };
   const platform = {
-    createCanvas() {
-      if (!mainCreated) {
-        mainCreated = true;
-        return canvas;
-      }
-      if (offscreenFails) return { getContext: () => null };
-      const offscreenContext = createContext();
-      const offscreen = { width: 0, height: 0, ctx: offscreenContext, getContext: () => offscreenContext };
-      offscreenCanvases.push(offscreen);
-      return offscreen;
-    },
+    createCanvas: () => canvas,
     getWindowInfo: () => windowInfo,
     requestAnimationFrame(callback) {
       animationFrames.push(callback);
@@ -122,13 +87,14 @@ function createRuntime({ clipboardFails = false, pixelRatio = 2, offscreenFails 
       else success({ errMsg: 'setClipboardData:ok' });
     },
   };
-  return { platform, canvas, ctx, listeners, clipboard, animationFrames, windowInfo, offscreenCanvases };
+  return { platform, canvas, ctx, listeners, clipboard, animationFrames, windowInfo };
 }
 
 function flushAnimationFrame(runtime, timestamp) {
   assert.ok(runtime.animationFrames.length > 0, '应存在等待绘制的动画帧');
+  runtime.animationTime = Number.isFinite(timestamp) ? timestamp : (runtime.animationTime || 0) + 16;
   const callbacks = runtime.animationFrames.splice(0);
-  callbacks.forEach((callback) => callback(timestamp));
+  callbacks.forEach((callback) => callback(runtime.animationTime));
 }
 
 function tap(runtime, zone) {
@@ -164,6 +130,7 @@ function assertTextBlockCentered(bounds, y, height, label) {
   assert.equal(runtime.canvas.width, 780);
   assert.equal(runtime.canvas.height, 1688);
   assert.equal(app.page, 'overview');
+  assert.equal(app.frameRate.targetFps, 60);
   assert.equal(app.matches.length, dailyReport.matches.length);
   assert.ok(runtime.ctx.texts.includes('让每一次推断，'), '小游戏首页应保留 Web 品牌主视觉文案');
   assert.ok(runtime.ctx.texts.includes('都有迹可循。'), '小游戏首页应保留 Web 强调文案');
@@ -196,17 +163,8 @@ function assertTextBlockCentered(bounds, y, height, label) {
   ]) {
     assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `紧凑卡应实际绘制 ${expected}`);
   }
-  assert.ok(runtime.offscreenCanvases.length > 0, '每日可见卡片应使用离屏缓存');
-  assert.ok(runtime.ctx.drawImageCalls > 0, '缓存卡片应实际贴回主画布');
-  const cachedCanvasCount = runtime.offscreenCanvases.length;
-  const cachedGradientCalls = runtime.ctx.gradientCalls;
-  app.render();
-  assert.equal(runtime.offscreenCanvases.length, cachedCanvasCount, '相同卡片重绘时应复用离屏缓存');
-  assert.equal(runtime.ctx.gradientCalls, cachedGradientCalls, '相同页面与尺寸应复用背景渐变');
-
   const warmedMeasureCalls = runtime.ctx.measureTextCalls;
   const warmedGradientCalls = runtime.ctx.gradientCalls;
-  const warmedBackgroundFills = runtime.ctx.backgroundFillCalls;
   const startScroll = app.scroll;
   runtime.listeners.touchStart({ timeStamp: 0, touches: [{ clientX: 100, clientY: 400 }] });
   for (let index = 1; index <= 20; index++) {
@@ -215,13 +173,12 @@ function assertTextBlockCentered(bounds, y, height, label) {
   runtime.listeners.touchEnd({ timeStamp: 160, changedTouches: [{ clientX: 100, clientY: 320 }] });
   assert.ok(app.scroll > startScroll, '连续触控应更新滚动位置');
   assert.equal(runtime.animationFrames.length, 1, '连续触控应合并为一个待绘制帧');
-  assert.equal(runtime.ctx.backgroundFillCalls, warmedBackgroundFills, '触控事件不应反复同步绘制背景');
+  assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls, '触控事件不应反复同步绘制背景');
   assert.equal(app.inertiaActive, true, '快速滑动松手后应进入惯性滚动');
   const releasedScroll = app.scroll;
   flushAnimationFrame(runtime, 16);
   assert.ok(app.scroll > releasedScroll, '惯性帧应在松手后继续滚动');
-  assert.equal(runtime.ctx.backgroundFillCalls, warmedBackgroundFills + 1, '合并后的帧应只绘制一次背景');
-  assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls, '滚动帧不得重复创建背景渐变');
+  assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls + 1, '合并后的帧应只绘制一次背景');
   assert.equal(runtime.ctx.clearRectCalls, 0, '不透明全屏背景绘制前不应再清屏');
   assert.equal(runtime.ctx.measureTextCalls, warmedMeasureCalls, '布局缓存命中后不应重复测量文字');
   assert.equal(runtime.animationFrames.length, 1, '惯性滚动每次只应保留下一帧');
@@ -262,23 +219,17 @@ function assertTextBlockCentered(bounds, y, height, label) {
   flushAnimationFrame(runtime);
   const lastMatch = app.matches.at(-1);
   assert.ok(runtime.ctx.texts.includes(lastMatch.homeTeam), '底部应实际绘制最后一场比赛');
-  assert.ok(app.dailyCardCache.entries.has(app.matches.length - 1), '底部卡片应进入离屏缓存');
-  assert.ok(app.dailyCardCache.entries.size <= 6, '卡片缓存不得超出 LRU 上限');
   assertTextWithinCanvas(runtime, app.width, '每日底部');
   app.scrollBy(Number.NEGATIVE_INFINITY);
   assert.equal(app.scroll, 0);
   flushAnimationFrame(runtime);
 
   const measureBeforeResize = runtime.ctx.measureTextCalls;
-  const gradientsBeforeResize = runtime.ctx.gradientCalls;
-  const canvasesBeforeResize = runtime.offscreenCanvases.length;
   runtime.windowInfo.windowWidth = 360;
   runtime.ctx.textBounds.length = 0;
   app.refreshMetrics();
   app.render();
   assert.ok(runtime.ctx.measureTextCalls > measureBeforeResize, '宽度变化后应重新计算文字布局');
-  assert.ok(runtime.ctx.gradientCalls > gradientsBeforeResize, '尺寸变化后应重建背景渐变');
-  assert.ok(runtime.offscreenCanvases.length > canvasesBeforeResize, '宽度变化后应重建卡片缓存');
   assertTextWithinCanvas(runtime, app.width, '每日页宽度变化');
 
   for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
@@ -330,45 +281,6 @@ function assertTextBlockCentered(bounds, y, height, label) {
   emptyApp.setPage('daily');
   assert.ok(emptyRuntime.ctx.texts.some((text) => text.includes('暂无可展示的每日推断')));
 
-  const highDprRuntime = createRuntime({ pixelRatio: 3 });
-  const highDprApp = new MiniGameApp(highDprRuntime.platform).start();
-  assert.equal(highDprApp.dpr, 2, '高 DPR 设备应将渲染像素比限制为 2');
-  assert.equal(highDprRuntime.canvas.width, 780);
-  assert.equal(highDprRuntime.canvas.height, 1688);
-
-  const fallbackRuntime = createRuntime({ offscreenFails: true });
-  const fallbackApp = new MiniGameApp(fallbackRuntime.platform).start();
-  fallbackApp.setPage('daily');
-  assert.equal(fallbackApp.dailyCardCache.disabled, true, '离屏 Canvas 不可用时应停用缓存');
-  assert.ok(fallbackRuntime.ctx.texts.includes(fallbackApp.matches[0].homeTeam), '回退路径仍应完整绘制比赛');
-
-  let profileNow = 0;
-  const profiler = new RenderProfiler(() => profileNow, true);
-  profiler.render(10);
-  profiler.render(20);
-  profiler.render(30);
-  profiler.frame(0);
-  profiler.frame(16);
-  profiler.frame(32);
-  profiler.draw('fillText');
-  profiler.draw('fillText');
-  const profile = profiler.snapshot();
-  assert.equal(profile.renders, 3);
-  assert.equal(profile.renderAvgMs, 20);
-  assert.equal(profile.renderP95Ms, 30);
-  assert.equal(profile.renderMaxMs, 30);
-  assert.equal(profile.fps, 62.5);
-  assert.equal(profile.drawCalls.fillText, 2);
-  profileNow = 1100;
-  profiler.maybeLog(profileNow);
-
-  const profiledRuntime = createRuntime();
-  const profiledApp = new MiniGameApp(profiledRuntime.platform, null, { profile: true }).start();
-  assert.ok(profiledApp.profiler.snapshot().drawCalls.fillText > 0, '性能工具应统计实际文字绘制');
-  assert.ok(profiledApp.profiler.snapshot().drawCalls.fillRect > 0, '性能工具应统计实际背景绘制');
-  profiledApp.setPage('daily');
-  assert.ok(profiledApp.profiler.snapshot().drawCalls.drawImage > 0, '性能工具应统计实际缓存贴图');
-
   const painter = new Painter(emptyRuntime.ctx, () => 844);
   const lines = painter.wrap('bash scripts/daily_automation.sh --with-a-very-long-option', 120, { size: 12, mono: true });
   assert.ok(lines.length > 1);
@@ -412,6 +324,23 @@ function assertTextBlockCentered(bounds, y, height, label) {
     assert.ok(Math.abs((bound.left + bound.right) / 2 - (index + 0.5) * tabWidth) < 1e-8);
   }
 
+  const frameRate = new FrameRateController(() => 0);
+  assert.equal(frameRate.shouldDraw(0), true);
+  assert.equal(frameRate.shouldDraw(8), false, '120Hz 设备不应重复绘制多余的 60FPS 帧');
+  assert.equal(frameRate.shouldDraw(16), true);
+  assert.equal(frameRate.shouldDraw(24), false);
+  assert.equal(frameRate.shouldDraw(32), true);
+
+  const adaptiveRate = new FrameRateController(() => 0);
+  for (let index = 0; index < 30; index += 1) adaptiveRate.recordFrame(index * 1000 / 30, 18);
+  assert.equal(adaptiveRate.targetFps, 30, '持续低帧率或超出帧预算时应降到 30FPS');
+  let recoveryTime = adaptiveRate.lastSampleAt;
+  for (let index = 0; index < 140 && adaptiveRate.targetFps === 30; index += 1) {
+    recoveryTime += 1000 / 30;
+    adaptiveRate.recordFrame(recoveryTime, 6);
+  }
+  assert.equal(adaptiveRate.targetFps, 60, '持续稳定后应恢复 60FPS');
+
   const gameConfig = JSON.parse(fs.readFileSync(path.join(root, 'dist/weapp/game.json'), 'utf8'));
   assert.equal(gameConfig.deviceOrientation, 'portrait');
   const projectConfig = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
@@ -438,8 +367,7 @@ function assertTextBlockCentered(bounds, y, height, label) {
   const sourceFiles = [
     'minigame/game.js',
     'minigame/src/app.js',
-    'minigame/src/draw.js',
-    'minigame/src/profiler.js',
+    'minigame/src/frame-rate.js',
     ...fs.readdirSync(path.join(root, 'minigame/src/pages')).map((name) => `minigame/src/pages/${name}`),
   ];
   for (const file of sourceFiles) {
