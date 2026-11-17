@@ -3,6 +3,7 @@ const { dailyReport: reportData } = require('../data/daily-report.js');
 const { boundedIndex, createMatrix, decorateMatches } = require('../utils/report.js');
 const { writeClipboard } = require('../utils/clipboard-core.js');
 const { Painter } = require('./draw.js');
+const { RenderProfiler } = require('./profiler.js');
 
 const renderers = {
   overview: require('./pages/overview.js'),
@@ -39,6 +40,7 @@ const FLING_MIN_SPEED = 40;
 const FLING_MAX_SPEED = 2800;
 const FLING_STOP_SPEED = 20;
 const FLING_DECAY_MS = 220;
+const MAX_DPR = 2;
 
 function pointFromEvent(event) {
   const point = (event.changedTouches && event.changedTouches[0]) || (event.touches && event.touches[0]);
@@ -72,7 +74,13 @@ class MiniGameApp {
     this.inertiaActive = false;
     this.inertiaVelocity = 0;
     this.inertiaFrameTime = null;
-    this.painter = new Painter(this.ctx, () => this.height);
+    this.backgroundGradient = null;
+    this.backgroundGradientKey = '';
+    const performance = typeof platform.getPerformance === 'function' ? platform.getPerformance() : null;
+    const now = performance && typeof performance.now === 'function' ? () => performance.now() : () => Date.now();
+    this.profiler = new RenderProfiler(now, data.profile === true);
+    const onDraw = this.profiler.enabled ? (type) => this.profiler.draw(type) : null;
+    this.painter = new Painter(this.ctx, () => this.height - this.getNavHeight(), onDraw);
     this.refreshMetrics();
   }
 
@@ -82,13 +90,15 @@ class MiniGameApp {
       : this.platform.getSystemInfoSync();
     this.width = info.windowWidth || 375;
     this.height = info.windowHeight || 667;
-    this.dpr = info.pixelRatio || 1;
+    this.dpr = Math.min(info.pixelRatio || 1, MAX_DPR);
     const safeArea = info.safeArea;
     this.safeTop = Math.max(20, safeArea ? safeArea.top + 8 : 28);
     this.safeBottom = Math.max(12, safeArea ? this.height - safeArea.bottom : 12);
     this.canvas.width = Math.round(this.width * this.dpr);
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.scale(this.dpr, this.dpr);
+    this.backgroundGradient = null;
+    this.backgroundGradientKey = '';
   }
 
   start() {
@@ -251,6 +261,7 @@ class MiniGameApp {
     if (this.frameHandle !== null) return;
     const draw = (timestamp) => {
       this.frameHandle = null;
+      if (this.profiler.enabled) this.profiler.frame(Number.isFinite(timestamp) ? timestamp : this.profiler.now());
       this.advanceInertia(timestamp);
       this.render();
       if (this.inertiaActive) this.scheduleRender();
@@ -379,18 +390,42 @@ class MiniGameApp {
   }
 
   render() {
+    if (!this.profiler.enabled) {
+      this.renderFrame();
+      return;
+    }
+    const started = this.profiler.now();
+    try {
+      this.renderFrame();
+    } finally {
+      const ended = this.profiler.now();
+      this.profiler.render(ended - started);
+      this.profiler.maybeLog(ended);
+    }
+  }
+
+  paintBackground() {
+    const stadiumPage = this.page === 'overview' || this.page === 'daily';
+    const key = `${stadiumPage}:${this.width}:${this.height}`;
+    if (!this.backgroundGradient || this.backgroundGradientKey !== key) {
+      this.backgroundGradient = this.ctx.createLinearGradient(0, 0, this.width, this.height);
+      this.backgroundGradient.addColorStop(0, stadiumPage ? '#164d2c' : this.colors.background);
+      this.backgroundGradient.addColorStop(1, stadiumPage ? '#081d13' : '#172318');
+      this.backgroundGradientKey = key;
+    }
+    this.ctx.fillStyle = this.backgroundGradient;
+    if (this.profiler.enabled) this.profiler.draw('fillRect');
+    this.ctx.fillRect(0, 0, this.width, this.height);
+  }
+
+  renderFrame() {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
     const navHeight = this.getNavHeight();
     this.scroll = Math.max(0, Math.min(this.maxScroll, this.scroll));
     this.zones = [];
-    const gradient = ctx.createLinearGradient(0, 0, w, h);
-    const stadiumPage = this.page === 'overview' || this.page === 'daily';
-    gradient.addColorStop(0, stadiumPage ? '#164d2c' : this.colors.background);
-    gradient.addColorStop(1, stadiumPage ? '#081d13' : '#172318');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, w, h);
+    this.paintBackground();
 
     ctx.save();
     ctx.beginPath();
