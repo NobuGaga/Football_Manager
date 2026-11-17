@@ -25,7 +25,7 @@ try {
   fs.mkdirSync(path.join(output, 'utils'), { recursive: true });
   fs.writeFileSync(path.join(output, 'game.json'), JSON.stringify({ deviceOrientation: 'portrait' }));
   fs.writeFileSync(path.join(output, 'game.js'), "require('./src/app.js');\n");
-  for (const file of ['app.js', 'draw.js', 'frame-rate.js']) {
+  for (const file of ['app.js', 'draw.js']) {
     fs.writeFileSync(path.join(output, 'src', file), 'module.exports = {};\n');
   }
   for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure', 'stadium-theme']) {

@@ -8,7 +8,6 @@ execFileSync(process.execPath, [path.join(root, 'scripts', 'build-minigame.cjs')
 
 const { MiniGameApp, TABS } = require('../dist/weapp/src/app.js');
 const { Painter } = require('../dist/weapp/src/draw.js');
-const { FrameRateController } = require('../dist/weapp/src/frame-rate.js');
 const { dailyReport } = require('../generated/daily-report.js');
 const project = require('../src/data/project.js');
 
@@ -92,9 +91,8 @@ function createRuntime({ clipboardFails = false } = {}) {
 
 function flushAnimationFrame(runtime, timestamp) {
   assert.ok(runtime.animationFrames.length > 0, '应存在等待绘制的动画帧');
-  runtime.animationTime = Number.isFinite(timestamp) ? timestamp : (runtime.animationTime || 0) + 16;
   const callbacks = runtime.animationFrames.splice(0);
-  callbacks.forEach((callback) => callback(runtime.animationTime));
+  callbacks.forEach((callback) => callback(timestamp));
 }
 
 function tap(runtime, zone) {
@@ -130,7 +128,6 @@ function assertTextBlockCentered(bounds, y, height, label) {
   assert.equal(runtime.canvas.width, 780);
   assert.equal(runtime.canvas.height, 1688);
   assert.equal(app.page, 'overview');
-  assert.equal(app.frameRate.targetFps, 60);
   assert.equal(app.matches.length, dailyReport.matches.length);
   assert.ok(runtime.ctx.texts.includes('让每一次推断，'), '小游戏首页应保留 Web 品牌主视觉文案');
   assert.ok(runtime.ctx.texts.includes('都有迹可循。'), '小游戏首页应保留 Web 强调文案');
@@ -324,22 +321,15 @@ function assertTextBlockCentered(bounds, y, height, label) {
     assert.ok(Math.abs((bound.left + bound.right) / 2 - (index + 0.5) * tabWidth) < 1e-8);
   }
 
-  const frameRate = new FrameRateController(() => 0);
-  assert.equal(frameRate.shouldDraw(0), true);
-  assert.equal(frameRate.shouldDraw(8), false, '120Hz 设备不应重复绘制多余的 60FPS 帧');
-  assert.equal(frameRate.shouldDraw(16), true);
-  assert.equal(frameRate.shouldDraw(24), false);
-  assert.equal(frameRate.shouldDraw(32), true);
-
-  const adaptiveRate = new FrameRateController(() => 0);
-  for (let index = 0; index < 30; index += 1) adaptiveRate.recordFrame(index * 1000 / 30, 18);
-  assert.equal(adaptiveRate.targetFps, 30, '持续低帧率或超出帧预算时应降到 30FPS');
-  let recoveryTime = adaptiveRate.lastSampleAt;
-  for (let index = 0; index < 140 && adaptiveRate.targetFps === 30; index += 1) {
-    recoveryTime += 1000 / 30;
-    adaptiveRate.recordFrame(recoveryTime, 6);
-  }
-  assert.equal(adaptiveRate.targetFps, 60, '持续稳定后应恢复 60FPS');
+  const pacingRuntime = createRuntime();
+  const pacingApp = new MiniGameApp(pacingRuntime.platform).start();
+  const pacingDraws = pacingRuntime.ctx.gradientCalls;
+  pacingApp.scrollBy(1);
+  flushAnimationFrame(pacingRuntime, 0);
+  pacingApp.scrollBy(1);
+  flushAnimationFrame(pacingRuntime, 8);
+  assert.equal(pacingRuntime.ctx.gradientCalls, pacingDraws + 2, '8ms 帧间隔也必须逐帧绘制，不得主动降帧');
+  assert.equal(pacingRuntime.animationFrames.length, 0);
 
   const gameConfig = JSON.parse(fs.readFileSync(path.join(root, 'dist/weapp/game.json'), 'utf8'));
   assert.equal(gameConfig.deviceOrientation, 'portrait');
@@ -367,7 +357,6 @@ function assertTextBlockCentered(bounds, y, height, label) {
   const sourceFiles = [
     'minigame/game.js',
     'minigame/src/app.js',
-    'minigame/src/frame-rate.js',
     ...fs.readdirSync(path.join(root, 'minigame/src/pages')).map((name) => `minigame/src/pages/${name}`),
   ];
   for (const file of sourceFiles) {

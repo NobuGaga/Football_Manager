@@ -27,7 +27,6 @@ function validateCompiledProject(frontendRoot = FRONTEND_ROOT, expectedVersion =
     'game.js',
     'src/app.js',
     'src/draw.js',
-    'src/frame-rate.js',
     'src/pages/stadium-theme.js',
     'data/daily-report.js',
     'data/project.js',

@@ -3,7 +3,6 @@ const { dailyReport: reportData } = require('../data/daily-report.js');
 const { boundedIndex, createMatrix, decorateMatches } = require('../utils/report.js');
 const { writeClipboard } = require('../utils/clipboard-core.js');
 const { Painter } = require('./draw.js');
-const { FrameRateController } = require('./frame-rate.js');
 
 const renderers = {
   overview: require('./pages/overview.js'),
@@ -73,9 +72,6 @@ class MiniGameApp {
     this.inertiaActive = false;
     this.inertiaVelocity = 0;
     this.inertiaFrameTime = null;
-    const performance = typeof platform.getPerformance === 'function' ? platform.getPerformance() : null;
-    const now = performance && typeof performance.now === 'function' ? () => performance.now() : () => Date.now();
-    this.frameRate = new FrameRateController(now);
     this.painter = new Painter(this.ctx, () => this.height);
     this.refreshMetrics();
   }
@@ -255,15 +251,8 @@ class MiniGameApp {
     if (this.frameHandle !== null) return;
     const draw = (timestamp) => {
       this.frameHandle = null;
-      const now = Number.isFinite(timestamp) ? timestamp : this.frameRate.now();
-      if (!this.frameRate.shouldDraw(now)) {
-        this.scheduleRender();
-        return;
-      }
-      this.advanceInertia(now);
-      const started = this.frameRate.now();
+      this.advanceInertia(timestamp);
       this.render();
-      this.frameRate.recordFrame(now, Math.max(0, this.frameRate.now() - started));
       if (this.inertiaActive) this.scheduleRender();
     };
     if (typeof this.platform.requestAnimationFrame === 'function') {
