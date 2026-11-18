@@ -21,6 +21,12 @@ fi
 if [[ -n "${DAILY_RESULTS_FILE:-}" ]]; then
   args+=(--results "$DAILY_RESULTS_FILE")
 fi
+if [[ -n "${DAILY_FEATURES_FILE:-}" ]]; then
+  args+=(--features "$DAILY_FEATURES_FILE")
+fi
+if [[ "${DAILY_OFFICIAL_FEATURES:-1}" == "0" ]]; then
+  args+=(--no-official-features)
+fi
 if [[ "${DAILY_REFRESH:-0}" == "1" ]]; then
   args+=(--refresh)
 fi

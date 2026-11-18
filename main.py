@@ -57,6 +57,9 @@ def build_parser() -> argparse.ArgumentParser:
     features.add_argument("file")
     features.add_argument("--source", default="manual_features")
 
+    official_features = sub.add_parser("fetch-features", help="获取竞彩网官方公开赛前特征并保存原始快照")
+    official_features.add_argument("--date", required=True, help="体彩营业日 YYYY-MM-DD")
+
     predict = sub.add_parser("predict", help="按项目 AI 策略文档生成版本化概率和比分推断")
     predict.add_argument("--date")
     predict.add_argument("--refresh", action="store_true", help="临场更新：追加新推断，保留初版")
@@ -135,10 +138,14 @@ def build_parser() -> argparse.ArgumentParser:
     daily.add_argument("--results-date", help="赛果日期，默认对阵日期前一天")
     daily.add_argument("--fixtures", help="官方对阵文件；不提供时读取体彩官方公开接口")
     daily.add_argument("--results", help="昨日赛果文件")
+    daily.add_argument("--features", help="本地赛前特征文件；在官方特征抓取后导入")
+    daily.add_argument("--official-features", action=argparse.BooleanOptionalAction, default=True,
+                       help="获取竞彩网官方公开赛前特征，默认启用；可用 --no-official-features 关闭")
     daily.add_argument("--output-dir", default="reports")
     daily.add_argument("--ai-model", default=os.environ.get("AI_MODEL", "kimi"))
     daily.add_argument("--refresh", action="store_true", help="追加临场推断版本")
-    daily.add_argument("--require-results", action="store_true", help="昨日有比赛但未可靠回填时中止")
+    daily.add_argument("--require-results", action="store_true",
+                       help="指定赛果日期的有效对阵未全部回填合法比分时中止；按数据库覆盖核验")
     daily.add_argument("--pull", action="store_true", help="开始前 git pull --rebase")
     daily.add_argument("--push", action="store_true", help="旧命令兼容参数；不会提交或推送本地关键文件")
     return parser
@@ -162,6 +169,9 @@ def main(argv: list[str] | None = None) -> int:
         print_result(AliasImporter(db).import_file(args.file))
     elif args.command == "import-features":
         print_result(FeatureImporter(db).import_file(args.file, args.source))
+    elif args.command == "fetch-features":
+        from sporttery_features import SportteryFeatureFetcher
+        print_result(SportteryFeatureFetcher(db).fetch_daily_features(args.date))
     elif args.command == "ai-strategies":
         from ai_strategies import available_ai_strategies
         print_result(available_ai_strategies())
@@ -264,7 +274,8 @@ def main(argv: list[str] | None = None) -> int:
             output_dir = repo_root / output_dir
         status = DailyAutomation(repo_root, db_path, output_dir).run(
             date=args.date, results_date=args.results_date, fixtures=args.fixtures, results=args.results,
-            refresh=args.refresh, require_results=args.require_results, pull=args.pull, push=args.push,
+            features=args.features, refresh=args.refresh, require_results=args.require_results,
+            official_features=args.official_features, pull=args.pull, push=args.push,
             ai_model=args.ai_model,
         )
         print(Path(status["summary_file"]).read_text(encoding="utf-8") if Path(status["summary_file"]).is_absolute()

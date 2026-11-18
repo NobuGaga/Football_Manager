@@ -124,6 +124,8 @@ class SportteryScraper:
             "odds_handicap_home": hhad.get("h"),
             "odds_handicap_draw": hhad.get("d"),
             "odds_handicap_away": hhad.get("a"),
+            "external_provider": "sporttery" if clean_text(item.get("matchId")) else None,
+            "external_fixture_id": clean_text(item.get("matchId")) or None,
             "source_url": f"{SportteryScraper.api_url}?channel=c",
         }
 

@@ -116,7 +116,7 @@ class PipelineTest(unittest.TestCase):
             "fixture_key": self._key(), "实际比分": "01:00", "复盘备注": "测试复盘",
         }]), encoding="utf-8")
         ResultImporter(self.db).import_file(result_file)
-        metrics = Backtester(self.db).evaluate("poisson-dc-v1")
+        metrics = Backtester(self.db).evaluate(FootballPredictor.MODEL_VERSION)
         self.assertEqual(metrics["eligible_predictions"], 1)
         self.assertIn("log_loss", metrics["metrics"]["测试联赛"])
         self.assertEqual(len(metrics["calibration"]), 10)

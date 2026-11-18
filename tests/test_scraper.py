@@ -36,6 +36,7 @@ class FakeSession:
 
 def match(business_date="2099-10-25"):
     return {
+        "matchId": 2042830,
         "matchNumStr": "周日001",
         "businessDate": business_date,
         "matchDate": "2099-10-26",
@@ -85,6 +86,8 @@ class SportteryScraperTest(unittest.TestCase):
             self.assertEqual(row["business_date"], "2099-10-25")
             self.assertEqual(row["timezone"], "Asia/Shanghai")
             self.assertEqual(row["source"], "sporttery_web")
+            self.assertEqual(row["external_provider"], "sporttery")
+            self.assertEqual(row["external_fixture_id"], "2042830")
             self.assertEqual(json.loads(row["odds_json"])["odds_handicap_home"], 1.9)
         snapshots = list((self.root / "snapshots").glob("sporttery_*.json"))
         self.assertEqual(len(snapshots), 1)

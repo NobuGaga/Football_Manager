@@ -12,6 +12,25 @@ class ResultChecker:
         self.db = Database(db_path)
         self.db.initialize()
 
+    def coverage(self, business_date: str) -> dict:
+        """按营业日核对有效对阵是否均已有合法赛果。"""
+        with self.db.connect() as conn:
+            rows = conn.execute("""SELECT f.fixture_key,f.match_code,f.home_team,f.away_team,
+                f.start_time_utc,f.match_status,r.actual_score
+                FROM fixtures f LEFT JOIN results r ON r.fixture_key=f.fixture_key
+                WHERE f.business_date=? AND f.match_status NOT IN ('cancelled','postponed')
+                ORDER BY f.start_time_utc,f.match_code""", (business_date,)).fetchall()
+        missing = [{
+            "fixture_key": row["fixture_key"], "match_code": row["match_code"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "start_time_utc": row["start_time_utc"], "match_status": row["match_status"],
+        } for row in rows if not row["actual_score"]]
+        return {
+            "business_date": business_date, "expected": len(rows),
+            "covered": len(rows) - len(missing), "complete": not missing,
+            "missing": missing,
+        }
+
     def check_all(self) -> list[dict]:
         from selections import outcome_selection_hit
 

@@ -12,7 +12,7 @@ from utils import clean_text, optional_float, utc_now
 
 
 class FootballPredictor:
-    MODEL_VERSION = "poisson-dc-v1"
+    MODEL_VERSION = "poisson-dc-v2"
 
     def __init__(self, db_path: str | Path = "data/football.db", parameters: dict | None = None,
                  ai_model: str = DEFAULT_AI_MODEL):
@@ -131,6 +131,14 @@ class FootballPredictor:
             home = (home_xg + away_xga) / 2
             away = (away_xg + home_xga) / 2
             return self._clip(home), self._clip(away), "xg_xga_baseline"
+        recent = [optional_float(features.get(key)) for key in (
+            "home_recent_goals_avg", "home_recent_conceded_avg",
+            "away_recent_goals_avg", "away_recent_conceded_avg",
+        )]
+        if all(value is not None for value in recent):
+            home = (recent[0] + recent[3]) / 2
+            away = (recent[2] + recent[1]) / 2
+            return self._clip(home), self._clip(away), "recent_goal_averages"
         attack = [optional_float(features.get(key)) for key in ("home_attack", "home_defense", "away_attack", "away_defense")]
         if all(value is not None for value in attack):
             home = self.parameters["league_avg_home_goals"] * attack[0] * attack[3]
@@ -166,8 +174,11 @@ class FootballPredictor:
     @staticmethod
     def _analysis(features: dict, method: str, source: str) -> dict:
         evidence = [{"field": key, "value": features[key]} for key in (
-            "recent_form", "home_xg", "home_xga", "away_xg", "away_xga", "injuries",
-            "lineups", "rest_days_home", "rest_days_away", "h2h"
+            "recent_form", "home_xg", "home_xga", "away_xg", "away_xga",
+            "home_recent_goals_avg", "home_recent_conceded_avg",
+            "away_recent_goals_avg", "away_recent_conceded_avg", "recent_goal_sample_size",
+            "injuries", "lineups", "rest_days_home", "rest_days_away", "h2h",
+            "official_match_id", "official_source_url",
         ) if key in features and clean_text(features[key])]
         return {"method": method, "feature_source": source, "evidence": evidence}
 

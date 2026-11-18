@@ -14,6 +14,8 @@ from utils import (DEFAULT_TIMEZONE, clean_text, first, fixture_key, local_date,
 FEATURE_FIELDS = (
     "home_attack", "home_defense", "away_attack", "away_defense",
     "home_xg", "home_xga", "away_xg", "away_xga",
+    "home_recent_goals_avg", "home_recent_conceded_avg",
+    "away_recent_goals_avg", "away_recent_conceded_avg",
     "expected_home_goals", "expected_away_goals", "injuries", "lineups",
     "rest_days_home", "rest_days_away", "recent_form", "h2h",
 )
@@ -200,6 +202,9 @@ class AliasImporter(BaseImporter):
 class FeatureImporter(BaseImporter):
     def import_file(self, path: str | Path, source: str = "manual_features") -> dict:
         rows, _ = read_structured_file(path)
+        return self.import_rows(rows, source)
+
+    def import_rows(self, rows: list[dict], source: str = "manual_features") -> dict:
         count, errors = 0, []
         with self.db.connect() as conn:
             for number, row in enumerate(rows, 2):

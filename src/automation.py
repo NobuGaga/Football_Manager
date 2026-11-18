@@ -11,12 +11,13 @@ from zoneinfo import ZoneInfo
 
 from backtest import Backtester
 from database import Database
-from importers import FixtureImporter, ResultImporter
+from importers import FeatureImporter, FixtureImporter, ResultImporter
 from miniprogram_export import export_miniprogram_report
 from predictor import FootballPredictor
 from reporter import ReportGenerator
 from result_checker import ResultChecker
 from scraper import SportteryScraper
+from sporttery_features import SportteryFeatureFetcher
 from utils import utc_now
 
 
@@ -71,18 +72,20 @@ class GitRepository:
 
 class DailyAutomation:
     def __init__(self, repo_root: str | Path, db_path: str | Path | None = None,
-                 output_dir: str | Path | None = None, frontend_dir: str | Path | None = None):
+                 output_dir: str | Path | None = None, frontend_dir: str | Path | None = None,
+                 feature_fetcher=None):
         self.repo_root = Path(repo_root).resolve()
         self.db_path = Path(db_path) if db_path else self.repo_root / "data" / "football.db"
         self.output_dir = Path(output_dir) if output_dir else self.repo_root / "reports"
         self.frontend_data_path = (Path(frontend_dir) if frontend_dir
                                    else self.repo_root / "web") / "generated" / "daily-report.js"
+        self.feature_fetcher = feature_fetcher
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.git = GitRepository(self.repo_root)
 
     def run(self, date: str | None = None, results_date: str | None = None,
-            fixtures: str | None = None, results: str | None = None,
-            refresh: bool = False, require_results: bool = False,
+            fixtures: str | None = None, results: str | None = None, features: str | None = None,
+            refresh: bool = False, require_results: bool = False, official_features: bool = False,
             pull: bool = False, push: bool = False, ai_model: str = "kimi") -> dict:
         match_date = date or datetime.now(ZoneInfo("Asia/Shanghai")).date().isoformat()
         day = datetime.strptime(match_date, "%Y-%m-%d").date()
@@ -105,16 +108,26 @@ class DailyAutomation:
                 raise RuntimeError(f"赛果导入存在关联错误，已停止后续推送：{result_info['errors'][:3]}")
             if result_info.get("unmatched"):
                 warnings.append(f"{len(result_info['unmatched'])} 场赛果关联待人工确认")
-            if require_results and (result_info.get("skipped") or result_info.get("imported", 0) == 0):
-                raise RuntimeError("require-results 已启用，但昨日赛果没有可靠回填")
-            checked = len(ResultChecker(self.db_path).check_all())
+            result_checker = ResultChecker(self.db_path)
+            result_coverage = result_checker.coverage(previous_date)
+            if not result_coverage["complete"]:
+                missing_text = "、".join(
+                    f"{item['match_code']} {item['home_team']} VS {item['away_team']}"
+                    for item in result_coverage["missing"]
+                )
+                coverage_warning = (f"{previous_date} 有效对阵赛果仅覆盖 "
+                                    f"{result_coverage['covered']}/{result_coverage['expected']} 场；缺失：{missing_text}")
+                warnings.append(coverage_warning)
+                if require_results:
+                    raise RuntimeError(f"require-results 已启用，但{coverage_warning}")
+            checked = len(result_checker.check_all())
             from checklist import ChecklistGenerator
             from history import HistoryManager
             from strategy_engine import StrategyEngine, StrategyValidator
 
             checklist_generator = ChecklistGenerator(self.db_path, self.output_dir, ai_model=ai_model)
             checked_checklists = []
-            if result_info.get("imported", 0):
+            if result_coverage["covered"]:
                 previous_checklist = checklist_generator.generate(previous_date)
                 if previous_checklist["rows"]:
                     checked_checklists.append(previous_checklist["csv"])
@@ -129,6 +142,29 @@ class DailyAutomation:
                 fixture_count = len(frame)
             if fixture_count == 0:
                 raise RuntimeError("没有导入有效官方对阵，已停止推断和推送")
+
+            official_feature_info = {"imported": 0, "skipped": 0, "warnings": [], "errors": []}
+            if official_features:
+                fetcher = self.feature_fetcher or SportteryFeatureFetcher(self.db_path)
+                try:
+                    official_feature_info = fetcher.fetch_daily_features(match_date)
+                except RuntimeError as exc:
+                    official_feature_info = {"imported": 0, "skipped": fixture_count,
+                                             "warnings": [], "errors": [{"error": str(exc)}]}
+                warnings.extend(official_feature_info.get("warnings", []))
+                feature_errors = official_feature_info.get("errors", [])
+                if feature_errors:
+                    warnings.append(f"官方赛前特征存在 {len(feature_errors)} 个获取或导入错误：{feature_errors[:3]}")
+                if official_feature_info.get("imported", 0) == 0:
+                    warnings.append("本次未新增官方赛前特征，将使用已有赛前数据或降级模型")
+            else:
+                official_feature_info["skipped"] = fixture_count
+
+            manual_feature_info = {"imported": 0, "errors": []}
+            if features:
+                manual_feature_info = FeatureImporter(self.db_path).import_file(features)
+                if manual_feature_info.get("errors"):
+                    raise RuntimeError(f"本地赛前特征导入失败：{manual_feature_info['errors'][:3]}")
 
             predictions = FootballPredictor(self.db_path, ai_model=ai_model).predict_all(match_date, refresh=refresh)
             reporter = ReportGenerator(self.db_path, self.output_dir)
@@ -147,6 +183,15 @@ class DailyAutomation:
                 "generated_at": utc_now(), "fixtures": fixture_count, "ai_model": ai_model,
                 "results_imported": result_info.get("imported", 0), "predictions_checked": checked,
                 "new_predictions": len(predictions), "warnings": warnings,
+                "results_coverage": result_coverage,
+                "features": {
+                    "official_enabled": official_features,
+                    "official_imported": official_feature_info.get("imported", 0),
+                    "official_skipped": official_feature_info.get("skipped", 0),
+                    "official_errors": official_feature_info.get("errors", []),
+                    "manual_provided": bool(features),
+                    "manual_imported": manual_feature_info.get("imported", 0),
+                },
                 "reports": {key: self._relative(path) for key, path in report_paths.items()},
                 "strategy_reports": {key: self._relative(strategy_result[key]) for key in ("json", "csv", "markdown")},
                 "checklist": self._relative(checklist_result["csv"]),
@@ -195,8 +240,10 @@ class DailyAutomation:
         lines = [f"# 足球经理的推断每日摘要（{status['date']}）", "",
                  f"- 官方对阵：{status['fixtures']} 场",
                  f"- 昨日赛果回填：{status['results_imported']} 场",
+                 f"- 昨日赛果覆盖：{status['results_coverage']['covered']}/{status['results_coverage']['expected']} 场（{'完整' if status['results_coverage']['complete'] else '不完整'}）",
                  f"- 已核对推断版本：{status['predictions_checked']} 条",
                  f"- 今日新增推断：{status['new_predictions']} 条",
+                 f"- 赛前特征：官方新增 {status['features']['official_imported']} 场；本地文件导入 {status['features']['manual_imported']} 场",
                  f"- 每日报告：{status['reports']['markdown']}",
                  f"- 双选与方向策略：{status['strategy_reports']['markdown']}",
                  f"- 预测核对表：{status['checklist']}",
