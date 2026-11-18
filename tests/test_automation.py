@@ -99,6 +99,55 @@ class AutomationTest(unittest.TestCase):
         summary = (self.root / "reports" / "每日中文摘要_2099-10-26.md").read_text(encoding="utf-8")
         self.assertIn("昨日赛果覆盖：1/1 场（完整）", summary)
 
+    def test_manual_fixtures_from_wrong_business_date_abort_before_reports(self):
+        db = self.root / "football.db"
+        wrong_file = self.root / "wrong-date-fixtures.json"
+        wrong_file.write_text(json.dumps([
+            self._fixture("周四001", "2099-10-23", "错日期主队", "错日期客队"),
+        ], ensure_ascii=False), encoding="utf-8")
+        reports = self.root / "reports"
+
+        with self.assertRaisesRegex(
+                RuntimeError, r"2099-10-25.*没有有效官方对阵.*2099-10-23") as raised:
+            DailyAutomation(ROOT, db, reports, frontend_dir=self.root / "web").run(
+                date="2099-10-25", results_date="2099-10-24", fixtures=str(wrong_file),
+            )
+
+        self.assertIn("已停止推断和推送", str(raised.exception))
+        self.assertFalse((reports / "每日运行状态_2099-10-25.json").exists())
+        self.assertFalse(list(reports.glob("足球经理的推断_2099-10-25.*")))
+        self.assertFalse((self.root / "web" / "generated" / "daily-report.js").exists())
+        with Database(db).connect() as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0], 0)
+
+    def test_mixed_business_date_file_counts_only_target_active_fixtures(self):
+        db = self.root / "football.db"
+        cancelled = self._fixture("周一002", "2099-10-25", "取消主队", "取消客队")
+        cancelled["match_status"] = "cancelled"
+        fixture_file = self.root / "mixed-date-fixtures.json"
+        fixture_file.write_text(json.dumps([
+            self._fixture("周一001", "2099-10-25", "目标主队", "目标客队"),
+            cancelled,
+            self._fixture("周日001", "2099-10-24", "昨日主队", "昨日客队"),
+        ], ensure_ascii=False), encoding="utf-8")
+
+        status = DailyAutomation(ROOT, db, self.root / "reports", frontend_dir=self.root / "web").run(
+            date="2099-10-25", results_date="2099-10-24", fixtures=str(fixture_file),
+        )
+
+        self.assertEqual(status["fixtures"], 1)
+        self.assertEqual(status["new_predictions"], 1)
+        self.assertTrue(any(
+            "非目标营业日" in warning and "2099-10-24" in warning
+            for warning in status["warnings"]
+        ))
+        report = json.loads((self.root / "reports" / "足球经理的推断_2099-10-25.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["match_count"], 1)
+        self.assertEqual(report["matches"][0]["basic_info"]["home_team"], "目标主队")
+        mini_data = Path(status["miniprogram_data"]).read_text(encoding="utf-8")
+        self.assertIn('"matchCount": 1', mini_data)
+        self.assertNotIn("昨日主队", mini_data)
+
     def test_local_daily_pipeline_generates_chinese_summary(self):
         db = self.root / "football.db"
         FixtureImporter(db).import_file(ROOT / "examples" / "fixtures.csv")

@@ -73,33 +73,40 @@ class FixtureImporter(BaseImporter):
         raw_path = snapshot_dir / f"{captured.replace(':', '').replace('+', '_')}_{payload_hash(raw)[:12]}_{Path(path).name}"
         shutil.copy2(path, raw_path)
         imported, duplicates, errors = 0, 0, []
+        business_dates = set()
         with self.db.connect() as conn:
             for number, row in enumerate(rows, 2):
                 try:
-                    key, changed = self._import_row(conn, row, default_date, source, timezone_name, str(raw_path), captured)
+                    key, changed, business_date = self._import_row(
+                        conn, row, default_date, source, timezone_name, str(raw_path), captured)
                     imported += 1
                     duplicates += 0 if changed else 1
+                    business_dates.add(business_date)
                 except (ValueError, TypeError) as exc:
                     errors.append({"row": number, "error": str(exc)})
         if imported == 0 and errors:
             raise ValueError(f"没有有效对阵：{errors[:3]}")
-        return {"imported": imported, "unchanged": duplicates, "errors": errors, "raw_snapshot": str(raw_path)}
+        return {"imported": imported, "unchanged": duplicates, "errors": errors,
+                "business_dates": sorted(business_dates), "raw_snapshot": str(raw_path)}
 
     def import_rows(self, rows: list[dict], default_date: str | None = None,
                     source: str = "sporttery_web", timezone_name: str = DEFAULT_TIMEZONE) -> dict:
         imported, errors = 0, []
+        business_dates = set()
         captured = utc_now()
         with self.db.connect() as conn:
             for number, row in enumerate(rows, 2):
                 try:
-                    self._import_row(conn, row, default_date, source, timezone_name, None, captured)
+                    _, _, business_date = self._import_row(
+                        conn, row, default_date, source, timezone_name, None, captured)
                     imported += 1
+                    business_dates.add(business_date)
                 except (ValueError, TypeError) as exc:
                     errors.append({"row": number, "error": str(exc)})
-        return {"imported": imported, "errors": errors}
+        return {"imported": imported, "errors": errors, "business_dates": sorted(business_dates)}
 
     def _import_row(self, conn, row: dict, default_date: str | None, source: str,
-                    timezone_name: str, raw_path: str | None, captured: str) -> tuple[str, bool]:
+                    timezone_name: str, raw_path: str | None, captured: str) -> tuple[str, bool, str]:
         home, away = self._teams(row)
         code = clean_text(first(row, "比赛编号", "竞彩编号", "场次", "match_code"), "未编号")
         league = clean_text(first(row, "联赛名称", "联赛", "league"), "未知联赛")
@@ -170,7 +177,7 @@ class FixtureImporter(BaseImporter):
                     "SELECT 1 FROM match_review_queue WHERE fixture_key=? AND reason=? AND status='open'", (key, reason)).fetchone():
                 conn.execute("""INSERT INTO match_review_queue(fixture_key,reason,candidates_json,created_at)
                     VALUES(?,?,?,?)""", (key, reason, "[]", now))
-        return key, changed
+        return key, changed, business_date
 
 
 class AliasImporter(BaseImporter):

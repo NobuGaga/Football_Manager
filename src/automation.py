@@ -132,16 +132,31 @@ class DailyAutomation:
                 if previous_checklist["rows"]:
                     checked_checklists.append(previous_checklist["csv"])
 
+            fixture_dates = []
             if fixtures:
                 fixture_info = FixtureImporter(self.db_path).import_file(fixtures, default_date=match_date)
                 if fixture_info.get("errors"):
                     raise RuntimeError(f"官方对阵存在导入错误：{fixture_info['errors'][:3]}")
-                fixture_count = fixture_info["imported"]
+                fixture_dates = fixture_info["business_dates"]
+                other_dates = sorted(set(fixture_dates) - {match_date})
+                if other_dates:
+                    warnings.append(
+                        f"手动对阵文件包含非目标营业日：{'、'.join(other_dates)}；"
+                        f"这些记录不计入 {match_date} 对阵数"
+                    )
             else:
-                frame = SportteryScraper(self.db_path).fetch_daily_matches(match_date)
-                fixture_count = len(frame)
+                SportteryScraper(self.db_path).fetch_daily_matches(match_date)
+            with Database(self.db_path).connect() as conn:
+                fixture_count = conn.execute(
+                    """SELECT COUNT(*) FROM fixtures
+                    WHERE business_date=? AND match_status NOT IN ('cancelled','postponed','finished')""",
+                    (match_date,),
+                ).fetchone()[0]
             if fixture_count == 0:
-                raise RuntimeError("没有导入有效官方对阵，已停止推断和推送")
+                date_detail = f"（手动文件营业日：{'、'.join(fixture_dates)}）" if fixture_dates else ""
+                raise RuntimeError(
+                    f"目标营业日 {match_date} 没有有效官方对阵{date_detail}，已停止推断和推送"
+                )
 
             official_feature_info = {"imported": 0, "skipped": 0, "warnings": [], "errors": []}
             if official_features:
