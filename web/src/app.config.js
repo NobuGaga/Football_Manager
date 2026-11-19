@@ -5,7 +5,6 @@ export default defineAppConfig({
     'pages/pipeline/index',
     'pages/model/index',
     'pages/automation/index',
-    'pages/structure/index',
   ],
   window: {
     navigationBarBackgroundColor: '#0b100d',
@@ -24,7 +23,6 @@ export default defineAppConfig({
       { pagePath: 'pages/pipeline/index', text: '流水线' },
       { pagePath: 'pages/model/index', text: '模型' },
       { pagePath: 'pages/automation/index', text: '自动化' },
-      { pagePath: 'pages/structure/index', text: '结构' },
     ],
   },
 });

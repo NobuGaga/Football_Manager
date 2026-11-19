@@ -32,11 +32,6 @@ const automationSource = fs.readFileSync(path.join(root, 'src', 'pages', 'automa
 assert.match(automationSource, /关联失败时立即中止，不上传半成品/);
 const automationStyles = fs.readFileSync(path.join(root, 'src', 'pages', 'automation', 'index.css'), 'utf8');
 assert.match(automationStyles, /\.command-tab,\s*\.copy-button\s*\{[^}]*background: transparent/);
-const structureSource = fs.readFileSync(path.join(root, 'src', 'pages', 'structure', 'index.jsx'), 'utf8');
-const structureStyles = fs.readFileSync(path.join(root, 'src', 'pages', 'structure', 'index.css'), 'utf8');
-assert.match(structureStyles, /\.file-row\s*\{[^}]*background: transparent/);
-assert.match(structureSource, /仅保存本地，不进入 Git/);
-assert.doesNotMatch(structureSource, /按安全范围写回/);
 const dailySource = fs.readFileSync(path.join(root, 'src', 'pages', 'daily', 'index.jsx'), 'utf8');
 assert.match(dailySource, /index === 0/);
 assert.match(dailySource, /function FeaturedMatch/);
@@ -129,7 +124,7 @@ async function testClipboard() {
   assert.match(pageSource, /role='status'/);
 }
 
-const pages = ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure'];
+const pages = ['overview', 'daily', 'pipeline', 'model', 'automation'];
 for (const page of pages) {
   const source = fs.readFileSync(path.join(root, 'src', 'pages', page, 'index.jsx'), 'utf8');
   assert.match(source, /@tarojs\/components/);
@@ -139,9 +134,12 @@ for (const page of pages) {
 }
 const appConfig = fs.readFileSync(path.join(root, 'src', 'app.config.js'), 'utf8');
 for (const page of pages) assert.ok(appConfig.includes(`pages/${page}/index`));
+assert.ok(!appConfig.includes('pages/structure/index'));
+assert.ok(!appConfig.includes("text: '结构'"));
 assert.ok(appConfig.includes('tabBar'));
 assert.ok(!appConfig.includes('web-view'));
 const appStyles = fs.readFileSync(path.join(root, 'src', 'app.css'), 'utf8');
+assert.ok(!appStyles.includes('pages/structure'));
 const h5Styles = fs.readFileSync(path.join(root, 'src', 'h5.css'), 'utf8');
 assert.match(h5Styles, /taro_router > \.taro_page[\s\S]*transform: none !important/);
 assert.match(h5Styles, /taro_page\.taro_page_shade[\s\S]*display: none !important/);
@@ -151,7 +149,6 @@ assert.doesNotMatch(appStyles, /:not\(|\[src|nth-child|nth-last-child/);
 assert.ok(project.projectFiles.some((item) => item.path === 'web/dist/weapp/'));
 assert.ok(project.projectFiles.some((item) => item.path === 'web/minigame/'));
 assert.match(overviewSource, /Taro React H5 · Canvas 2D 微信小游戏/);
-assert.match(structureSource, /H5 \/ 微信小游戏/);
 assert.doesNotMatch(JSON.stringify(project), /上传微信小程序|不上传小程序|H5／微信小程序/);
 const packageJson = require('../package.json');
 const { parseDevArgs } = require('./dev-h5.cjs');
@@ -168,7 +165,7 @@ assert.equal(packageJson.dependencies['@tarojs/taro'], packageJson.dependencies[
 assert.equal(packageJson.dependencies['@tarojs/taro'], packageJson.devDependencies['@tarojs/cli']);
 
 testClipboard().then(() => {
-  console.log('CROSS_PLATFORM_LOGIC_OK overview daily pipeline model automation structure navigation clipboard');
+  console.log('CROSS_PLATFORM_LOGIC_OK overview daily pipeline model automation navigation clipboard');
 }).catch((error) => {
   console.error(error);
   process.exitCode = 1;
