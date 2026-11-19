@@ -28,7 +28,7 @@ try {
   for (const file of ['app.js', 'draw.js']) {
     fs.writeFileSync(path.join(output, 'src', file), 'module.exports = {};\n');
   }
-  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure', 'stadium-theme']) {
+  for (const page of ['overview', 'daily', 'pipeline', 'model', 'automation', 'stadium-theme']) {
     fs.writeFileSync(path.join(output, 'src', 'pages', `${page}.js`), 'module.exports = {};\n');
   }
   for (const file of ['daily-report.js', 'project.js']) {

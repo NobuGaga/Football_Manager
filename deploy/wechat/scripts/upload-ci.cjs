@@ -6,7 +6,7 @@ const fileRules = require('miniprogram-ci/dist/utils/filerules.js');
 const { dailyReport } = require('../../../web/generated/daily-report.js');
 
 const FRONTEND_ROOT = path.resolve(__dirname, '../../../web');
-const EXPECTED_PAGES = ['overview', 'daily', 'pipeline', 'model', 'automation', 'structure'];
+const EXPECTED_PAGES = ['overview', 'daily', 'pipeline', 'model', 'automation'];
 
 function parseRobot(value) {
   const robot = Number(value || '1');

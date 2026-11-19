@@ -17,13 +17,12 @@ assert.equal(project.priorities.length, 5);
 assert.equal(project.metrics.length, 6);
 assert.equal(project.commandModes.length, 3);
 assert.equal(project.safetyRules.length, 3);
-assert.ok(project.projectFiles.some((item) => item.path === 'web/src/'));
+assert.equal(Object.hasOwn(project, 'projectFiles'), false);
 assert.equal(Object.hasOwn(project, 'skillTestText'), false);
 assert.doesNotMatch(JSON.stringify(project), /测试实现需求|提交并推送数据产物|只暂存数据库|需要写回仓库|安全提交/);
 assert.ok(project.automationSteps.includes('核查本地关键文件未进入 Git'));
 assert.equal(project.safetyRules[0].title, '关键文件仅本地保存');
 assert.match(project.commandModes[0].description, /仅保存本地，不进入 Git/);
-assert.match(project.projectFiles.find((item) => item.path === 'reports/').description, /仅保留在本地，不进入 Git/);
 const overviewSource = fs.readFileSync(path.join(root, 'src', 'pages', 'overview', 'index.jsx'), 'utf8');
 assert.doesNotMatch(overviewSource, /skillTestText|skill-test-banner|测试实现需求/);
 const overviewStyles = fs.readFileSync(path.join(root, 'src', 'pages', 'overview', 'index.css'), 'utf8');
@@ -146,8 +145,6 @@ assert.match(h5Styles, /taro_page\.taro_page_shade[\s\S]*display: none !importan
 assert.match(h5Styles, /taro_navigation_page:not\(\.taro_page_show\):not\(\.taro_tabbar_page\)[\s\S]*display: none !important/);
 assert.doesNotMatch(appStyles, /:not\(|\[src|nth-child|nth-last-child/);
 
-assert.ok(project.projectFiles.some((item) => item.path === 'web/dist/weapp/'));
-assert.ok(project.projectFiles.some((item) => item.path === 'web/minigame/'));
 assert.match(overviewSource, /Taro React H5 · Canvas 2D 微信小游戏/);
 assert.doesNotMatch(JSON.stringify(project), /上传微信小程序|不上传小程序|H5／微信小程序/);
 const packageJson = require('../package.json');

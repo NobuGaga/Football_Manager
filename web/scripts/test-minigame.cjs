@@ -138,7 +138,7 @@ function createLongReport(report, copies = 6) {
   const longReport = createLongReport(dailyReport);
   const runtime = createRuntime();
   const app = new MiniGameApp(runtime.platform, null, { dailyReport: longReport }).start();
-  assert.deepEqual(TABS.map((item) => item.id), ['overview', 'pipeline', 'model', 'automation', 'structure']);
+  assert.deepEqual(TABS.map((item) => item.id), ['overview', 'pipeline', 'model', 'automation']);
   assert.equal(runtime.canvas.width, 780);
   assert.equal(runtime.canvas.height, 1688);
   assert.equal(app.page, 'overview');
@@ -147,6 +147,7 @@ function createLongReport(report, copies = 6) {
   assert.ok(runtime.ctx.texts.includes('让每一次推断，'), '小游戏首页应保留 Web 品牌主视觉文案');
   assert.ok(runtime.ctx.texts.includes('都有迹可循。'), '小游戏首页应保留 Web 强调文案');
   assert.ok(!runtime.ctx.texts.some((text) => text.includes('测试实现需求')), '小游戏不得恢复已移除的试验文案');
+  assert.ok(!runtime.ctx.texts.includes('结构'), '小游戏底部不得再绘制结构页签');
   assert.ok(app.maxScroll > 0);
   assertTextWithinCanvas(runtime, app.width, '概览首屏');
 
@@ -244,7 +245,7 @@ function createLongReport(report, copies = 6) {
   assert.ok(runtime.ctx.measureTextCalls > measureBeforeResize, '宽度变化后应重新计算文字布局');
   assertTextWithinCanvas(runtime, app.width, '每日页宽度变化');
 
-  for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
+  for (const page of ['overview', 'pipeline', 'model', 'automation', 'daily']) {
     runtime.ctx.texts.length = 0;
     runtime.ctx.textBounds.length = 0;
     app.setPage(page);
@@ -272,10 +273,7 @@ function createLongReport(report, copies = 6) {
   assert.equal(app.message, '运行命令已复制');
 
   app.setPage('structure');
-  app.handleAction({ type: 'file', index: 99 });
-  assert.equal(app.selectedFile, project.projectFiles.length - 1);
-  app.handleAction({ type: 'file', index: -1 });
-  assert.equal(app.selectedFile, 0);
+  assert.equal(app.page, 'automation', '已删除的结构页不得再被打开');
 
   const failedRuntime = createRuntime({ clipboardFails: true });
   const failedApp = new MiniGameApp(failedRuntime.platform).start();
@@ -348,7 +346,7 @@ function createLongReport(report, copies = 6) {
 
   const pixelRuntime = createRuntime();
   const pixelApp = new MiniGameApp(pixelRuntime.platform, null, { dailyReport: longReport }).start();
-  for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
+  for (const page of ['overview', 'pipeline', 'model', 'automation', 'daily']) {
     pixelApp.setPage(page);
     pixelApp.scrollBy(0.26);
     assert.ok(
@@ -463,9 +461,9 @@ function createLongReport(report, copies = 6) {
     assert.doesNotMatch(source, /wx\.request\s*\(/);
   }
   const automationSource = fs.readFileSync(path.join(root, 'minigame/src/pages/automation.js'), 'utf8');
-  const structureSource = fs.readFileSync(path.join(root, 'minigame/src/pages/structure.js'), 'utf8');
   assert.match(automationSource, /关联失败时立即中止，不上传半成品/);
-  assert.match(structureSource, /仅保存本地，不进入 Git/);
+  assert.equal(fs.existsSync(path.join(root, 'minigame/src/pages/structure.js')), false, '小游戏源码不得保留结构页面');
+  assert.equal(fs.existsSync(path.join(root, 'dist/weapp/src/pages/structure.js')), false, '小游戏产物不得保留结构页面');
 
   const packageJson = require('../package.json');
   assert.ok(packageJson.scripts['build:minigame'].includes('build-minigame.cjs'));

@@ -10,7 +10,6 @@ const renderers = {
   pipeline: require('./pages/pipeline.js'),
   model: require('./pages/model.js'),
   automation: require('./pages/automation.js'),
-  structure: require('./pages/structure.js'),
 };
 
 const TABS = [
@@ -18,7 +17,6 @@ const TABS = [
   { id: 'pipeline', label: '流水线' },
   { id: 'model', label: '模型' },
   { id: 'automation', label: '自动化' },
-  { id: 'structure', label: '结构' },
 ];
 
 const colors = {
@@ -63,7 +61,6 @@ class MiniGameApp {
     this.maxScroll = 0;
     this.flowIndex = 0;
     this.commandMode = 'daily';
-    this.selectedFile = 0;
     this.message = '';
     this.messageTimer = null;
     this.zones = [];
@@ -175,14 +172,13 @@ class MiniGameApp {
     const textColor = primary || selected ? this.colors.accentText : this.colors.text;
     const stroke = primary || selected ? this.colors.accent : this.colors.border;
     this.painter.roundRect(x, y, width, height, options.small ? 10 : 13, fill, stroke);
-    const size = options.file ? 12 : options.small ? 12 : 14;
-    const textWidth = width - (options.file ? 54 : 20);
+    const size = options.small ? 12 : 14;
+    const textWidth = width - 20;
     this.painter.paragraph(label, x + 10, y, textWidth, {
       size,
       weight: selected || primary ? 'bold' : 'normal',
       color: textColor,
-      align: options.file ? 'left' : 'center',
-      mono: options.file,
+      align: 'center',
       lineHeight: Math.round(size * 1.4),
       blockHeight: height,
       baseline: 'middle',
@@ -224,9 +220,6 @@ class MiniGameApp {
         this.scroll = 0;
         this.render();
       }
-    } else if (action.type === 'file') {
-      this.selectedFile = boundedIndex(action.index, this.project.projectFiles.length);
-      this.render();
     } else if (action.type === 'copy') {
       return this.copy(action.text, action.success);
     }

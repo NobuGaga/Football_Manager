@@ -117,24 +117,6 @@ const safetyRules = [
   { title: '重复执行受控', description: '文件锁阻止并发；临场更新追加版本，同日初版不重复生成。', mark: '锁' },
 ];
 
-const projectFiles = [
-  { path: 'main.py', type: '入口', description: 'argparse 全部命令入口，包含导入、推断、报告、回测和 daily 自动化。', tag: 'CLI' },
-  { path: 'src/automation.py', type: '编排', description: '负责 Git 安全检查、每日流程编排、非并发锁、中文摘要与本地产物安全保护。', tag: 'AUTOMATION' },
-  { path: 'src/database.py', type: '数据', description: '定义 SQLite schema、数据库连接，以及旧 matches 数据的无损迁移。', tag: 'SQLITE' },
-  { path: 'src/importers.py', type: '数据', description: '处理对阵、球队映射、赛前特征与赛果导入，执行字段和时间校验。', tag: 'IMPORT' },
-  { path: 'src/predictor.py', type: '模型', description: '实现 Poisson + Dixon–Coles 基线，生成完整比分概率与三向概率。', tag: 'MODEL' },
-  { path: 'src/ai_strategies.py', type: '策略', description: '加载项目 AI 策略文档，校验分类并保存文档哈希。', tag: 'STRATEGY' },
-  { path: 'src/scraper.py', type: '适配', description: '体彩官方公开接口入口，保存原始快照，失败时显式降级到手动导入。', tag: 'SOURCE' },
-  { path: 'src/reporter.py', type: '输出', description: '生成每日 JSON／CSV／Excel／Markdown 报告和回测 Excel。', tag: 'REPORT' },
-  { path: 'src/result_checker.py', type: '复盘', description: '逐条关联已保存推断与实际赛果，写入复盘字段。', tag: 'RESULT' },
-  { path: 'src/backtest.py', type: '复盘', description: '计算 Log Loss、Brier、概率校准、比分命中和预期进球误差。', tag: 'BACKTEST' },
-  { path: 'web/src/', type: '前端', description: '保留 Taro + React H5 视觉设计，并提供每日报告、工程内容和展示派生逻辑的共享数据源。', tag: 'H5 / DATA' },
-  { path: 'web/minigame/', type: '前端', description: 'Canvas 2D 微信小游戏运行时，将共享数据转换为六个信息页面、纵向滚动和触控交互。', tag: 'MINIGAME' },
-  { path: 'web/dist/weapp/', type: '产物', description: '由 web/scripts/build-minigame.cjs 转换生成的小游戏产物，包含 game.js、game.json、Canvas 页面和共享数据；禁止手改。', tag: 'BUILD' },
-  { path: 'data/football.db', type: '产物', description: '保存对阵、不可变快照、赛前特征、追加式推断、赛果与模型版本。', tag: 'RUNTIME' },
-  { path: 'reports/', type: '产物', description: '保存每日四格式报告、回测结果、运行状态与中文摘要，仅保留在本地，不进入 Git。', tag: 'OUTPUT' },
-];
-
 module.exports = {
   stats,
   principles,
@@ -145,5 +127,4 @@ module.exports = {
   commandModes,
   automationSteps,
   safetyRules,
-  projectFiles,
 };
