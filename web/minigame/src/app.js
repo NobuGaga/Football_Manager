@@ -34,6 +34,7 @@ const colors = {
   risk: '#b7a77b',
 };
 
+const MAX_RENDER_DPR = 2;
 const FLING_SAMPLE_MS = 100;
 const FLING_MIN_SPEED = 40;
 const FLING_MAX_SPEED = 2800;
@@ -82,7 +83,7 @@ class MiniGameApp {
       : this.platform.getSystemInfoSync();
     this.width = info.windowWidth || 375;
     this.height = info.windowHeight || 667;
-    this.dpr = info.pixelRatio || 1;
+    this.dpr = Math.min(MAX_RENDER_DPR, Math.max(1, info.pixelRatio || 1));
     const safeArea = info.safeArea;
     this.safeTop = Math.max(20, safeArea ? safeArea.top + 8 : 28);
     this.safeBottom = Math.max(12, safeArea ? this.height - safeArea.bottom : 12);
@@ -251,8 +252,9 @@ class MiniGameApp {
     if (this.frameHandle !== null) return;
     const draw = (timestamp) => {
       this.frameHandle = null;
+      const previousScroll = this.scroll;
       this.advanceInertia(timestamp);
-      this.render();
+      if (!this.inertiaActive || this.scroll !== previousScroll) this.render();
       if (this.inertiaActive) this.scheduleRender();
     };
     if (typeof this.platform.requestAnimationFrame === 'function') {
@@ -267,8 +269,14 @@ class MiniGameApp {
     }
   }
 
+  normalizeScroll(value) {
+    const bounded = Math.max(0, Math.min(this.maxScroll, value));
+    if (bounded === 0 || bounded === this.maxScroll) return bounded;
+    return Math.round(bounded * this.dpr) / this.dpr;
+  }
+
   scrollBy(delta) {
-    const next = Math.max(0, Math.min(this.maxScroll, this.scroll + delta));
+    const next = this.normalizeScroll(this.scroll + delta);
     if (next !== this.scroll) {
       this.scroll = next;
       this.scheduleRender();
@@ -310,10 +318,10 @@ class MiniGameApp {
       : Math.max(0, Math.min(50, now - this.inertiaFrameTime));
     this.inertiaFrameTime = now;
     const unbounded = this.scroll + this.inertiaVelocity * elapsed / 1000;
-    const next = Math.max(0, Math.min(this.maxScroll, unbounded));
-    this.scroll = next;
+    const bounded = Math.max(0, Math.min(this.maxScroll, unbounded));
+    this.scroll = this.normalizeScroll(bounded);
     this.inertiaVelocity *= Math.exp(-elapsed / FLING_DECAY_MS);
-    if (next !== unbounded || Math.abs(this.inertiaVelocity) < FLING_STOP_SPEED) this.stopInertia();
+    if (bounded !== unbounded || Math.abs(this.inertiaVelocity) < FLING_STOP_SPEED) this.stopInertia();
   }
 
   recordTouch(touch, point, time) {
@@ -383,7 +391,7 @@ class MiniGameApp {
     const w = this.width;
     const h = this.height;
     const navHeight = this.getNavHeight();
-    this.scroll = Math.max(0, Math.min(this.maxScroll, this.scroll));
+    this.scroll = this.normalizeScroll(this.scroll);
     this.zones = [];
     const gradient = ctx.createLinearGradient(0, 0, w, h);
     const stadiumPage = this.page === 'overview' || this.page === 'daily';
@@ -402,7 +410,7 @@ class MiniGameApp {
 
     this.maxScroll = Math.max(0, contentEnd + 24 - (h - navHeight));
     if (this.scroll > this.maxScroll && !this.correctingScroll) {
-      this.scroll = this.maxScroll;
+      this.scroll = this.normalizeScroll(this.maxScroll);
       this.correctingScroll = true;
       this.render();
       this.correctingScroll = false;

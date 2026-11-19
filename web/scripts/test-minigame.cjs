@@ -55,7 +55,7 @@ function createContext() {
   };
 }
 
-function createRuntime({ clipboardFails = false } = {}) {
+function createRuntime({ clipboardFails = false, pixelRatio = 2 } = {}) {
   const ctx = createContext();
   const canvas = { width: 0, height: 0, getContext: () => ctx };
   const listeners = {};
@@ -64,7 +64,7 @@ function createRuntime({ clipboardFails = false } = {}) {
   const windowInfo = {
     windowWidth: 390,
     windowHeight: 844,
-    pixelRatio: 2,
+    pixelRatio,
     safeArea: { top: 47, bottom: 810 },
   };
   const platform = {
@@ -121,14 +121,29 @@ function assertTextBlockCentered(bounds, y, height, label) {
   for (const bound of bounds) assert.equal(bound.baseline, 'middle', `${label} 应使用中线基线`);
 }
 
+function createLongReport(report, copies = 6) {
+  assert.ok(report.matches.length > 0, '滚动测试需要至少一条基础比赛记录');
+  const matches = Array.from({ length: report.matches.length * copies }, (_, index) => {
+    const match = report.matches[index % report.matches.length];
+    return {
+      ...match,
+      fixtureKey: `scroll-test-${index}`,
+      homeTeam: `${match.homeTeam} 滚动${index + 1}`,
+    };
+  });
+  return { ...report, matchCount: matches.length, predictionCount: matches.length, matches };
+}
+
 (async () => {
+  const longReport = createLongReport(dailyReport);
   const runtime = createRuntime();
-  const app = new MiniGameApp(runtime.platform).start();
+  const app = new MiniGameApp(runtime.platform, null, { dailyReport: longReport }).start();
   assert.deepEqual(TABS.map((item) => item.id), ['overview', 'pipeline', 'model', 'automation', 'structure']);
   assert.equal(runtime.canvas.width, 780);
   assert.equal(runtime.canvas.height, 1688);
   assert.equal(app.page, 'overview');
-  assert.equal(app.matches.length, dailyReport.matches.length);
+  assert.equal(app.matches.length, longReport.matches.length);
+  assert.equal(new Set(app.matches.map((match) => match.fixtureKey)).size, longReport.matches.length);
   assert.ok(runtime.ctx.texts.includes('让每一次推断，'), '小游戏首页应保留 Web 品牌主视觉文案');
   assert.ok(runtime.ctx.texts.includes('都有迹可循。'), '小游戏首页应保留 Web 强调文案');
   assert.ok(!runtime.ctx.texts.some((text) => text.includes('测试实现需求')), '小游戏不得恢复已移除的试验文案');
@@ -330,6 +345,89 @@ function assertTextBlockCentered(bounds, y, height, label) {
   flushAnimationFrame(pacingRuntime, 8);
   assert.equal(pacingRuntime.ctx.gradientCalls, pacingDraws + 2, '8ms 帧间隔也必须逐帧绘制，不得主动降帧');
   assert.equal(pacingRuntime.animationFrames.length, 0);
+
+  const pixelRuntime = createRuntime();
+  const pixelApp = new MiniGameApp(pixelRuntime.platform, null, { dailyReport: longReport }).start();
+  for (const page of ['overview', 'pipeline', 'model', 'automation', 'structure', 'daily']) {
+    pixelApp.setPage(page);
+    pixelApp.scrollBy(0.26);
+    assert.ok(
+      Number.isInteger(pixelApp.scroll * pixelApp.dpr),
+      `${page} 滚动位置应对齐物理像素：${pixelApp.scroll}`,
+    );
+    if (page === 'daily') pixelRuntime.ctx.textBounds.length = 0;
+    flushAnimationFrame(pixelRuntime, 0);
+    if (page === 'daily') {
+      const heading = pixelRuntime.ctx.textBounds.find((item) => item.text === '今日比赛中心');
+      assert.ok(heading, '滚动后应绘制每日页主标题');
+      assert.ok(Number.isInteger(heading.baselineY * pixelApp.dpr), '主要文字坐标应对齐物理像素');
+    }
+    pixelApp.scrollBy(Number.POSITIVE_INFINITY);
+    flushAnimationFrame(pixelRuntime, 8);
+    assert.equal(pixelApp.scroll, pixelApp.maxScroll, `${page} 应精确到达底部`);
+    pixelApp.scrollBy(Number.NEGATIVE_INFINITY);
+    flushAnimationFrame(pixelRuntime, 16);
+    assert.equal(pixelApp.scroll, 0, `${page} 应精确到达顶部`);
+  }
+
+  const highDprRuntime = createRuntime({ pixelRatio: 3 });
+  const highDprApp = new MiniGameApp(highDprRuntime.platform, null, { dailyReport: longReport }).start();
+  assert.equal(highDprApp.dpr, 2, '高 DPR 设备的渲染倍率应限制为 2');
+  assert.equal(highDprRuntime.canvas.width, 780);
+  assert.equal(highDprRuntime.canvas.height, 1688);
+  assert.equal(highDprApp.width, 390, '页面布局应继续使用 CSS 像素');
+  assert.equal(highDprApp.height, 844);
+  const highDprDailyZone = highDprApp.zones.find((zone) => zone.action.type === 'page' && zone.action.page === 'daily');
+  assert.ok(highDprDailyZone, '高 DPR 设备应保留每日页入口');
+  tap(highDprRuntime, highDprDailyZone);
+  assert.equal(highDprApp.page, 'daily', '高 DPR 设备的 CSS 像素热区应可点击');
+  assertTextWithinCanvas(highDprRuntime, highDprApp.width, '高 DPR 每日页');
+  const highDprBackZone = highDprApp.zones.find((zone) => zone.action.type === 'page' && zone.action.page === 'overview');
+  assert.ok(highDprBackZone, '高 DPR 设备应保留返回热区');
+  tap(highDprRuntime, highDprBackZone);
+  assert.equal(highDprApp.page, 'overview', '高 DPR 设备返回导航应保持正常');
+  highDprRuntime.windowInfo.windowWidth = 360;
+  highDprRuntime.windowInfo.windowHeight = 780;
+  highDprRuntime.windowInfo.safeArea = { top: 47, bottom: 746 };
+  highDprRuntime.ctx.textBounds.length = 0;
+  highDprApp.refreshMetrics();
+  highDprApp.render();
+  assert.equal(highDprRuntime.canvas.width, 720, '窗口变化后应按 DPR=2 重算画布宽度');
+  assert.equal(highDprRuntime.canvas.height, 1560, '窗口变化后应按 DPR=2 重算画布高度');
+  assert.equal(highDprApp.safeBottom, 34, '底部安全区应继续使用 CSS 像素');
+  assertTextWithinCanvas(highDprRuntime, highDprApp.width, '高 DPR 窗口变化');
+
+  const tailRuntime = createRuntime();
+  const tailApp = new MiniGameApp(tailRuntime.platform).start();
+  tailApp.scroll = 0.5;
+  tailApp.inertiaActive = true;
+  tailApp.inertiaVelocity = 22;
+  tailApp.inertiaFrameTime = 0;
+  const tailDraws = tailRuntime.ctx.gradientCalls;
+  tailApp.scheduleRender();
+  flushAnimationFrame(tailRuntime, 8);
+  assert.equal(tailApp.scroll, 0.5);
+  assert.equal(tailApp.inertiaActive, true, '可见位置未变化时惯性仍应继续');
+  assert.equal(tailRuntime.ctx.gradientCalls, tailDraws, '惯性位置未变化时不应完整重绘');
+  assert.equal(tailRuntime.animationFrames.length, 1, '惯性继续时应只保留一个后续帧');
+  flushAnimationFrame(tailRuntime, 16);
+  assert.equal(tailRuntime.ctx.gradientCalls, tailDraws, '连续无效惯性帧均不应重绘');
+  flushAnimationFrame(tailRuntime, 24);
+  assert.equal(tailApp.inertiaActive, false, '低速惯性应正常结束');
+  assert.equal(tailRuntime.ctx.gradientCalls, tailDraws + 1, '惯性结束时应执行最终绘制');
+  assert.equal(tailRuntime.animationFrames.length, 0, '惯性结束后不得保留动画循环');
+
+  tailApp.scroll = 0.5;
+  tailApp.inertiaActive = true;
+  tailApp.inertiaVelocity = -100;
+  tailApp.inertiaFrameTime = 0;
+  const boundaryDraws = tailRuntime.ctx.gradientCalls;
+  tailApp.scheduleRender();
+  flushAnimationFrame(tailRuntime, 32);
+  assert.equal(tailApp.scroll, 0, '惯性越界应精确收敛到顶部');
+  assert.equal(tailApp.inertiaActive, false);
+  assert.equal(tailRuntime.ctx.gradientCalls, boundaryDraws + 1, '惯性到达边界时应执行最终绘制');
+  assert.equal(tailRuntime.animationFrames.length, 0);
 
   const gameConfig = JSON.parse(fs.readFileSync(path.join(root, 'dist/weapp/game.json'), 'utf8'));
   assert.equal(gameConfig.deviceOrientation, 'portrait');
