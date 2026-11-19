@@ -33,7 +33,7 @@ __pycache__/
 venv/
 env/
 .env
-/wechat_key/
+/deploy/wechat/wechat_key/
 .vscode/
 .idea/
 *.swp

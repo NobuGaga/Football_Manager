@@ -12,6 +12,13 @@ export WECHAT_PRIVATE_KEY='from-environment'
 load_wechat_credentials "$REPO_ROOT"
 [[ "$WECHAT_PRIVATE_KEY" == 'from-environment' ]]
 
+mkdir -p "$TMP_ROOT/default-project/deploy/wechat/wechat_key"
+printf 'default-directory\n' > "$TMP_ROOT/default-project/deploy/wechat/wechat_key/upload.key"
+unset WECHAT_APPID WECHAT_PRIVATE_KEY WECHAT_KEY_DIR
+export WECHAT_APPID='wx0000000000000010'
+load_wechat_credentials "$TMP_ROOT/default-project"
+[[ "$WECHAT_PRIVATE_KEY" == 'default-directory' ]]
+
 mkdir -p "$TMP_ROOT/infer-project" "$TMP_ROOT/single"
 printf 'from-file\n' > "$TMP_ROOT/single/private.wx0000000000000002.key"
 unset WECHAT_APPID WECHAT_PRIVATE_KEY

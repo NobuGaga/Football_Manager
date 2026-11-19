@@ -3,7 +3,7 @@
 
 load_wechat_credentials() {
   local repo_root="$1"
-  local key_dir="${WECHAT_KEY_DIR:-${repo_root}/wechat_key}"
+  local key_dir="${WECHAT_KEY_DIR:-${repo_root}/deploy/wechat/wechat_key}"
   local node_bin="${NODE_BIN:-node}"
   local project_appid
   local key_name
