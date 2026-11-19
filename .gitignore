@@ -39,3 +39,5 @@ env/
 *.swp
 .DS_Store
 *.svn
+
+/exports/
