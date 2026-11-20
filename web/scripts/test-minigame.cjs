@@ -159,8 +159,10 @@ function createLongReport(report, copies = 6) {
   assertTextWithinCanvas(runtime, app.width, '每日首屏');
   assert.ok(runtime.ctx.texts.includes('今日比赛中心'), '每日页应使用 C 方案标题');
   assert.ok(runtime.ctx.texts.includes('VS'), '首场应绘制 C 方案记分牌');
+  // 记分牌队名列宽有限，长队名会被 paragraph 折行绘制；断言需兼容折行（按绘制顺序拼接校验）。
+  const drawnSequence = runtime.ctx.texts.join('');
   for (const expected of [app.matches[0].homeTeam, app.matches[0].awayTeam, app.matches[0].tendencyPercent]) {
-    assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)), `首场记分牌应实际绘制 ${expected}`);
+    assert.ok(runtime.ctx.texts.some((text) => text.includes(expected)) || drawnSequence.includes(expected), `首场记分牌应实际绘制 ${expected}`);
   }
   const compactMatch = app.matches[1];
   for (const expected of [
