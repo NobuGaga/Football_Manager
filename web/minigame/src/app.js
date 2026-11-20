@@ -38,6 +38,8 @@ const FLING_MIN_SPEED = 40;
 const FLING_MAX_SPEED = 2800;
 const FLING_STOP_SPEED = 20;
 const FLING_DECAY_MS = 220;
+const SWIPE_LEFT_MIN_DISTANCE = 64;
+const SWIPE_LEFT_DIRECTION_RATIO = 1.2;
 
 function pointFromEvent(event) {
   const point = (event.changedTouches && event.changedTouches[0]) || (event.touches && event.touches[0]);
@@ -335,6 +337,29 @@ class MiniGameApp {
     return point.y >= 0 && point.y < this.height - this.getNavHeight();
   }
 
+  isLeftSwipe(touch, point) {
+    const horizontal = touch.x - point.x;
+    const vertical = Math.abs(point.y - touch.y);
+    return horizontal >= SWIPE_LEFT_MIN_DISTANCE && horizontal > vertical * SWIPE_LEFT_DIRECTION_RATIO;
+  }
+
+  handleLeftSwipe() {
+    if (this.page === 'daily') {
+      this.setPage('overview');
+      return;
+    }
+    if (TABS.some((tab) => tab.id === this.page)) this.exitMiniProgram();
+  }
+
+  exitMiniProgram() {
+    if (typeof this.platform.exitMiniProgram !== 'function') {
+      this.message = '当前环境不支持手势退出，请使用系统操作';
+      this.render();
+      return;
+    }
+    this.platform.exitMiniProgram();
+  }
+
   onTouchStart(event) {
     const point = pointFromEvent(event);
     if (!point) return;
@@ -344,6 +369,7 @@ class MiniGameApp {
       ...point,
       lastY: point.y,
       moved: false,
+      gesture: null,
       allowScroll: this.isContentPoint(point),
       samples: [{ y: point.y, time }],
     };
@@ -352,8 +378,13 @@ class MiniGameApp {
   onTouchMove(event) {
     const point = pointFromEvent(event);
     if (!point || !this.touch) return;
-    if (Math.abs(point.y - this.touch.y) > 6 || Math.abs(point.x - this.touch.x) > 6) this.touch.moved = true;
-    if (this.touch.moved && this.touch.allowScroll) {
+    const horizontal = Math.abs(point.x - this.touch.x);
+    const vertical = Math.abs(point.y - this.touch.y);
+    if (!this.touch.gesture && (horizontal > 6 || vertical > 6)) {
+      this.touch.gesture = horizontal > vertical * SWIPE_LEFT_DIRECTION_RATIO ? 'horizontal' : 'vertical';
+    }
+    if (this.touch.gesture) this.touch.moved = true;
+    if (this.touch.gesture === 'vertical' && this.touch.allowScroll) {
       this.scrollBy(this.touch.lastY - point.y);
       this.recordTouch(this.touch, point, this.eventTime(event));
     }
@@ -365,8 +396,12 @@ class MiniGameApp {
     const touch = this.touch;
     this.touch = null;
     if (!point || !touch) return;
+    if (this.isLeftSwipe(touch, point)) {
+      this.handleLeftSwipe();
+      return;
+    }
     if (touch.moved) {
-      if (touch.allowScroll) {
+      if (touch.allowScroll && touch.gesture !== 'horizontal') {
         this.recordTouch(touch, point, this.eventTime(event));
         this.startInertia(this.flingVelocity(touch));
       }

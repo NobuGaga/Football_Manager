@@ -60,6 +60,7 @@ function createRuntime({ clipboardFails = false, pixelRatio = 2 } = {}) {
   const canvas = { width: 0, height: 0, getContext: () => ctx };
   const listeners = {};
   const clipboard = [];
+  const exitCalls = [];
   const animationFrames = [];
   const windowInfo = {
     windowWidth: 390,
@@ -80,13 +81,14 @@ function createRuntime({ clipboardFails = false, pixelRatio = 2 } = {}) {
     onTouchCancel: (handler) => { listeners.touchCancel = handler; },
     onWindowResize: (handler) => { listeners.resize = handler; },
     onShow: (handler) => { listeners.show = handler; },
+    exitMiniProgram: () => exitCalls.push(Date.now()),
     setClipboardData({ data, success, fail }) {
       clipboard.push(data);
       if (clipboardFails) fail({ errMsg: 'setClipboardData:fail denied' });
       else success({ errMsg: 'setClipboardData:ok' });
     },
   };
-  return { platform, canvas, ctx, listeners, clipboard, animationFrames, windowInfo };
+  return { platform, canvas, ctx, listeners, clipboard, exitCalls, animationFrames, windowInfo };
 }
 
 function flushAnimationFrame(runtime, timestamp) {
@@ -99,6 +101,18 @@ function tap(runtime, zone) {
   const point = { clientX: zone.x + zone.width / 2, clientY: zone.y + zone.height / 2 };
   runtime.listeners.touchStart({ touches: [point], changedTouches: [point] });
   runtime.listeners.touchEnd({ touches: [], changedTouches: [point] });
+}
+
+function swipe(runtime, { startX = 320, startY = 400, endX = 100, endY = 400 } = {}) {
+  runtime.listeners.touchStart({ timeStamp: 10000, touches: [{ clientX: startX, clientY: startY }] });
+  for (let index = 1; index <= 4; index += 1) {
+    const ratio = index / 4;
+    runtime.listeners.touchMove({
+      timeStamp: 10000 + index * 40,
+      touches: [{ clientX: startX + (endX - startX) * ratio, clientY: startY + (endY - startY) * ratio }],
+    });
+  }
+  runtime.listeners.touchEnd({ timeStamp: 10160, changedTouches: [{ clientX: endX, clientY: endY }] });
 }
 
 function assertTextWithinCanvas(runtime, width, label) {
@@ -187,6 +201,8 @@ function createLongReport(report, copies = 6) {
   }
   runtime.listeners.touchEnd({ timeStamp: 160, changedTouches: [{ clientX: 100, clientY: 320 }] });
   assert.ok(app.scroll > startScroll, '连续触控应更新滚动位置');
+  assert.equal(app.page, 'daily', '纵向滚动不得触发左滑返回');
+  assert.equal(runtime.exitCalls.length, 0, '纵向滚动不得退出小游戏');
   assert.equal(runtime.animationFrames.length, 1, '连续触控应合并为一个待绘制帧');
   assert.equal(runtime.ctx.gradientCalls, warmedGradientCalls, '触控事件不应反复同步绘制背景');
   assert.equal(app.inertiaActive, true, '快速滑动松手后应进入惯性滚动');
@@ -277,10 +293,34 @@ function createLongReport(report, copies = 6) {
   app.setPage('structure');
   assert.equal(app.page, 'automation', '已删除的结构页不得再被打开');
 
+  swipe(runtime, { startX: 100, endX: 320 });
+  assert.equal(runtime.exitCalls.length, 0, '右滑不得退出小游戏');
+  swipe(runtime, { startX: 120, endX: 100 });
+  assert.equal(runtime.exitCalls.length, 0, '短距离左滑不得退出小游戏');
+  for (const tab of TABS) {
+    app.setPage(tab.id);
+    const exitCount = runtime.exitCalls.length;
+    swipe(runtime, { endY: 420 });
+    assert.equal(runtime.exitCalls.length, exitCount + 1, `${tab.label}主界面左滑应退出小游戏`);
+    assert.equal(app.page, tab.id, '退出调用前不得误切换页面');
+    assert.equal(app.scroll, 0, `${tab.label}横向左滑不得带动纵向滚动`);
+  }
+  app.setPage('daily');
+  swipe(runtime);
+  assert.equal(app.page, 'overview', '每日页左滑应返回概览');
+  assert.equal(runtime.exitCalls.length, TABS.length, '每日页左滑不得调用退出 API');
+
   const failedRuntime = createRuntime({ clipboardFails: true });
   const failedApp = new MiniGameApp(failedRuntime.platform).start();
   assert.equal(await failedApp.copy('safe text', '不应显示'), false);
   assert.equal(failedApp.message, '复制失败，请稍后重试');
+
+  const unsupportedRuntime = createRuntime();
+  delete unsupportedRuntime.platform.exitMiniProgram;
+  const unsupportedApp = new MiniGameApp(unsupportedRuntime.platform).start();
+  swipe(unsupportedRuntime);
+  assert.equal(unsupportedApp.page, 'overview');
+  assert.equal(unsupportedApp.message, '当前环境不支持手势退出，请使用系统操作');
 
   const emptyRuntime = createRuntime();
   const emptyReport = {
